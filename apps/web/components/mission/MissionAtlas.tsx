@@ -154,8 +154,10 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient }: { qua
     if (lexiKey.current?.action !== serialized) lexiKey.current = { action: serialized, key: crypto.randomUUID() };
     let response;
     if (!local) {
-      await queue.current.flush(client, signal, run.current.session.sessionId);
-      try { response = await client.lexi({ sessionId: run.current.session.sessionId, ...action }, lexiKey.current.key, signal); }
+      try {
+        await queue.current.flush(client, signal, run.current.session.sessionId);
+        response = await client.lexi({ sessionId: run.current.session.sessionId, ...action }, lexiKey.current.key, signal);
+      }
       catch (error) { if (signal.aborted || !["request_hint", "create_reality_mission"].includes(action.tool ?? "")) throw error; }
     }
     if (signal.aborted) return;

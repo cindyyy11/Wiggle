@@ -85,3 +85,40 @@ it("uses typed Lexi requests and ignores delayed responses after leaving", async
   fireEvent.click(screen.getByRole("button", { name: "Leave mission" }));
   expect(lexi.mock.calls[0][2].aborted).toBe(true);
 });
+
+it.each(["telemetry", "lexi"] as const)("keeps hints and Reality Missions available when %s fails with queued API events", async failure => {
+  const client = new ApiClient();
+  vi.spyOn(client, "start").mockResolvedValue(demoSession("offline-api-session"));
+  const events = vi.spyOn(client, "events").mockImplementation(async body => {
+    if (failure === "telemetry") throw new TypeError("Network unavailable");
+    return { acceptedEventIds: body.events.map(event => event.id) };
+  });
+  const lexi = vi.spyOn(client, "lexi").mockRejectedValue(new TypeError("Network unavailable"));
+  render(<MissionAtlas quality="fallback" client={client} />);
+  fireEvent.click(screen.getByRole("button", { name: "Start fractions mission" }));
+  await screen.findByRole("heading", { name: "Make three quarters" });
+  fireEvent.click(screen.getByRole("button", { name: "Ask Lexi" }));
+  const originalIds = new EventQueue().entries().map(entry => entry.event.id);
+  expect(originalIds.length).toBeGreaterThan(0);
+  fireEvent.click(screen.getByRole("button", { name: "Give me a hint" }));
+  await screen.findByText("Choose three equal slices. Leave one on the plate.");
+  fireEvent.click(screen.getByRole("button", { name: "Try a Reality Mission" }));
+  await screen.findByRole("heading", { name: "A little mission around you" });
+  fireEvent.click(screen.getByRole("button", { name: "I found my three quarters" }));
+  expect(screen.getByRole("heading", { name: "Make three quarters" })).toBeTruthy();
+  expect(screen.queryByText("Let's try that again. Your puzzle is still here.")).toBeNull();
+  const pending = new EventQueue().entries();
+  expect(pending.every(entry => entry.transport === "api")).toBe(true);
+  expect(pending.some(entry => entry.event.type === "mission_completed")).toBe(false);
+  if (failure === "telemetry") {
+    expect(pending.map(entry => entry.event.id)).toEqual(expect.arrayContaining(originalIds));
+    expect(pending.map(entry => entry.event.type)).toEqual(expect.arrayContaining(["hint_requested", "reality_mission_started", "reality_mission_completed"]));
+    expect(lexi).not.toHaveBeenCalled();
+  } else expect(lexi).toHaveBeenCalledTimes(2);
+  // Reconnect after the persisted retry deadline: replay the same queued evidence.
+  events.mockClear().mockImplementation(async body => ({ acceptedEventIds: body.events.map(event => event.id) }));
+  const replay = new EventQueue(localStorage, () => Date.now() + 60001);
+  await replay.flush(client, new AbortController().signal, "offline-api-session");
+  expect(events.mock.calls.flatMap(([body]) => body.events.map(event => event.id))).toEqual(expect.arrayContaining(pending.map(entry => entry.event.id)));
+  expect(replay.entries()).toHaveLength(0);
+});
