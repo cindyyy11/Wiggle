@@ -45,3 +45,36 @@ test("WebGL unavailable and reduced motion still expose the accessible map", asy
   await page.getByRole("button", { name: "How to explore", exact: true }).click();
   await expect(page.getByRole("complementary", { name: "Exploration instructions" })).toBeVisible();
 });
+
+test("held cross-button input moves the rendered explorer and orbit/zoom change the view", async ({ page }) => {
+  // Decorative motion is disabled so image changes must come from the exercised controls.
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  const canvas = page.locator("canvas");
+  await expect(canvas).toBeVisible({ timeout: 20_000 });
+  await page.getByRole("button", { name: "Follow explorer", exact: true }).click();
+  const hold = async (name: string) => {
+    const box = await page.getByRole("button", { name, exact: true }).boundingBox();
+    if (!box) throw new Error(`Missing ${name} button`);
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.waitForTimeout(450);
+    await page.mouse.up();
+  };
+  await hold("Walk forward");
+  const beforeRight = await canvas.screenshot();
+  await hold("Walk right");
+  const afterRight = await canvas.screenshot();
+  expect(afterRight.equals(beforeRight)).toBe(false);
+  await page.getByRole("button", { name: "Zoom in", exact: true }).click();
+  const afterZoom = await canvas.screenshot();
+  expect(afterZoom.equals(afterRight)).toBe(false);
+  const box = await canvas.boundingBox();
+  if (!box) throw new Error("Missing canvas");
+  await page.mouse.move(box.width / 2, box.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(box.width / 2 + 45, box.height / 2 + 20, { steps: 6 });
+  await page.mouse.up();
+  const afterOrbit = await canvas.screenshot();
+  expect(afterOrbit.equals(afterZoom)).toBe(false);
+});
