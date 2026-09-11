@@ -1,8 +1,9 @@
 """Camel-case HTTP contracts, independent of persistence row shapes."""
 
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Annotated
 
-from pydantic import ConfigDict, Field
+from pydantic import ConfigDict, Field, field_validator
 
 from app.domain.models import (
     DomainModel,
@@ -98,6 +99,12 @@ class CheckInRequest(RequestModel):
     child_id: Identifier
     difficulty: Probability
     note: str = Field(default="", max_length=1000)
+
+    @field_validator("difficulty")
+    @classmethod
+    def canonical_difficulty(cls, value: float) -> float:
+        """Match the persisted numeric(4,3) precision before storing or comparing requests."""
+        return float(Decimal(str(value)).quantize(Decimal(".001"), rounding=ROUND_HALF_UP))
 
 
 class CheckInResponse(DomainModel):

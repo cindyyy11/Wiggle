@@ -79,6 +79,10 @@ class SessionService:
         return rows[-1]
 
     def current_twin(self, child_id: str) -> LearnerTwin:
+        return self.repository.put_twin(child_id, self._replay(child_id).twin)
+
+    def _replay(self, child_id: str, *, audit_from_event_id: str | None = None) -> TwinUpdate:
+        """Use one ordering for materialization and completion's audit suffix."""
         self.require_child(child_id)
         rows = self.repository.list_interventions(child_id)
         anchors = [
@@ -87,7 +91,7 @@ class SessionService:
             if "initial_twin" in as_record(row["simulation_snapshot"])
         ]
         if not anchors:
-            return self.repository.get_twin(child_id) or LearnerTwin()
+            return TwinUpdate(twin=self.repository.get_twin(child_id) or LearnerTwin(), changes=())
         anchor = anchors[0]
         excluded = cast(list[str], anchor["excluded_event_ids"])
         events = [
@@ -96,8 +100,19 @@ class SessionService:
         # Rebuild from a durable baseline, not from an already updated materialized twin.
         # Sorting by timestamp and ID also handles delayed/batched delivery deterministically.
         events.sort(key=lambda event: (event.occurred_at, event.id))
-        twin = update_twin(LearnerTwin.model_validate(anchor["initial_twin"]), events).twin
-        return self.repository.put_twin(child_id, twin)
+        baseline = LearnerTwin.model_validate(anchor["initial_twin"])
+        if audit_from_event_id is not None:
+            position = next(
+                (index for index, event in enumerate(events) if event.id == audit_from_event_id),
+                None,
+            )
+            if position is None:
+                raise WorkflowError(
+                    "missing_event", "Completion event is unavailable for replay", 503
+                )
+            baseline = update_twin(baseline, events[:position]).twin
+            events = events[position:]
+        return update_twin(baseline, events)
 
     def simulation(self, session_id: str) -> SimulationReport:
         session = self.session(session_id)
@@ -260,27 +275,17 @@ class SessionService:
                 strategy=strategy,
             ),
         )
-        # Exclude a previously appended completion when recovering a partial write.
-        anchor = next(
-            as_record(row["simulation_snapshot"])
-            for row in self.repository.list_interventions(child_id)
-            if "initial_twin" in as_record(row["simulation_snapshot"])
-        )
-        prior_events = [
-            row
-            for row in self.repository.list_events(child_id)
-            if row.id != event_id and row.id not in cast(list[str], anchor["excluded_event_ids"])
-        ]
-        prior_events.sort(key=lambda row: (row.occurred_at, row.id))
-        prior = update_twin(LearnerTwin.model_validate(anchor["initial_twin"]), prior_events).twin
-        update = update_twin(prior, [event])
         self.repository.append_event(event, idempotency_key=event_id)
-        final_twin = self.current_twin(child_id)
+        # Keep completion in its actual timestamp/ID position. The audit includes
+        # completion and every later event, so its final values match materialization
+        # even with client clock skew or new events during partial-write recovery.
+        update = self._replay(child_id, audit_from_event_id=event_id)
+        self.repository.put_twin(child_id, update.twin)
         prediction = float(cast(float, intervention["predicted_success"]))
         response = CompleteSessionResponse(
             session_id=request.session_id,
             intervention_id=str(intervention["id"]),
-            update=TwinUpdate(twin=final_twin, changes=update.changes),
+            update=update,
             predicted_success=prediction,
             actual_success=request.correctness,
             prediction_error=request.correctness - prediction,
