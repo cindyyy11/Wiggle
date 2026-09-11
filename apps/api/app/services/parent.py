@@ -42,7 +42,10 @@ class ParentService:
         for child in self.sessions.repository.list_children():
             for row in self.sessions.repository.list_check_ins(str(child["id"])):
                 if row["id"] == identifier:
-                    if any(row.get(field) != value for field, value in record.items()):
+                    stored_request = CheckInRequest.model_validate(
+                        {field: row[field] for field in ("child_id", "difficulty", "note")}
+                    )
+                    if stored_request != request:
                         raise WorkflowError("idempotency_conflict", "Check-in key was reused")
                     return CheckInResponse(check_in_id=identifier)
         self.sessions.repository.add_check_in(record)
