@@ -3,7 +3,15 @@ import json
 import pytest
 
 from app.domain.models import LearnerTwin, ModalityEffectiveness, StrategyEffectiveness
-from app.domain.simulation import ActivityCharacteristics, simulate
+from app.domain.simulation import (
+    BASE_SUCCESS,
+    FRICTION_WEIGHTS,
+    MASTERY_GAIN_SCALE,
+    MASTERY_OPPORTUNITY_WEIGHTS,
+    ActivityCharacteristics,
+    simulate,
+)
+from app.domain.strategies import STRATEGIES
 
 
 @pytest.fixture
@@ -144,6 +152,46 @@ def test_predictions_explain_every_named_weight(
         "novelty",
     }
     assert all(factor.explanation for factor in report.ranked[0].factors)
+
+
+def test_all_advertised_outputs_reconstruct_from_named_configuration(
+    seed_twin: LearnerTwin, fraction_activity: ActivityCharacteristics
+) -> None:
+    objective = "fractions.three_quarters"
+    prediction = simulate(seed_twin, objective, fraction_activity).ranked[0]
+    factor_values = {factor.name: factor.value for factor in prediction.factors}
+    definition = next(item for item in STRATEGIES if item.name == prediction.strategy)
+
+    expected_success = BASE_SUCCESS + sum(factor.contribution for factor in prediction.factors)
+    friction_inputs = {
+        "current_friction": factor_values["current_friction"],
+        "cognitive_load": factor_values["cognitive_load"],
+        "fatigue": factor_values["fatigue"],
+        "novelty": factor_values["novelty"],
+        "modality_history": factor_values["modality_history"],
+        "objective_compatibility": factor_values["objective_compatibility"],
+    }
+    raw_expected_friction = definition.friction_modifier + sum(
+        friction_inputs[name] * weight for name, weight in FRICTION_WEIGHTS.items()
+    )
+    expected_friction = max(0.0, min(1.0, raw_expected_friction))
+    opportunity_inputs = {
+        "activity_difficulty": fraction_activity.difficulty,
+        "mastery_gap": 1.0 - seed_twin.mastery[objective],
+    }
+    learning_opportunity = sum(
+        opportunity_inputs[name] * weight for name, weight in MASTERY_OPPORTUNITY_WEIGHTS.items()
+    )
+    expected_mastery_gain = (
+        prediction.predicted_success
+        * learning_opportunity
+        * definition.learning_gain_multiplier
+        * MASTERY_GAIN_SCALE
+    )
+
+    assert prediction.predicted_success == pytest.approx(expected_success)
+    assert prediction.predicted_friction == pytest.approx(expected_friction)
+    assert prediction.expected_mastery_gain == pytest.approx(expected_mastery_gain)
 
 
 def test_equal_scores_use_declared_strategy_order() -> None:
