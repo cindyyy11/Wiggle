@@ -17,6 +17,19 @@ SESSION_ID = "10000000-0000-0000-0000-000000001111"
 OTHER_SESSION_ID = "10000000-0000-0000-0000-000000001112"
 
 
+def child_row(child_id: str = CHILD_ID) -> Record:
+    return {"id": child_id, "parent_id": OWNER_ID, "display_name": "Nova"}
+
+
+def session_row(session_id: str = SESSION_ID, *, child_id: str = CHILD_ID) -> Record:
+    return {
+        "id": session_id,
+        "child_id": child_id,
+        "mission_id": "mission-1",
+        "status": "active",
+    }
+
+
 def event_row(number: int = 1, *, session_id: str = SESSION_ID) -> Record:
     return {
         "id": f"event-{number}",
@@ -69,7 +82,7 @@ class StubSupabaseRepository(SupabaseRepository):
 
 def test_event_rows_normalize_postgrest_timestamps_before_validation() -> None:
     repository = StubSupabaseRepository()
-    repository.responses = [[event_row()]]
+    repository.responses = [[child_row()], [session_row()], [event_row()]]
 
     persisted = repository.append_event(event(), idempotency_key="shared-key")
 
@@ -79,8 +92,12 @@ def test_event_rows_normalize_postgrest_timestamps_before_validation() -> None:
 def test_duplicate_event_recovery_is_scoped_by_session_and_key() -> None:
     repository = StubSupabaseRepository()
     repository.responses = [
+        [child_row()],
+        [session_row()],
         RepositoryError("duplicate"),
         [event_row()],
+        [child_row()],
+        [session_row(OTHER_SESSION_ID)],
         RepositoryError("duplicate"),
         [event_row(2, session_id=OTHER_SESSION_ID)],
     ]
@@ -89,7 +106,7 @@ def test_duplicate_event_recovery_is_scoped_by_session_and_key() -> None:
     assert repository.append_event(
         event(2, session_id=OTHER_SESSION_ID), idempotency_key="shared-key"
     ) == event(2, session_id=OTHER_SESSION_ID)
-    assert repository.requests[1] == (
+    assert repository.requests[3] == (
         "GET",
         "learning_events",
         {
@@ -98,7 +115,7 @@ def test_duplicate_event_recovery_is_scoped_by_session_and_key() -> None:
             "idempotency_key": "eq.shared-key",
         },
     )
-    assert repository.requests[3][2] == {
+    assert repository.requests[7][2] == {
         "select": "*",
         "session_id": f"eq.{OTHER_SESSION_ID}",
         "idempotency_key": "eq.shared-key",
@@ -141,3 +158,41 @@ def test_rls_hidden_update_uses_access_error() -> None:
 
     with pytest.raises(RepositoryAccessError):
         repository.update_session(SESSION_ID, {"status": "completed"})
+
+
+def test_cross_child_session_is_rejected_before_insert() -> None:
+    repository = StubSupabaseRepository()
+    other_child_id = "20000000-0000-0000-0000-000000000022"
+    repository.responses = [[child_row(other_child_id)], []]
+
+    with pytest.raises(RepositoryAccessError):
+        repository.create_session(
+            {
+                "id": "new-session",
+                "child_id": other_child_id,
+                "mission_id": "foreign-mission",
+                "status": "active",
+            }
+        )
+    assert all(request[0] == "GET" for request in repository.requests)
+
+
+def test_cross_child_event_is_rejected_before_insert() -> None:
+    repository = StubSupabaseRepository()
+    other_child_id = "20000000-0000-0000-0000-000000000022"
+    repository.responses = [
+        [child_row(other_child_id)],
+        [session_row(child_id=CHILD_ID)],
+    ]
+    cross_event = LearningEvent(
+        id="cross-event",
+        child_id=other_child_id,
+        session_id=SESSION_ID,
+        occurred_at=datetime(2026, 9, 11, 8, tzinfo=UTC),
+        event_type=EventType.SESSION_STARTED,
+        payload=GenericEventPayload(kind="session_started"),
+    )
+
+    with pytest.raises(RepositoryAccessError):
+        repository.append_event(cross_event, idempotency_key="cross-session")
+    assert all(request[0] == "GET" for request in repository.requests)
