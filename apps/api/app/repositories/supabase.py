@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 from collections.abc import Mapping
+from datetime import UTC, datetime
 from typing import Literal, Self, cast
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
@@ -14,7 +15,14 @@ from pydantic import AnyHttpUrl, BaseModel, ConfigDict, SecretStr, model_validat
 
 from app.domain.models import LearnerTwin, LearningEvent
 from app.repositories.memory import MemoryRepository
-from app.repositories.protocols import Record, RepositoryError, WiggleRepository
+from app.repositories.protocols import (
+    Record,
+    RepositoryAccessError,
+    RepositoryError,
+    WiggleRepository,
+)
+
+_PAGE_SIZE = 1000
 
 
 class RepositorySettings(BaseModel):
@@ -97,7 +105,19 @@ class SupabaseRepository:
         except HTTPError as error:
             detail = error.read().decode("utf-8", errors="replace")
             message = f"Supabase rejected {method} {table}: {error.code} {detail}"
-            raise RepositoryError(message) from error
+            postgres_code: object = None
+            try:
+                decoded_error = json.loads(detail)
+                if isinstance(decoded_error, dict):
+                    postgres_code = decoded_error.get("code")
+            except json.JSONDecodeError:
+                pass
+            error_type = (
+                RepositoryAccessError
+                if error.code in {401, 403} or postgres_code == "42501"
+                else RepositoryError
+            )
+            raise error_type(message) from error
         except URLError as error:
             raise RepositoryError(f"Supabase request failed for {table}: {error.reason}") from error
         if not raw:
@@ -117,6 +137,49 @@ class SupabaseRepository:
         query = {"select": "*", **{name: f"eq.{value}" for name, value in filters.items()}}
         return self._request("GET", table, query=query)
 
+    def _select_all(
+        self,
+        table: str,
+        *,
+        filters: Mapping[str, str] | None = None,
+        order: str,
+    ) -> list[Record]:
+        """Read every PostgREST page using a deterministic order."""
+
+        rows: list[Record] = []
+        encoded_filters = {name: f"eq.{value}" for name, value in (filters or {}).items()}
+        while True:
+            page = self._request(
+                "GET",
+                table,
+                query={
+                    "select": "*",
+                    **encoded_filters,
+                    "order": order,
+                    "limit": str(_PAGE_SIZE),
+                    "offset": str(len(rows)),
+                },
+            )
+            if not page:
+                return rows
+            rows.extend(page)
+
+    @staticmethod
+    def _event_from_row(row: Mapping[str, object]) -> LearningEvent:
+        """Convert Postgres timestamp strings without weakening the public wire model."""
+
+        normalized = dict(row)
+        occurred_at = normalized.get("occurred_at")
+        if isinstance(occurred_at, str):
+            try:
+                parsed = datetime.fromisoformat(occurred_at.replace("Z", "+00:00"))
+            except ValueError as error:
+                raise RepositoryError("Supabase returned an invalid event timestamp") from error
+            if parsed.tzinfo is None:
+                raise RepositoryError("Supabase returned an event timestamp without a timezone")
+            normalized["occurred_at"] = parsed.astimezone(UTC)
+        return LearningEvent.model_validate(normalized)
+
     def _insert(
         self, table: str, record: Mapping[str, object], *, resolution: str | None = None
     ) -> Record:
@@ -134,13 +197,15 @@ class SupabaseRepository:
             body=changes,
             prefer="return=representation",
         )
+        if not rows:
+            raise RepositoryAccessError(f"{table} row is not writable by this parent")
         return self._one(rows, table)
 
     def create_child(self, child: Mapping[str, object]) -> Record:
         record = dict(child)
         requested_parent = record.setdefault("parent_id", self.owner_id)
         if requested_parent != self.owner_id:
-            raise RepositoryError("cannot create a child for another parent")
+            raise RepositoryAccessError("cannot create a child for another parent")
         return self._insert("children", record)
 
     def get_child(self, child_id: str) -> Record | None:
@@ -148,7 +213,7 @@ class SupabaseRepository:
         return None if not rows else self._one(rows, "child")
 
     def list_children(self) -> list[Record]:
-        return self._select("children", parent_id=self.owner_id)
+        return self._select_all("children", filters={"parent_id": self.owner_id}, order="id.asc")
 
     def put_twin(self, child_id: str, twin: LearnerTwin, *, schema_version: int = 1) -> LearnerTwin:
         rows = self._request(
@@ -179,7 +244,9 @@ class SupabaseRepository:
         return None if not rows else self._one(rows, "mission")
 
     def list_missions(self, child_id: str) -> list[Record]:
-        return self._select("missions", child_id=child_id)
+        return self._select_all(
+            "missions", filters={"child_id": child_id}, order="created_at.asc,id.asc"
+        )
 
     def create_session(self, session: Mapping[str, object]) -> Record:
         return self._insert("sessions", session)
@@ -198,22 +265,28 @@ class SupabaseRepository:
         record["idempotency_key"] = idempotency_key
         try:
             row = self._insert("learning_events", record)
+        except RepositoryAccessError:
+            raise
         except RepositoryError:
-            rows = self._select("learning_events", idempotency_key=idempotency_key)
+            rows = self._select(
+                "learning_events",
+                session_id=event.session_id,
+                idempotency_key=idempotency_key,
+            )
             if not rows:
                 raise
             row = self._one(rows, "learning event")
-        persisted = LearningEvent.model_validate(row)
+        persisted = self._event_from_row(row)
         if persisted != event:
             raise RepositoryError("idempotency key was already used for another event")
         return persisted
 
     def list_events(self, child_id: str, *, session_id: str | None = None) -> list[LearningEvent]:
-        query = {"select": "*", "child_id": f"eq.{child_id}", "order": "occurred_at.asc"}
+        filters = {"child_id": child_id}
         if session_id is not None:
-            query["session_id"] = f"eq.{session_id}"
-        rows = self._request("GET", "learning_events", query=query)
-        return [LearningEvent.model_validate(row) for row in rows]
+            filters["session_id"] = session_id
+        rows = self._select_all("learning_events", filters=filters, order="occurred_at.asc,id.asc")
+        return [self._event_from_row(row) for row in rows]
 
     def create_intervention(self, intervention: Mapping[str, object]) -> Record:
         return self._insert("interventions", intervention)
@@ -224,7 +297,9 @@ class SupabaseRepository:
         return self._update("interventions", intervention_id, changes)
 
     def list_interventions(self, child_id: str) -> list[Record]:
-        return self._select("interventions", child_id=child_id)
+        return self._select_all(
+            "interventions", filters={"child_id": child_id}, order="created_at.asc,id.asc"
+        )
 
     def get_settings(self) -> Record | None:
         rows = self._select("parent_settings", parent_id=self.owner_id)
@@ -246,11 +321,15 @@ class SupabaseRepository:
         record = dict(check_in)
         requested_parent = record.setdefault("parent_id", self.owner_id)
         if requested_parent != self.owner_id:
-            raise RepositoryError("cannot create another parent's check-in")
+            raise RepositoryAccessError("cannot create another parent's check-in")
         return self._insert("parent_check_ins", record)
 
     def list_check_ins(self, child_id: str) -> list[Record]:
-        return self._select("parent_check_ins", child_id=child_id)
+        return self._select_all(
+            "parent_check_ins",
+            filters={"child_id": child_id},
+            order="created_at.asc,id.asc",
+        )
 
 
 def repository_from_env(

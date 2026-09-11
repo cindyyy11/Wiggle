@@ -64,9 +64,9 @@ create table public.learning_events (
     'mission_completed', 'mission_abandoned', 'stuck_requested', 'reset_started',
     'reset_completed', 'mode_changed', 'difficulty_self_reported', 'parent_check_in'
   )),
-  payload jsonb not null check (
+  payload jsonb not null check ((
     jsonb_typeof(payload) = 'object' and payload ->> 'kind' = event_type
-  ),
+  ) is true),
   idempotency_key text not null check (length(trim(idempotency_key)) > 0),
   created_at timestamptz not null default now(),
   unique (session_id, idempotency_key),

@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set search_path = public, extensions;
 
-select plan(35);
+select plan(37);
 
 select has_table('public', 'profiles', 'profiles table exists');
 select has_table('public', 'children', 'children table exists');
@@ -80,6 +80,18 @@ select lives_ok(
 select lives_ok(
   $$insert into public.learning_events (id, child_id, session_id, occurred_at, event_type, payload, idempotency_key) values ('10000000-0000-0000-0000-000000011111', '10000000-0000-0000-0000-000000000011', '10000000-0000-0000-0000-000000001111', now(), 'session_started', '{"kind":"session_started"}', 'session-start')$$,
   'parent can append an event for an owned child'
+);
+select throws_ok(
+  $$insert into public.learning_events (id, child_id, session_id, occurred_at, event_type, payload, idempotency_key) values ('10000000-0000-0000-0000-000000011112', '10000000-0000-0000-0000-000000000011', '10000000-0000-0000-0000-000000001111', now(), 'session_started', '{}', 'event-missing-kind')$$,
+  '23514',
+  null,
+  'event payloads reject a missing discriminator'
+);
+select throws_ok(
+  $$insert into public.learning_events (id, child_id, session_id, occurred_at, event_type, payload, idempotency_key) values ('10000000-0000-0000-0000-000000011113', '10000000-0000-0000-0000-000000000011', '10000000-0000-0000-0000-000000001111', now(), 'session_started', '{"kind":null}', 'event-null-kind')$$,
+  '23514',
+  null,
+  'event payloads reject a null discriminator'
 );
 select throws_ok(
   $$update public.learning_events set payload = '{"kind":"session_started","changed":true}' where id = '10000000-0000-0000-0000-000000011111'$$,
