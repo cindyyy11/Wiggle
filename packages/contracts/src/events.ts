@@ -1,0 +1,140 @@
+import { assertProbability } from "./twin.js";
+
+export const eventTypes = [
+  "session_started",
+  "task_started",
+  "first_interaction",
+  "response_time_recorded",
+  "answer_submitted",
+  "retry_recorded",
+  "hint_requested",
+  "task_skipped",
+  "mission_completed",
+  "mission_abandoned",
+  "stuck_requested",
+  "reset_started",
+  "reset_completed",
+  "mode_changed",
+  "difficulty_self_reported",
+  "parent_check_in",
+] as const;
+
+export type EventType = (typeof eventTypes)[number];
+export type LearningMode =
+  | "standard"
+  | "visual"
+  | "gesture"
+  | "visual_gesture"
+  | "chunk"
+  | "voice"
+  | "movement"
+  | "story";
+
+export interface StuckRequestedPayload {
+  kind: "stuck_requested";
+  mode?: LearningMode;
+}
+
+export interface MissionCompletedPayload {
+  kind: "mission_completed";
+  objective: string;
+  correctness: number;
+  mode: LearningMode;
+  strategy?: "chunking" | "movement_break" | "visual_hint" | "voice_hint" | "choice";
+}
+
+export interface GenericEventPayload {
+  kind: Exclude<EventType, "stuck_requested" | "mission_completed">;
+}
+
+export type LearningEventPayload =
+  | StuckRequestedPayload
+  | MissionCompletedPayload
+  | GenericEventPayload;
+
+export type LearningEvent =
+  | EventEnvelope<"stuck_requested", StuckRequestedPayload>
+  | EventEnvelope<"mission_completed", MissionCompletedPayload>
+  | EventEnvelope<Exclude<EventType, "stuck_requested" | "mission_completed">, GenericEventPayload>;
+
+interface EventEnvelope<Type extends EventType, Payload extends LearningEventPayload> {
+  id: string;
+  childId: string;
+  sessionId: string;
+  occurredAt: string;
+  type: Type;
+  payload: Payload;
+}
+
+const learningModes: readonly LearningMode[] = [
+  "standard",
+  "visual",
+  "gesture",
+  "visual_gesture",
+  "chunk",
+  "voice",
+  "movement",
+  "story",
+];
+const strategyNames = ["chunking", "movement_break", "visual_hint", "voice_hint", "choice"] as const;
+
+function assertUtcTimestamp(value: string): void {
+  if (!value.endsWith("Z") || Number.isNaN(Date.parse(value))) {
+    throw new TypeError("occurredAt must be an ISO-8601 UTC timestamp ending in Z");
+  }
+}
+
+/** Runtime validation for untrusted event JSON; returns the same immutable input reference. */
+export function validateLearningEvent(event: unknown): LearningEvent {
+  if (event === null || typeof event !== "object") {
+    throw new TypeError("event must be an object");
+  }
+  const candidate = event as Partial<LearningEvent>;
+  if (
+    typeof candidate.id !== "string" ||
+    !candidate.id ||
+    typeof candidate.childId !== "string" ||
+    !candidate.childId ||
+    typeof candidate.sessionId !== "string" ||
+    !candidate.sessionId
+  ) {
+    throw new TypeError("id, childId, and sessionId are required");
+  }
+  if (typeof candidate.occurredAt !== "string") {
+    throw new TypeError("occurredAt is required");
+  }
+  assertUtcTimestamp(candidate.occurredAt);
+  if (!eventTypes.includes(candidate.type as EventType)) {
+    throw new TypeError("type must be a supported event type");
+  }
+  const payload = candidate.payload as Partial<LearningEventPayload> | undefined;
+  if (payload === undefined || typeof payload !== "object" || typeof payload.kind !== "string") {
+    throw new TypeError("payload.kind is required");
+  }
+  if (candidate.type !== payload.kind) {
+    throw new TypeError("type must match payload.kind");
+  }
+  if (payload.kind === "mission_completed") {
+    if (typeof payload.objective !== "string" || !payload.objective) {
+      throw new TypeError("payload.objective is required");
+    }
+    assertProbability(payload.correctness, "payload.correctness");
+    if (!learningModes.includes(payload.mode as LearningMode)) {
+      throw new TypeError("payload.mode must be a supported learning mode");
+    }
+    if (
+      payload.strategy !== undefined &&
+      !strategyNames.includes(payload.strategy as (typeof strategyNames)[number])
+    ) {
+      throw new TypeError("payload.strategy must be a supported strategy");
+    }
+  }
+  if (
+    payload.kind === "stuck_requested" &&
+    payload.mode !== undefined &&
+    !learningModes.includes(payload.mode as LearningMode)
+  ) {
+    throw new TypeError("payload.mode must be a supported learning mode");
+  }
+  return candidate as LearningEvent;
+}
