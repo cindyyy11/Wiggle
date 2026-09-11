@@ -112,8 +112,21 @@ class CheckInResponse(DomainModel):
     message: str = "Thanks for sharing."
 
 
+class ProgressPoint(DomainModel):
+    label: str
+    value: Probability
+
+
+class ParentMission(DomainModel):
+    title: str
+    objective: str
+
+
 class ParentInsightsResponse(DomainModel):
     child_id: str
     completed_missions: int
     twin: LearnerTwin
     insight: TextContent
+    missions: tuple[ParentMission, ...] = ()
+    mastery_history: tuple[ProgressPoint, ...] = ()
+    independence_history: tuple[ProgressPoint, ...] = ()

@@ -76,4 +76,7 @@ export interface ParentInsightsResponse {
   completedMissions: number;
   twin: LearnerTwin;
   insight: TextContent;
+  missions?: readonly { title: string; objective: string }[];
+  masteryHistory?: readonly { label: string; value: number }[];
+  independenceHistory?: readonly { label: string; value: number }[];
 }

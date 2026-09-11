@@ -1,0 +1,30 @@
+import { expect, test } from "@playwright/test";
+
+test("parent PIN, responsive dashboard, settings, check-in and relock", async ({ page }) => {
+  await page.goto("/parent");
+  await expect(page.getByRole("heading", { name: "Parent mission control" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Mastery today" })).toHaveCount(0);
+  const denied = await page.request.get("/api/parent/insights?child_id=10000000-0000-0000-0000-000000000011");
+  expect(denied.status()).toBe(403);
+  await page.getByLabel("Parent PIN").fill("000000");
+  await page.getByRole("button", { name: "Enter mission control" }).click();
+  await expect(page.getByText("Enter your parent PIN to continue.", { exact: true })).toBeVisible();
+  await page.getByLabel("Parent PIN").fill("123456");
+  await page.getByRole("button", { name: "Enter mission control" }).click();
+  await expect(page.getByRole("heading", { name: "Mastery today" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Growing independence" })).toBeVisible();
+  const cookies = await page.context().cookies();
+  expect(cookies.find(cookie => cookie.name === "wiggle-parent-pin")?.httpOnly).toBe(true);
+  await page.getByLabel("Minutes between reminders").fill("25");
+  await page.getByRole("button", { name: "Save break preference" }).click();
+  await expect(page.getByText("Break preference saved.")).toBeVisible();
+  await page.getByLabel("Anything helpful to know?").fill("We used paper pizza slices today.");
+  await page.getByRole("button", { name: "Share check-in" }).click();
+  await expect(page.getByText("Demo check-in saved for this server session.")).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await page.screenshot({ path: `../../.superpowers/sdd/2026-09-11-wiggle-hybrid-universe/parent-${test.info().project.name}.png`, fullPage: true });
+  await page.getByRole("button", { name: "Lock parent space" }).click();
+  await expect(page.getByRole("heading", { name: "Parent mission control" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Mastery today" })).toHaveCount(0);
+  await expect.poll(async () => (await page.request.get("/api/parent/settings")).status()).toBe(403);
+});
