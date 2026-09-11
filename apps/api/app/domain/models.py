@@ -86,6 +86,9 @@ class GenericEventPayload(DomainModel):
         "difficulty_self_reported",
         "parent_check_in",
     ]
+    difficulty: Probability | None = None
+    response_time_ms: int | None = Field(default=None, ge=0, le=86400000)
+    mode: LearningMode | None = None
 
 
 EventPayload = Annotated[

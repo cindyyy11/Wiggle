@@ -32,6 +32,21 @@ const twin: LearnerTwin = {
 };
 
 describe("Wiggle contracts", () => {
+  it("validates optional bounded telemetry and self reports", () => {
+    const event = {
+      id: "timing-1", childId: "child-1", sessionId: "session-1",
+      occurredAt: "2026-09-11T00:00:00Z", type: "response_time_recorded",
+      payload: { kind: "response_time_recorded", responseTimeMs: 19000 },
+    };
+    expect(validateLearningEvent(event)).toEqual(event);
+    expect(() => validateLearningEvent({ ...event,
+      payload: { ...event.payload, responseTimeMs: -1 },
+    })).toThrow("responseTimeMs");
+    expect(() => validateLearningEvent({ ...event,
+      payload: { ...event.payload, difficulty: 2 },
+    })).toThrow("difficulty");
+    expect(() => validateLearningEvent({ ...event, payload: null })).toThrow("payload.kind");
+  });
   it("accepts bounded learner-twin values", () => {
     expect(assertLearnerTwin(twin)).toEqual(twin);
     expect(() => assertLearnerTwin({ ...twin, fatigueEstimate: 1.1 })).toThrow("fatigueEstimate");

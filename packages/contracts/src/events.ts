@@ -47,6 +47,9 @@ export type GenericEventType = Exclude<EventType, "stuck_requested" | "mission_c
 
 export interface GenericEventPayload<Type extends GenericEventType> {
   kind: Type;
+  difficulty?: number | null;
+  responseTimeMs?: number | null;
+  mode?: LearningMode | null;
 }
 
 export type LearningEventPayload =
@@ -140,7 +143,7 @@ export function validateLearningEvent(event: unknown): LearningEvent {
     throw new TypeError("type must be a supported event type");
   }
   const payload = candidate.payload as Partial<LearningEventPayload> | undefined;
-  if (payload === undefined || typeof payload !== "object" || typeof payload.kind !== "string") {
+  if (payload == null || typeof payload !== "object" || typeof payload.kind !== "string") {
     throw new TypeError("payload.kind is required");
   }
   if (candidate.type !== payload.kind) {
@@ -167,6 +170,17 @@ export function validateLearningEvent(event: unknown): LearningEvent {
     !learningModes.includes(payload.mode as LearningMode)
   ) {
     throw new TypeError("payload.mode must be a supported learning mode");
+  }
+  if (payload.kind !== "stuck_requested" && payload.kind !== "mission_completed") {
+    const generic = payload as Partial<GenericEventPayload<GenericEventType>>;
+    if (generic.difficulty != null) assertProbability(generic.difficulty, "payload.difficulty");
+    if (generic.responseTimeMs != null && (
+      !Number.isInteger(generic.responseTimeMs) || generic.responseTimeMs < 0 ||
+      generic.responseTimeMs > 86400000
+    )) throw new TypeError("payload.responseTimeMs must be bounded milliseconds");
+    if (payload.mode != null && !learningModes.includes(payload.mode)) {
+      throw new TypeError("payload.mode must be a supported learning mode");
+    }
   }
   return candidate as LearningEvent;
 }
