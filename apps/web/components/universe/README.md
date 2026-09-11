@@ -17,7 +17,7 @@
 ```
 
 - `mode`: controlled `globe`, `follow`, or `mission`. Omit it for local mode switching. Mission mode frames the Fraction Forest pedestal and dims terrain.
-- `destination`: `{ latitude, longitude }` in radians. The astronaut travels along the sphere; click/tap destinations report through the same callback. Keyboard movement cancels a queued destination.
+- `destination`: `{ latitude, longitude }` in radians. The astronaut travels along the sphere; click/tap destinations report through the same callback. Pass `null` to cancel queued travel, or omit the prop (`undefined`) to retain locally selected travel. Keyboard movement cancels a queued destination. Explicit destinations, including `null`, take priority over mission mode's default destination.
 - `selectedLandmark`: optionally control the selected action card. IDs are exported in `world.ts`.
 - `onMissionStart`: mission entry callback. Task 7 owns lesson state, API/events, outcome and rewards. Without a callback the card offers exploration.
 - `pizza`: optional controlled four-slice geometry. The 2D/keyboard slice buttons invoke exactly the same callback as the mesh.

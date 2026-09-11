@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Component, useCallback, useEffect, useId, useRef, useState, type ReactNode, type CSSProperties } from "react";
+import React, { Component, useCallback, useEffect, useId, useRef, useState, type ReactNode, type CSSProperties, type PointerEvent } from "react";
 import dynamic from "next/dynamic";
 import { LANDMARKS, MISSION_DESTINATION, createExplorerInput, resolveQuality, type CameraMode, type Destination, type LandmarkId, type PizzaPresentation, type QualityPreference, type SceneQuality } from "./world";
 import styles from "./universe.module.css";
@@ -40,6 +40,7 @@ export function UniverseCanvas({ mode: controlledMode, onModeChange, quality: pr
   const [running, setRunning] = useState(false);
   const [announcement, setAnnouncement] = useState("Welcome, explorer. Your next adventure is in Fraction Forest.");
   const input = useRef(createExplorerInput());
+  const activePointer = useRef<number | null>(null);
   const instructionsId = useId();
   const mode = controlledMode ?? localMode;
   const selectedLandmark = controlledLandmark ?? localLandmark;
@@ -67,11 +68,11 @@ export function UniverseCanvas({ mode: controlledMode, onModeChange, quality: pr
     setQuality(resolveQuality(preference, supported, device.deviceMemory, device.hardwareConcurrency || 8));
   }, [preference]);
 
-  useEffect(() => { if (destination) input.current.destination = destination; }, [destination]);
-  useEffect(() => { if (mode === "mission") input.current.destination = MISSION_DESTINATION; }, [mode]);
+  useEffect(() => { if (mode === "mission" && destination === undefined) input.current.destination = MISSION_DESTINATION; }, [mode, destination]);
+  useEffect(() => { if (destination !== undefined) input.current.destination = destination; }, [destination]);
   useEffect(() => {
     const current = input.current;
-    const clear = () => { current.keys.clear(); current.horizontal = 0; current.vertical = 0; current.running = false; current.hop = false; setRunning(false); };
+    const clear = () => { current.keys.clear(); current.horizontal = 0; current.vertical = 0; current.running = false; current.hop = false; activePointer.current = null; setRunning(false); };
     window.addEventListener("blur", clear);
     document.addEventListener("visibilitychange", clear);
     return () => { clear(); window.removeEventListener("blur", clear); document.removeEventListener("visibilitychange", clear); };
@@ -89,7 +90,10 @@ export function UniverseCanvas({ mode: controlledMode, onModeChange, quality: pr
   const graphicsFailed = useCallback(() => { setFailed(true); setAnnouncement("Your map is ready. Every destination and mission is still here."); }, []);
   const lowerQuality = useCallback(() => setQuality("low"), []);
   const startMission = () => { selectLandmark("fraction-forest"); changeMode("mission"); onMissionStart?.(); };
-  const stopDirection = () => { input.current.horizontal = 0; input.current.vertical = 0; };
+  const stopDirection = (event: PointerEvent<HTMLButtonElement>) => {
+    if (event.pointerId !== activePointer.current) return;
+    activePointer.current = null; input.current.horizontal = 0; input.current.vertical = 0;
+  };
 
   return <section className={`${styles.universe} ${className}`} aria-label="Explore Numeria" data-camera-mode={mode} data-quality={mapVisible ? "fallback" : quality}>
     <div className={styles.stars} aria-hidden="true" />
@@ -115,11 +119,11 @@ export function UniverseCanvas({ mode: controlledMode, onModeChange, quality: pr
     </aside>
     {help ? <aside className={styles.help} aria-label="Exploration instructions"><h2>Make yourself at home.</h2><p id={instructionsId}>Drag to look around. Scroll or pinch to zoom. Tap the ground to walk. Focus the movement pad and use arrows or WASD. Hold Shift to run. Space to hop.</p><p>You can also choose any destination by name. The 2D map has the same mission controls.</p><button type="button" onClick={() => setHelp(false)}>Got it</button></aside> : null}
     {!mapVisible ? <div className={styles.explorerControls}>
-      <div className={styles.movementPad} tabIndex={0} role="group" aria-label="Move explorer. Arrow keys or WASD to walk, Shift to run, Space to hop." onBlur={() => { input.current.keys.clear(); stopDirection(); }} onKeyDown={event => {
+      <div className={styles.movementPad} tabIndex={0} role="group" aria-label="Move explorer. Arrow keys or WASD to walk, Shift to run, Space to hop." onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) input.current.keys.clear(); }} onKeyDown={event => {
         const key = event.key.toLowerCase();
         if (["arrowup", "arrowdown", "arrowleft", "arrowright", "w", "a", "s", "d", " ", "shift"].includes(key)) { event.preventDefault(); input.current.keys.add(key); if (key === " ") input.current.hop = true; }
       }} onKeyUp={event => input.current.keys.delete(event.key.toLowerCase())}>
-        {([{ label: "Walk forward", text: "↑", x: 0, y: 1, area: "up" }, { label: "Walk left", text: "←", x: -1, y: 0, area: "left" }, { label: "Walk back", text: "↓", x: 0, y: -1, area: "down" }, { label: "Walk right", text: "→", x: 1, y: 0, area: "right" }]).map(direction => <button type="button" key={direction.area} style={{ gridArea: direction.area }} aria-label={direction.label} onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); input.current.horizontal = direction.x; input.current.vertical = direction.y; input.current.destination = null; }} onPointerUp={stopDirection} onPointerCancel={stopDirection} onLostPointerCapture={stopDirection} onClick={event => { if (event.detail === 0) { const [x, y, z] = input.current.position; const latitude = Math.atan2(y, Math.hypot(x, z)); const longitude = Math.atan2(x, z); input.current.destination = { latitude: latitude + direction.y * .12, longitude: longitude + direction.x * .12 }; } }}>{direction.text}</button>)}
+        {([{ label: "Walk forward", text: "↑", x: 0, y: 1, area: "up" }, { label: "Walk left", text: "←", x: -1, y: 0, area: "left" }, { label: "Walk back", text: "↓", x: 0, y: -1, area: "down" }, { label: "Walk right", text: "→", x: 1, y: 0, area: "right" }]).map(direction => <button type="button" key={direction.area} style={{ gridArea: direction.area }} aria-label={direction.label} onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); activePointer.current = event.pointerId; input.current.horizontal = direction.x; input.current.vertical = direction.y; input.current.destination = null; }} onPointerUp={stopDirection} onPointerCancel={stopDirection} onLostPointerCapture={stopDirection} onClick={event => { if (event.detail === 0) { const [x, y, z] = input.current.position; const latitude = Math.atan2(y, Math.hypot(x, z)); const longitude = Math.atan2(x, z); input.current.destination = { latitude: latitude + direction.y * .12, longitude: longitude + direction.x * .12 }; } }}>{direction.text}</button>)}
       </div>
       <button type="button" className={styles.run} aria-pressed={running} onClick={() => { input.current.running = !running; setRunning(!running); }}>Run</button>
       <button type="button" className={styles.hop} onClick={() => { input.current.hop = true; }}>Hop <span aria-hidden="true">↑</span></button>

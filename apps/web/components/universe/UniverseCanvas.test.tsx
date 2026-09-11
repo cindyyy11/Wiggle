@@ -16,6 +16,7 @@ vi.mock("next/dynamic", () => ({ default: () => function Scene(props: { mode: st
 beforeEach(() => {
   Object.defineProperty(window, "matchMedia", { writable: true, value: vi.fn().mockReturnValue({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }) });
   vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({ getExtension: () => null } as never);
+  Object.defineProperty(HTMLElement.prototype, "setPointerCapture", { configurable: true, value: vi.fn() });
 });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
@@ -75,7 +76,7 @@ describe("Numeria quality and accessible controls", () => {
     expect(sceneState.input?.current.keys.has("shift")).toBe(true);
     fireEvent.keyDown(pad, { key: " " });
     expect(sceneState.input?.current.hop).toBe(true);
-    fireEvent.click(screen.getByRole("button", { name: "Run", exact: true }));
+    fireEvent.click(screen.getByRole("button", { name: "Run" }));
     expect(sceneState.input?.current.running).toBe(true);
     fireEvent.blur(window);
     expect(sceneState.input?.current.keys.size).toBe(0);
@@ -91,5 +92,52 @@ describe("Numeria quality and accessible controls", () => {
     fireEvent.click(slice);
     expect(toggle).toHaveBeenCalledWith(0);
     expect(screen.getByRole("button", { name: "Slice 4" }).getAttribute("aria-pressed")).toBe("false");
+  });
+
+  it("keeps a newly held pointer direction when focus moves between pad buttons", async () => {
+    render(<UniverseCanvas />);
+    await screen.findByTestId("scene");
+    const forward = screen.getByRole("button", { name: "Walk forward" });
+    const right = screen.getByRole("button", { name: "Walk right" });
+    fireEvent.pointerDown(forward, { pointerId: 1 });
+    fireEvent.focus(forward);
+    fireEvent.pointerUp(forward, { pointerId: 1 });
+    // Browsers dispatch pointerdown before the default focusout/focusin action.
+    fireEvent.pointerDown(right, { pointerId: 2 });
+    fireEvent.blur(forward, { relatedTarget: right });
+    fireEvent.focus(right, { relatedTarget: forward });
+    expect(sceneState.input?.current.horizontal).toBe(1);
+    expect(sceneState.input?.current.vertical).toBe(0);
+    fireEvent.pointerUp(right, { pointerId: 2 });
+    expect(sceneState.input?.current.horizontal).toBe(0);
+  });
+
+  it("clears keys only when focus leaves the pad without cancelling captured pointer input", async () => {
+    render(<UniverseCanvas />);
+    await screen.findByTestId("scene");
+    const pad = screen.getByRole("group", { name: /Move explorer/ });
+    const right = screen.getByRole("button", { name: "Walk right" });
+    const hop = screen.getByRole("button", { name: "Hop" });
+    fireEvent.keyDown(pad, { key: "w" });
+    fireEvent.pointerDown(right, { pointerId: 1 });
+    fireEvent.blur(pad, { relatedTarget: right });
+    expect(sceneState.input?.current.keys.has("w")).toBe(true);
+    expect(sceneState.input?.current.horizontal).toBe(1);
+    fireEvent.blur(right, { relatedTarget: hop });
+    expect(sceneState.input?.current.keys.size).toBe(0);
+    expect(sceneState.input?.current.horizontal).toBe(1);
+    fireEvent.lostPointerCapture(right, { pointerId: 1 });
+    expect(sceneState.input?.current.horizontal).toBe(0);
+  });
+
+  it("cancels an external destination with null but preserves local travel when omitted", async () => {
+    const destination = { latitude: .6, longitude: -.5 };
+    const view = render(<UniverseCanvas destination={destination} />);
+    await screen.findByTestId("scene");
+    expect(sceneState.input?.current.destination).toEqual(destination);
+    view.rerender(<UniverseCanvas />);
+    expect(sceneState.input?.current.destination).toEqual(destination);
+    view.rerender(<UniverseCanvas destination={null} />);
+    expect(sceneState.input?.current.destination).toBeNull();
   });
 });
