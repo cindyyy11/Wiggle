@@ -1,4 +1,4 @@
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
@@ -43,9 +43,10 @@ def test_reality_mission_events_are_telemetry_not_main_completion() -> None:
     )
 
 
-def test_lexi_tools_and_parent_check_in() -> None:
+def test_lexi_tools_and_parent_check_in(unlock_parent: Callable[[TestClient], None]) -> None:
     app = create_app()
     client = TestClient(app)
+    unlock_parent(client)
     session = start(client)
     for tool in [
         "get_current_twin",

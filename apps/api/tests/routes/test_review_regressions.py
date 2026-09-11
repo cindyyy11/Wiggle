@@ -1,4 +1,4 @@
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from datetime import UTC, datetime, timedelta
 from decimal import ROUND_HALF_UP, Decimal
 from uuid import uuid4
@@ -27,16 +27,21 @@ class RoundedCheckInRepository(MemoryRepository):
 @pytest.mark.parametrize("repository_type", [MemoryRepository, RoundedCheckInRepository])
 @pytest.mark.parametrize("difficulty,stored", [(0.1234, 0.123), (0.1235, 0.124), (0.9999, 1.0)])
 def test_check_in_precision_and_retry_parity(
-    repository_type: type[MemoryRepository], difficulty: float, stored: float
+    repository_type: type[MemoryRepository],
+    difficulty: float,
+    stored: float,
+    unlock_parent: Callable[[TestClient], None],
 ) -> None:
     repository = repository_type(DEMO_PARENT_ID)
     seed_demo(repository)
     client = TestClient(create_app(repository=repository))
+    unlock_parent(client)
     request = {"childId": DEMO_CHILD_ID, "difficulty": difficulty, "note": "Busy afternoon."}
     first = client.post("/parent/check-in", json=request, headers={"Idempotency-Key": "check"})
     assert first.status_code == 200
     assert repository.list_check_ins(DEMO_CHILD_ID)[0]["difficulty"] == stored
     restarted = TestClient(create_app(repository=repository))
+    unlock_parent(restarted)
     retry = restarted.post("/parent/check-in", json=request, headers={"Idempotency-Key": "check"})
     assert retry.status_code == 200, retry.text
     assert retry.json() == first.json()

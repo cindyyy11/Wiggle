@@ -1,10 +1,13 @@
+from collections.abc import Callable
+
 from fastapi.testclient import TestClient
 
 from app.main import create_app
 
 
-def test_complete_hero_loop_and_retries() -> None:
+def test_complete_hero_loop_and_retries(unlock_parent: Callable[[TestClient], None]) -> None:
     client = TestClient(create_app())
+    unlock_parent(client)
     start_body = {"childId": "10000000-0000-0000-0000-000000000011"}
     start = client.post("/session/start", json=start_body, headers={"Idempotency-Key": "start"})
     assert start.status_code == 200, start.text
@@ -68,6 +71,10 @@ def test_complete_hero_loop_and_retries() -> None:
     insight = client.get("/parent/insights", params={"child_id": child})
     assert insight.status_code == 200, insight.text
     assert insight.json()["completedMissions"] == 1
+    assert insight.json()["masteryHistory"] == [
+        {"label": "Mission 1", "value": final["mastery"][objective]}
+    ]
+    assert insight.json()["independenceHistory"] == [{"label": "Mission 1", "value": 0}]
     assert "slice" in insight.json()["insight"]["text"].lower()
 
 

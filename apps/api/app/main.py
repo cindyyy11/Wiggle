@@ -1,3 +1,6 @@
+import os
+import tempfile
+from pathlib import Path
 from threading import Lock
 
 from fastapi import FastAPI, Request
@@ -11,6 +14,7 @@ from app.repositories.memory import MemoryRepository
 from app.repositories.protocols import RepositoryAccessError, RepositoryError, WiggleRepository
 from app.repositories.supabase import RepositorySettings
 from app.routes import adaptation, events, lexi, parent, sessions, twin
+from app.services.parent_pin import PinStore
 from app.services.sessions import WorkflowError
 
 
@@ -27,6 +31,11 @@ def create_app(
     app.state.repository = repository
     app.state.provider = provider or provider_from_env()
     app.state.workflow_lock = Lock()
+    pin_path = os.environ.get("WIGGLE_PIN_STORE_PATH")
+    if not pin_path:
+        if settings.backend == "memory":
+            pin_path = str(Path(tempfile.mkdtemp(prefix="wiggle-pin-")) / "pin.sqlite")
+    app.state.pin_store = PinStore(pin_path) if pin_path else None
 
     @app.exception_handler(WorkflowError)
     async def workflow_error(request: Request, error: WorkflowError) -> JSONResponse:

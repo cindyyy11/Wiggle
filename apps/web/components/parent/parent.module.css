@@ -1,0 +1,47 @@
+.shell { min-height: 100vh; box-sizing: border-box; background: #f7f8f2; color: #24352e; font-family: Arial, Helvetica, sans-serif; padding: 28px max(24px, calc((100vw - 1140px) / 2)); line-height: 1.6; }
+.shell * { box-sizing: border-box; }
+.shell a { color: #2c654d; text-underline-offset: 4px; }
+.shell h1, .shell h2, .shell p { margin-top: 0; }
+.shell h1 { font-size: clamp(36px, 5vw, 58px); line-height: 1.08; letter-spacing: -2px; font-weight: 500; margin-bottom: 20px; }
+.shell h2 { font-size: 23px; line-height: 1.3; font-weight: 500; letter-spacing: -.5px; margin-bottom: 12px; }
+.shell p, .shell small { color: #59675e; }
+.shell button, .shell input, .shell textarea, .shell select { font: inherit; }
+.shell button { background: #315e47; color: white; border: 1px solid transparent; padding: 11px 18px; min-height: 46px; border-radius: 12px; cursor: pointer; }
+.shell button:disabled { opacity: .65; cursor: wait; }
+.shell :is(button, a, input, select, textarea):focus-visible { outline: 3px solid #8c6334; outline-offset: 4px; }
+.shell input, .shell select, .shell textarea { display: block; width: 100%; border: 1px solid #aebcaf; border-radius: 9px; background: #fffefa; color: #24352e; padding: 12px; margin: 5px 0 18px; }
+.shell label { display: block; font-size: 14px; font-weight: 600; }
+.header { display: flex; align-items: center; justify-content: space-between; gap: 20px; border-bottom: 1px solid #d9ded3; padding-bottom: 23px; }
+.brand { font-size: 27px; font-weight: 700; text-decoration: none; letter-spacing: -1px; }
+.brand span { font-size: 13px; font-weight: 400; letter-spacing: 0; color: #5b675e; }
+.shell .secondary { color: #315e47; background: transparent; border-color: #b6c3b4; }
+.intro { display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; padding: 46px 0 28px; }
+.eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: 1.6px; font-weight: 700; margin-bottom: 14px; }
+.childSelect { min-width: 170px; }
+.notice { background: #f0ead8; padding: 12px 18px; border-radius: 8px; margin-top: 24px; font-size: 13px; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.grid > section { background: #fffefa; border: 1px solid #e0e4d9; border-radius: 20px; padding: 28px; min-width: 0; }
+.grid > .missionCard { background: #e8eddf; }
+.missionCard ul { list-style: none; padding: 0; margin: 24px 0; }
+.missionCard li { display: flex; flex-direction: column; padding: 12px 0; border-top: 1px solid #c6d3bb; }
+.missionCard li span { color: #5c6758; font-size: 14px; }
+.grid > .insight { background: #f1e6d6; border-color: #eadcc7; display: flex; flex-direction: column; justify-content: center; }
+.insight > p:not(.eyebrow) { font-size: 21px; color: #66513c; }
+.insight > span { font-size: 13px; color: #71634e; }
+.meter label { display: flex; justify-content: space-between; gap: 10px; }
+.meter meter { width: 100%; height: 23px; accent-color: #638458; margin-top: 10px; }
+.bars { display: flex; align-items: flex-end; gap: 16px; height: 105px; border-bottom: 1px solid #9ba992; padding: 0 8px; }
+.bars > div { height: 100%; flex: 1; display: flex; align-items: flex-end; }
+.bars span { display: block; width: 100%; background: #8b9f75; border-radius: 7px 7px 0 0; }
+.trendText { display: flex; flex-wrap: wrap; gap: 5px 20px; padding-left: 20px; font-size: 12px; }
+.empty { padding: 25px 18px; border-left: 2px solid #a9b499; background: #f5f6ee; font-size: 14px; }
+.strategies { list-style: none; padding: 0; }
+.strategies li { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid #e1e5db; }
+.strategies strong { color: #537245; }
+.gate { max-width: 520px; margin: 9vh auto; padding: 36px; background: #fffefa; border: 1px solid #dde2d5; border-radius: 24px; }
+.gate h1 { font-size: 39px; }
+.gate form { margin: 28px 0; }
+.gate .pin { font-size: 25px; letter-spacing: 12px; }
+.gate button { width: 100%; }
+.footer { padding: 32px 0 8px; font-size: 12px; color: #687263; }
+@media (max-width: 650px) { .shell { padding: 20px; } .grid { grid-template-columns: 1fr; } .grid > section { padding: 23px; } .intro { display: block; padding-top: 32px; } .childSelect { max-width: 220px; } .brand span { display: none; } .header { gap: 10px; } .header button { padding: 9px 12px; font-size: 13px; } .gate { padding: 25px; margin: 5vh auto; } .gate h1 { font-size: 34px; } }
