@@ -54,6 +54,12 @@ def _record_change(
     )
 
 
+def _replace_twin(twin: LearnerTwin, **updates: object) -> LearnerTwin:
+    """Revalidate replacements so externally exposed mappings remain read-only."""
+
+    return LearnerTwin.model_validate({**twin.model_dump(), **updates})
+
+
 def _update_scalar(
     twin: LearnerTwin,
     changes: list[AuditChange],
@@ -71,7 +77,7 @@ def _update_scalar(
     previous = getattr(twin, field)
     result = _bounded_exponential_update(previous, target, rate)
     _record_change(changes, field, previous, result, evidence)
-    return twin.model_copy(update={field: result})
+    return _replace_twin(twin, **{field: result})
 
 
 def _update_mastery(
@@ -81,7 +87,7 @@ def _update_mastery(
     result = _bounded_exponential_update(previous, correctness, _COMPLETION_RATE)
     mastery = {**twin.mastery, objective: result}
     _record_change(changes, f"mastery.{objective}", previous, result, evidence)
-    return twin.model_copy(update={"mastery": mastery})
+    return _replace_twin(twin, mastery=mastery)
 
 
 def _update_modality(
@@ -91,7 +97,7 @@ def _update_modality(
     result = _bounded_exponential_update(previous, correctness, _COMPLETION_RATE)
     modalities = twin.modality_effectiveness.model_copy(update={modality: result})
     _record_change(changes, f"modality_effectiveness.{modality}", previous, result, evidence)
-    return twin.model_copy(update={"modality_effectiveness": modalities})
+    return _replace_twin(twin, modality_effectiveness=modalities)
 
 
 def _update_strategy(
@@ -101,13 +107,13 @@ def _update_strategy(
     result = _bounded_exponential_update(previous, correctness, _COMPLETION_RATE)
     strategies = twin.strategy_effectiveness.model_copy(update={strategy: result})
     _record_change(changes, f"strategy_effectiveness.{strategy}", previous, result, evidence)
-    return twin.model_copy(update={"strategy_effectiveness": strategies})
+    return _replace_twin(twin, strategy_effectiveness=strategies)
 
 
 def update_twin(twin: LearnerTwin, events: Iterable[LearningEvent]) -> TwinUpdate:
     """Return a new twin and auditable changes without mutating the input twin or events."""
 
-    updated = twin.model_copy(deep=True)
+    updated = twin
     changes: list[AuditChange] = []
 
     for event in events:
@@ -143,7 +149,7 @@ def update_twin(twin: LearnerTwin, events: Iterable[LearningEvent]) -> TwinUpdat
             strategy_names = (
                 (payload.strategy,)
                 if payload.strategy is not None
-                else _MODE_STRATEGIES[payload.mode]
+                else _MODE_STRATEGIES.get(payload.mode, ())
             )
             for strategy in strategy_names:
                 updated = _update_strategy(

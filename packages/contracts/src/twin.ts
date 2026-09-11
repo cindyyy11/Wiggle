@@ -19,7 +19,7 @@ export interface StrategyEffectiveness {
 }
 
 export interface LearnerTwin {
-  mastery: Record<string, Probability>;
+  mastery: Readonly<Record<string, Probability>>;
   initiationFriction: Probability;
   persistenceFriction: Probability;
   cognitiveLoad: Probability;

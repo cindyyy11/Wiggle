@@ -43,19 +43,23 @@ export interface MissionCompletedPayload {
   strategy?: "chunking" | "movement_break" | "visual_hint" | "voice_hint" | "choice";
 }
 
-export interface GenericEventPayload {
-  kind: Exclude<EventType, "stuck_requested" | "mission_completed">;
+export type GenericEventType = Exclude<EventType, "stuck_requested" | "mission_completed">;
+
+export interface GenericEventPayload<Type extends GenericEventType> {
+  kind: Type;
 }
 
 export type LearningEventPayload =
   | StuckRequestedPayload
   | MissionCompletedPayload
-  | GenericEventPayload;
+  | GenericEventPayload<GenericEventType>;
 
 export type LearningEvent =
   | EventEnvelope<"stuck_requested", StuckRequestedPayload>
   | EventEnvelope<"mission_completed", MissionCompletedPayload>
-  | EventEnvelope<Exclude<EventType, "stuck_requested" | "mission_completed">, GenericEventPayload>;
+  | {
+      [Type in GenericEventType]: EventEnvelope<Type, GenericEventPayload<Type>>;
+    }[GenericEventType];
 
 interface EventEnvelope<Type extends EventType, Payload extends LearningEventPayload> {
   id: string;
@@ -77,9 +81,10 @@ const learningModes: readonly LearningMode[] = [
   "story",
 ];
 const strategyNames = ["chunking", "movement_break", "visual_hint", "voice_hint", "choice"] as const;
+const zuluTimestampPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?Z$/;
 
 function assertUtcTimestamp(value: string): void {
-  if (!value.endsWith("Z") || Number.isNaN(Date.parse(value))) {
+  if (!zuluTimestampPattern.test(value) || Number.isNaN(Date.parse(value))) {
     throw new TypeError("occurredAt must be an ISO-8601 UTC timestamp ending in Z");
   }
 }
