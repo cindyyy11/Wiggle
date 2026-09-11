@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Header, Request
 from pydantic import Field
 
 from app.dependencies import IdempotencyKey, Sessions
+from app.repositories.memory import MemoryRepository
 from app.schemas import CheckInRequest, CheckInResponse, ParentInsightsResponse, RequestModel
 from app.services.parent import ParentService
 from app.services.parent_pin import ParentPinService, PinStore
@@ -40,8 +41,13 @@ ParentSessions = Annotated[SessionService, Depends(require_parent)]
 
 
 @router.get("/pin/status")
-def pin_status(service: Pins) -> dict[str, bool]:
-    return {"setupRequired": not bool((service.repository.get_settings() or {}).get("pin_hash"))}
+def pin_status(service: Pins) -> dict[str, bool | str]:
+    return {
+        "setupRequired": not bool((service.repository.get_settings() or {}).get("pin_hash")),
+        "dataMode": "memory_demo"
+        if isinstance(service.repository, MemoryRepository)
+        else "household",
+    }
 
 
 @router.post("/pin/setup")

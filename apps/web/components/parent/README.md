@@ -6,7 +6,15 @@ It shows Nova's starting state, not invented progress or the browser's local eve
 Demo preferences/check-ins reset when the server restarts; they never become learner evidence.
 
 With `WIGGLE_API_URL`, the page uses the existing parent API and repositories. For a
-Supabase household, set `NEXT_PUBLIC_SUPABASE_URL` and
+connected memory repository, both the PIN gate and dashboard explicitly say
+"Connected demo" and explain that settings/check-ins last only for the API server
+session. The trusted `/parent/pin/status` response declares `memory_demo` or
+`household`; the Next-only fallback declares `local_demo`. An upstream URL alone
+never implies household persistence, and missing/unknown modes fail closed.
+After first-time PIN setup the portal switches immediately to verification, including
+when its 15-minute automatic gate timer expires.
+
+For a Supabase household, set `NEXT_PUBLIC_SUPABASE_URL` and
 `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` on the Next.js host. Only `sb_publishable_…`
 keys are accepted; secret/service-role keys must never be provided. Incomplete
 configuration fails closed. Sign in with an existing household account at
@@ -47,3 +55,9 @@ interval is a saved preference; automatic reminder scheduling is not implemented
 Local verification: web parent component/auth tests, Python PIN/authorization tests,
 and `node node_modules/@playwright/test/cli.js test tests/browser/parent.spec.ts`
 from `apps/web` against a running production server at port 3100.
+For the connected-demo setup/expiry regression, start a fresh memory API for each
+viewport, point the Next server's `WIGGLE_API_URL` at it, set
+`WIGGLE_TEST_CONNECTED_PARENT=1` and `PLAYWRIGHT_BASE_URL` for the connected server,
+then run `tests/browser/parent-connected.spec.ts` once with `--project=desktop`
+and once with `--project=mobile`. Each checks real first-time setup and verification
+after advancing the browser clock 15 minutes. No backend or auth response is mocked.

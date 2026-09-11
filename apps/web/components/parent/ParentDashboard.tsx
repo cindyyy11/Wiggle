@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import type { ParentInsightsResponse } from "@wiggle/contracts";
-import { parentRequest } from "../../lib/api/parent";
+import { parentRequest, type ParentDataMode } from "../../lib/api/parent";
 import { HomeworkCheckIn } from "./HomeworkCheckIn";
 import styles from "./parent.module.css";
 
@@ -16,7 +16,7 @@ function Trend({ title, points, description }: { title: string; points: readonly
   </section>;
 }
 
-export function ParentDashboard({ demo, onLock }: { demo: boolean; onLock: () => void }) {
+export function ParentDashboard({ mode, onLock }: { mode: ParentDataMode; onLock: () => void }) {
   const [children, setChildren] = useState<{ id: string; name: string }[]>([]);
   const [childId, setChildId] = useState("");
   const [data, setData] = useState<ParentInsightsResponse | null>(null);
@@ -43,7 +43,8 @@ export function ParentDashboard({ demo, onLock }: { demo: boolean; onLock: () =>
   const name = children.find(child => child.id === childId)?.name || "Your explorer";
   return <>
     <header className={styles.header}><a href="/" className={styles.brand}>wiggle<span> / parent space</span></a><button className={styles.secondary} onClick={onLock}>Lock parent space</button></header>
-    {demo && <p className={styles.notice}>Local demo · Sample starting state for Nova. Changes last for this server session. Complete mission history is available when the API is connected.</p>}
+    {mode === "local_demo" && <p className={styles.notice}>Local demo · Sample starting state for Nova. Changes last for this server session. Complete mission history is available when the API is connected.</p>}
+    {mode === "memory_demo" && <p className={styles.notice}>Connected demo · Shared sample explorer data. Settings and check-ins last only for this API server session.</p>}
     <div className={styles.intro}><div><p className={styles.eyebrow}>Little steps. Real discoveries.</p><h1>Mission control</h1><p>A window into how {name} is finding their way.</p></div>
       {children.length > 0 && <label className={styles.childSelect}>Your explorer<select value={childId} onChange={event => setChildId(event.target.value)}>{children.map(child => <option key={child.id} value={child.id}>{child.name}</option>)}</select></label>}
     </div>
@@ -65,7 +66,7 @@ export function ParentDashboard({ demo, onLock }: { demo: boolean; onLock: () =>
         try { await parentRequest("settings", { breakIntervalMinutes: interval }); setSaved("Break preference saved."); }
         catch (error) { setSaved(error instanceof Error ? error.message : "Please try again."); }
         finally { setSaving(false); }
-      }}><label htmlFor="break-interval">Minutes between reminders</label><input id="break-interval" type="number" min={5} max={480} value={interval} onChange={event => setInterval(Number(event.target.value))} required /><button disabled={saving}>{saving ? "Saving…" : "Save break preference"}</button><p role="status">{saved}</p></form><small>This preference is saved for your household. Breaks can always be started from the mission’s Reset Station.</small></section>
+      }}><label htmlFor="break-interval">Minutes between reminders</label><input id="break-interval" type="number" min={5} max={480} value={interval} onChange={event => setInterval(Number(event.target.value))} required /><button disabled={saving}>{saving ? "Saving…" : "Save break preference"}</button><p role="status">{saved}</p></form><small>{mode === "household" ? "This preference is saved for your household." : "This demo preference lasts only for this server session."} Breaks can always be started from the mission’s Reset Station.</small></section>
       <HomeworkCheckIn key={childId} childId={childId} />
     </div>}
     <footer className={styles.footer}>Progress has its own pace. This space describes learning activity and is not a clinical assessment.</footer>

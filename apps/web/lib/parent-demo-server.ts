@@ -10,7 +10,7 @@ const state = { failures: 0, blocked: 0, tickets: new Map<string, number>(), int
 const digest = (ticket: string) => createHash("sha256").update(ticket).digest("hex");
 export async function demoParentRequest(endpoint: string, request: Request, ticket: string) {
   const now = Date.now();
-  if (endpoint === "pin/status") return Response.json({ setupRequired: false });
+  if (endpoint === "pin/status") return Response.json({ setupRequired: false, dataMode: "local_demo" });
   if (endpoint === "pin/verify") {
     if (state.blocked > now) return Response.json({}, { status: 429 });
     const { pin } = await request.json();

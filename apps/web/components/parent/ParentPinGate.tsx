@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useState, type ReactNode } from "react";
+import type { ParentDataMode } from "../../lib/api/parent";
 import styles from "./parent.module.css";
 
-export function ParentPinGate({ children, verify, setup = false, demo = false }: {
-  children: ReactNode; verify: (pin: string) => Promise<unknown>; setup?: boolean; demo?: boolean;
+export function ParentPinGate({ children, verify, setup = false, mode = "household" }: {
+  children: ReactNode; verify: (pin: string) => Promise<unknown>; setup?: boolean; mode?: ParentDataMode;
 }) {
   const [pin, setPin] = useState("");
   const [open, setOpen] = useState(false);
@@ -19,7 +20,8 @@ export function ParentPinGate({ children, verify, setup = false, demo = false }:
     <p className={styles.eyebrow}>A little space for the grown-ups</p>
     <h1 id="parent-entry">Parent mission control</h1>
     <p>{setup ? "Create a six-digit PIN for this shared device." : "Enter your six-digit PIN to see your explorer’s progress."}</p>
-    {demo && <p className={styles.notice}>Local demo · PIN <strong>123456</strong>. Sample progress only.</p>}
+    {mode === "local_demo" && <p className={styles.notice}>Local demo · PIN <strong>123456</strong>. Sample progress only.</p>}
+    {mode === "memory_demo" && <p className={styles.notice}>Connected demo · Shared sample explorer data. Settings and check-ins last only for this API server session.</p>}
     <form onSubmit={async event => {
       event.preventDefault(); setBusy(true); setError("");
       try { await verify(pin); setPin(""); setOpen(true); }

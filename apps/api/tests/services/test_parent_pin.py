@@ -6,8 +6,38 @@ from fastapi.testclient import TestClient
 from app.demo import DEMO_CHILD_ID, DEMO_PARENT_ID, seed_demo
 from app.main import create_app
 from app.repositories.memory import MemoryRepository
+from app.repositories.supabase import SupabaseRepository
+from app.routes.parent import pin_status
 from app.services.parent_pin import ParentPinService, PinStore, hash_pin, verify_pin
 from app.services.sessions import WorkflowError
+
+
+def test_status_labels_the_actual_memory_repository_and_tracks_setup() -> None:
+    client = TestClient(create_app())
+    assert client.get("/parent/pin/status").json() == {
+        "setupRequired": True,
+        "dataMode": "memory_demo",
+    }
+    assert client.post("/parent/pin/setup", json={"pin": "654321"}).status_code == 200
+    assert client.get("/parent/pin/status").json() == {
+        "setupRequired": False,
+        "dataMode": "memory_demo",
+    }
+    assert client.post("/parent/pin/verify", json={"pin": "654321"}).status_code == 200
+
+
+def test_status_labels_supabase_household_without_network(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repository = SupabaseRepository(
+        url="https://example.supabase.co",
+        anon_key="test",
+        access_token="test",
+        owner_id="household",
+    )
+    monkeypatch.setattr(repository, "get_settings", lambda: None)
+    service = ParentPinService(repository, PinStore(str(tmp_path / "pin.sqlite")))
+    assert pin_status(service) == {"setupRequired": True, "dataMode": "household"}
 
 
 def test_salted_hash_and_malformed_hash_fail_closed() -> None:
