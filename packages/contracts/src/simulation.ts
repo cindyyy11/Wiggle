@@ -43,6 +43,7 @@ export interface StrategyPrediction {
   predictedSuccess: Probability;
   predictedFriction: Probability;
   expectedMasteryGain: Probability;
+  /** Weighted explanations for predictedSuccess. */
   factors: readonly SimulationFactor[];
 }
 
@@ -51,4 +52,3 @@ export interface SimulationReport {
   recommendedStrategy: StrategyName;
   ranked: readonly StrategyPrediction[];
 }
-
