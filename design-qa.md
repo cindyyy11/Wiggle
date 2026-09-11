@@ -2,7 +2,17 @@
 
 final result: blocked
 
-The local desktop/mobile hero experience passed visual and interaction QA. The overall production acceptance gate remains blocked: no live Vercel/Render/Supabase deployment, real household Auth/RLS run, Docker execution, or physical-device validation was performed. Those checks are not represented as passes.
+The local desktop/mobile hero experience passed visual and interaction QA after the first review corrections below. The overall production acceptance gate remains blocked: no live Vercel/Render/Supabase deployment, real household Auth/RLS run, Docker execution, or physical-device validation was performed. Those checks are not represented as passes.
+
+## Review correction — round 1
+
+The initial desktop reference capture still showed its loading overlay, and the initial follow captures exposed low-contrast HUD text over bright terrain. The first QA record incorrectly treated that evidence as clean. Both P2 findings are now corrected and the matched views have been inspected again.
+
+- **R1:** `capture-reference.mjs` now waits for both “Growing a little world” and “One moment of wonder” to be hidden, a visible canvas and the Follow control, then 1.6 seconds for the initial globe camera to settle. Recaptured `reference-desktop.png` and `reference-mobile.png` show the loaded globe, not the overlay. Follow/journal reference captures were refreshed in the same run.
+- **R2:** A shared dark navy, 95%-opaque backing now protects the world title/subtitle, mission progress and future-world labels in follow and mission views. Globe mode keeps the existing open HUD. The new desktop/mobile browser cases composite the rendered backing over pure white and require every affected text color to retain at least 4.5:1 contrast. Fresh `wiggle-follow-*` and `wiggle-mission-*` captures confirm placement/readability and no horizontal overflow; the test also saves `follow-hud.png` and `mission-hud.png`.
+- **M1:** The parent E2E now records an authenticated baseline, relocks, completes its own mission and requires the count and history length to increase by exactly one. Its newest mastery point must match that completion response. Earlier tests' shared history cannot satisfy these assertions by itself.
+
+The frontend refinement guidance kept this to small, state-specific surfaces without changing the original geometry, palette, copy, controls or page hierarchy. Its mechanical detector returned no findings; the screenshots supplied the visual check.
 
 ## Comparison and provenance
 
@@ -10,9 +20,9 @@ Compared the supplied [Little Planet reference](https://signals.forwardfuture.co
 
 | State | Observed result |
 | --- | --- |
-| Desktop globe | Both compositions center a faceted spherical world in dark space with restrained stars, corner branding/view controls and a contextual action. Wiggle adds an original left destination list, larger serif title, geometric terrain and locked orbital worlds. Main mission CTA is legible and unobstructed. |
+| Desktop globe | Both loaded compositions center a faceted spherical world in dark space with restrained stars and corner branding/view controls. The reference puts its region title at bottom left and its action at bottom center; Wiggle uses a top-left serif title, persistent left destination list and bottom-right mission CTA. Wiggle's original geometric terrain and locked orbital worlds remain distinct. Main mission CTA is legible and unobstructed. |
 | Mobile globe | The globe sits between the title/HUD and a reachable destination/action area. Wiggle uses a directional pad, hop and zoom buttons; its five 44 px top controls fit without horizontal overflow. Parent entry was added after review exposed its absence. |
-| Follow and movement | Globe/follow controls change the rendered view. Directional holds, keyboard movement, hop, orbit and zoom remain responsive in the automated browser. Screenshots confirm the closer original explorer/terrain composition. |
+| Follow and movement | Globe/follow controls change the rendered view. Directional holds, keyboard movement, hop, orbit and zoom remain responsive in the automated browser. Refreshed screenshots confirm the closer original explorer/terrain composition and the corrected dark HUD backings over gold/purple terrain. |
 | Mission and simulation | Desktop uses a side panel; mobile uses a lower panel with visible pizza/slice controls above it. Standard, immediate stuck support, three predictions, selected slices and completion remain legible. Long gesture/support panels scroll within their own bounds. |
 | Fallbacks | No-WebGL/reduced-motion maps retain destinations and slice buttons. Camera denial leaves the puzzle usable. All three slices can be selected by pointer, touch-style browser controls or keyboard. |
 | Parent space | Responsive overview, meaningful mission history and practical insight are reachable from the child HUD. The dashboard requires PIN entry and hides again after lock/expiry. Memory data is clearly labelled as a connected sample. |
@@ -32,7 +42,7 @@ Original Wiggle geometry sources are documented in `assets/source/README.md`. Nu
 | P2 | Credential-free development launched an API but left Next disconnected from it. The dev launcher now uses the local API by default and reads optional environment files. | Shared production browser loop; launcher help smoke check. |
 | P2 | Default access logs could expose query data and lacked structured diagnostics. Supplied startup commands disable them; JSON middleware logs only method, route template, status, duration and request ID. Provider fallback logs only operation/error type. | API log-redaction tests. |
 
-No unresolved P0/P1/P2 defect was observed in the tested local hero flow. Two initial camera tests failed because sandbox networking denied MediaPipe's static downloads; both passed with network permission. Two initial newly written hero tests used an unavailable selector; the selector was corrected and the entire suite rerun. No failing test was waived.
+No unresolved P0/P1/P2 defect was observed in the tested local hero flow after R1/R2 were corrected. Two initial camera tests failed because sandbox networking denied MediaPipe's static downloads; both passed with network permission. Two initial newly written hero tests used an unavailable selector; the selector was corrected and the entire suite rerun. No failing test was waived.
 
 ## Verification record
 
@@ -43,14 +53,14 @@ No unresolved P0/P1/P2 defect was observed in the tested local hero flow. Two in
 | `pnpm test` | Passed: 5 contract tests, 67 web tests, 93 API tests; 6 optional local-Supabase adapter cases skipped because the local stack/credentials are unavailable. |
 | `pnpm build` | Passed; Next production build, 116 kB first-load JS on `/`, renderer deferred. |
 | `python -m pytest -v`, `ruff check .`, `mypy app` in `apps/api` | Passed: 93 passed / 6 explicit Supabase skips, Ruff clear, mypy clear across 32 app files. |
-| `pnpm test:e2e` | Passed: all 32 Chrome cases, no skips, across local/connected desktop/mobile projects. Includes the existing automatic-lock/PIN re-entry regression. |
+| `pnpm test:e2e` | Passed after review fixes: all 34 Chrome cases, no skips, across local/connected desktop/mobile projects. Includes both new HUD-contrast cases, the strengthened parent history assertions and the existing automatic-lock/PIN re-entry regression. |
 | Deployment files | JSON/YAML parsed; root/project Vercel configurations match. Blueprint and SSR conventions checked against official docs. No provider-side validation/apply claimed. |
 | Docker, local SQL/pgTAP, live RLS | Blocked: Docker daemon not running; Supabase CLI/stack and live credentials unavailable. |
 | Live deployment and production smoke | Blocked: not published; provider/account authorization and configured credentials required at action time. |
 
 Local runtime: Windows, Node 22.6.0, Chrome, FastAPI 0.135.3, Pydantic 2.11.7. The machine had pytest 8.2.0 and Uvicorn 0.44.0; the project declares pytest 8.4.2/Uvicorn 0.35.0 for clean installs. Container verification must confirm the declared clean environment. Browser camera tests use a synthetic stream with real local MediaPipe inference, not a child's hand or physical camera accuracy test.
 
-Evidence is under `.superpowers/sdd/2026-09-11-wiggle-hybrid-universe/`: `reference-{desktop,mobile}.png`, `reference-follow-*`, `reference-journal-*`, `wiggle-globe-*`, `wiggle-follow-*`, the `browser-artifacts/` state captures, and the `playwright-report/` HTML report. These generated artifacts are intentionally ignored by Git.
+Evidence is under `.superpowers/sdd/2026-09-11-wiggle-hybrid-universe/`: loaded `reference-{desktop,mobile}.png`, `reference-follow-*`, `reference-journal-*`, `wiggle-globe-*`, `wiggle-follow-*`, `wiggle-mission-*`, the `browser-artifacts/` state captures, and the `playwright-report/` HTML report. All globe/follow/mission comparison files were refreshed after the review corrections. These generated artifacts are intentionally ignored by Git.
 
 ## P3 differences and limits
 

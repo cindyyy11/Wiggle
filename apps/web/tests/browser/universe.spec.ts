@@ -1,4 +1,50 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
+
+async function expectReadableHud(surface: Locator, textSelector: string) {
+  await expect(surface).toBeVisible();
+  const measured = await surface.evaluate((element, selector) => {
+    const rgb = (value: string) => value.match(/[\d.]+/g)!.map(Number);
+    const backing = getComputedStyle(element, "::before");
+    const [r, g, b, alpha = 1] = rgb(backing.backgroundColor);
+    // White is the brightest possible scene pixel: a conservative terrain-independent floor.
+    const background = [r, g, b].map(channel => channel * alpha + 255 * (1 - alpha));
+    const luminance = (channels: number[]) => channels.map(channel => {
+      const value = channel / 255;
+      return value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4;
+    }).reduce((total, value, index) => total + value * [.2126, .7152, .0722][index], 0);
+    return {
+      backing: backing.content !== "none" && backing.position === "absolute" && alpha > 0,
+      text: [...element.querySelectorAll(selector)].map(node => {
+        const foreground = luminance(rgb(getComputedStyle(node).color).slice(0, 3));
+        const behind = luminance(background);
+        return { text: node.textContent, contrast: (Math.max(foreground, behind) + .05) / (Math.min(foreground, behind) + .05) };
+      }),
+    };
+  }, textSelector);
+  expect(measured.backing).toBe(true);
+  expect(measured.text.length).toBeGreaterThan(0);
+  for (const text of measured.text) expect(text.contrast, `${text.text} against brightest terrain`).toBeGreaterThanOrEqual(4.5);
+}
+
+test("follow and mission HUD text keeps contrast above bright terrain", async ({ page }, info) => {
+  await page.goto("/");
+  await expect(page.locator("canvas")).toBeVisible({ timeout: 20_000 });
+  await page.getByRole("button", { name: "Follow explorer", exact: true }).click();
+  const title = page.getByRole("heading", { name: "Numeria", exact: true }).locator("..");
+  const progress = page.getByLabel("Mission Atlas progress");
+  await expectReadableHud(title, ":scope > span, h1, p");
+  await expectReadableHud(progress, "span, strong, small");
+  await expectReadableHud(page.getByLabel("Future worlds"), "span, small");
+  await page.waitForTimeout(1600); // Allow the close-camera transition to settle for visual evidence.
+  await page.screenshot({ path: info.outputPath("follow-hud.png") });
+  await page.getByRole("button", { name: "Start fractions mission", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Make three quarters", exact: true })).toBeVisible();
+  await expectReadableHud(title, ":scope > span, h1, p");
+  await expectReadableHud(progress, "span, strong, small");
+  await page.waitForTimeout(1600);
+  await page.screenshot({ path: info.outputPath("mission-hud.png") });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+});
 
 test("original world renders, camera controls work, and context loss preserves destinations", async ({ page }, testInfo) => {
   const errors: string[] = [];
