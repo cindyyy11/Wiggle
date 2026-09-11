@@ -81,12 +81,39 @@ const learningModes: readonly LearningMode[] = [
   "story",
 ];
 const strategyNames = ["chunking", "movement_break", "visual_hint", "voice_hint", "choice"] as const;
-const zuluTimestampPattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?Z$/;
+const zuluTimestampPattern = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,6})?Z$/;
 
 function assertUtcTimestamp(value: string): void {
-  if (!zuluTimestampPattern.test(value) || Number.isNaN(Date.parse(value))) {
+  const match = zuluTimestampPattern.exec(value);
+  if (match === null) {
     throw new TypeError("occurredAt must be an ISO-8601 UTC timestamp ending in Z");
   }
+
+  const [, yearText, monthText, dayText, hourText, minuteText, secondText] = match;
+  const year = Number(yearText);
+  const month = Number(monthText);
+  const day = Number(dayText);
+  const hour = Number(hourText);
+  const minute = Number(minuteText);
+  const second = Number(secondText);
+  const daysInMonth = [31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+  if (
+    year === 0 ||
+    month < 1 ||
+    month > 12 ||
+    day < 1 ||
+    day > daysInMonth[month - 1] ||
+    hour > 23 ||
+    minute > 59 ||
+    second > 59
+  ) {
+    throw new TypeError("occurredAt must be an ISO-8601 UTC timestamp ending in Z");
+  }
+}
+
+function isLeapYear(year: number): boolean {
+  return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
 }
 
 /** Runtime validation for untrusted event JSON; returns the same immutable input reference. */

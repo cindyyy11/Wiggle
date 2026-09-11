@@ -105,4 +105,23 @@ describe("Wiggle contracts", () => {
       }).occurredAt,
     ).toBe("2026-09-11T00:00:00Z");
   });
+
+  it("rejects invalid Zulu calendar dates instead of normalizing them", () => {
+    for (const occurredAt of [
+      "2026-02-29T00:00:00Z",
+      "2024-02-30T00:00:00Z",
+      "2026-04-31T00:00:00Z",
+    ]) {
+      expect(() =>
+        validateLearningEvent({
+          id: "event-calendar",
+          childId: "child-1",
+          sessionId: "session-1",
+          occurredAt,
+          type: "stuck_requested",
+          payload: { kind: "stuck_requested" },
+        }),
+      ).toThrow("UTC");
+    }
+  });
 });
