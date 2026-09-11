@@ -23,7 +23,7 @@ test("original world renders, camera controls work, and context loss preserves d
   await expect(page.getByRole("img", { name: /Numeria map/ })).toBeVisible();
   await page.getByRole("button", { name: "Visit Fraction Forest", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Fraction Forest", exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Let's explore", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Start fractions mission", exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath("fallback.png") });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   expect(errors).toEqual([]);

@@ -7,7 +7,7 @@ export default defineConfig({
   workers: 1,
   timeout: 45_000,
   use: {
-    baseURL: "http://127.0.0.1:3100",
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://127.0.0.1:3100",
     headless: true,
     channel: "chrome",
     launchOptions: { args: ["--enable-unsafe-swiftshader"] },
