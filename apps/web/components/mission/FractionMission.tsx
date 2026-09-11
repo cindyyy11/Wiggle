@@ -21,7 +21,7 @@ export function FractionMission(props: FractionMissionProps) {
   return <section ref={panel} tabIndex={-1} className={styles.panel} aria-label="Fraction mission" aria-busy={props.busy} data-mission-phase={props.phase}>
     {props.phase !== "complete" ? <button className={styles.close} onClick={props.onClose} aria-label="Leave mission">×</button> : null}
     <fieldset disabled={props.busy}>
-      {props.phase === "stuck" ? <StuckMode onExplore={props.onSimulate} onBack={props.onBack} /> : null}
+      {props.phase === "stuck" ? <StuckMode onExplore={props.onSimulate} onCheck={props.onCheck} selectedSlices={props.selectedSlices} /> : null}
       {props.phase === "simulation" ? <SimulationHologram report={props.report} onSelect={props.onSelect} /> : null}
       {props.phase === "complete" ? <CompletionMoment correctness={props.correctness} onReturn={props.onClose} /> : null}
       {props.phase === "standard" || props.phase === "activity" ? <>

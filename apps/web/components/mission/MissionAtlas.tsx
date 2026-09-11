@@ -18,6 +18,8 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient }: { qua
   const controller = useRef<AbortController | null>(null);
   const run = useRef<Run | null>(null);
   const pending = useRef(false);
+  const wakeQueue = useRef<(() => void) | null>(null);
+  const supportReady = useRef(false);
   const selectionKey = useRef<{ strategy: StrategyName; key: string } | null>(null);
   const [phase, setPhase] = useState<MissionPhase | null>(null);
   const [mode, setMode] = useState<LearningMode>("standard");
@@ -34,15 +36,18 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient }: { qua
   useEffect(() => {
     queue.current = new EventQueue();
     const delivery = new AbortController();
-    const flush = () => { void queue.current?.flush(client, delivery.signal).catch(() => {}); };
+    let retry: number;
+    const schedule = () => { window.clearTimeout(retry); if (!delivery.signal.aborted) retry = window.setTimeout(flush, queue.current?.nextRetryDelay() ?? 60000); };
+    const flush = () => { void queue.current?.flush(client, delivery.signal).finally(schedule); };
+    wakeQueue.current = schedule;
     window.addEventListener("online", flush); flush();
-    const retry = window.setInterval(flush, 30000);
-    return () => { delivery.abort(); controller.current?.abort(); window.clearInterval(retry); window.removeEventListener("online", flush); };
+    return () => { wakeQueue.current = null; delivery.abort(); controller.current?.abort(); window.clearTimeout(retry); window.removeEventListener("online", flush); };
   }, [client]);
 
   const emit = (payload: LearningEventPayload) => {
     if (!run.current || !queue.current) return;
     emitLearningEvent(queue.current, run.current.session, payload, run.current.transport);
+    wakeQueue.current?.();
   };
   const interact = () => {
     if (!run.current || run.current.interacted) return;
@@ -67,48 +72,57 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient }: { qua
       catch { if (signal.aborted) return; session = demoSession(crypto.randomUUID()); transport = "local"; }
       if (signal.aborted) return;
       run.current = { session, transport, startedAt: Date.now(), interacted: false, finished: false };
-      setSlices([]); setAnswer(null); setMode("standard"); setReport(demoSimulation); selectionKey.current = null;
+      setSlices([]); setAnswer(null); setMode("standard"); setReport(demoSimulation); selectionKey.current = null; supportReady.current = false;
       setLandmark("fraction-forest"); setDestination(MISSION_DESTINATION); setCamera("mission"); setPhase("standard");
       if (transport === "local") emit({ kind: "session_started" });
       emit({ kind: "task_started", mode: "standard" });
     });
   };
-  const select = (strategy: StrategyName) => { void operation(async signal => {
+  const adapt = async (strategy: StrategyName, signal: AbortSignal, simplified = false) => {
     if (!run.current || !queue.current) return;
     interact();
     let nextMode = modeForStrategy(strategy);
     if (run.current.transport === "api") {
-      await queue.current.flush(client, signal);
+      await queue.current.flush(client, signal, run.current.session.sessionId);
       if (selectionKey.current?.strategy !== strategy) selectionKey.current = { strategy, key: crypto.randomUUID() };
       const response = await client.select({ sessionId: run.current.session.sessionId, strategy }, selectionKey.current.key, signal);
       nextMode = response.mode;
     }
     if (signal.aborted) return;
     selectionKey.current = null;
-    setMode(nextMode); setSlices([]); setAnswer(null); setPhase(nextMode === "standard" ? "standard" : "activity");
+    setMode(nextMode);
+    if (!simplified) { setSlices([]); setAnswer(null); }
+    setPhase(simplified ? "stuck" : nextMode === "standard" ? "standard" : "activity");
+    if (simplified) supportReady.current = true;
     setCamera("mission"); setDestination(MISSION_DESTINATION);
     emit({ kind: "mode_changed", mode: nextMode });
-  }); };
+  };
+  const select = (strategy: StrategyName) => { void operation(signal => adapt(strategy, signal)); };
   const simulate = () => { void operation(async signal => {
     if (!run.current || !queue.current) return;
     let next = demoSimulation;
     if (run.current.transport === "api") {
-      await queue.current.flush(client, signal);
+      await queue.current.flush(client, signal, run.current.session.sessionId);
       next = await client.simulate({ sessionId: run.current.session.sessionId }, signal);
     }
     if (!signal.aborted) { setReport(next); setPhase("simulation"); }
   }); };
+  const finish = (resultMode: LearningMode) => {
+    if (!run.current || run.current.finished) return;
+    run.current.finished = true;
+    emit({ kind: "mission_completed", objective: run.current.session.objective, correctness: DEMO_CORRECTNESS, mode: resultMode, ...(resultMode === "chunk" ? { strategy: "chunking" as const } : resultMode === "visual" || resultMode === "visual_gesture" ? { strategy: "visual_hint" as const } : {}) });
+    setPhase("complete"); setFeedback(""); setCompleted(count => count + 1);
+    if (queue.current) { const delivery = controller.current ?? new AbortController(); controller.current = delivery; void queue.current.flush(client, delivery.signal, run.current.session.sessionId).catch(() => {}).finally(() => wakeQueue.current?.()); }
+  };
   const check = () => {
     if (pending.current || !run.current || run.current.finished) return;
     interact(); emit({ kind: "answer_submitted", mode });
     if ((phase === "standard" ? answer : slices.length) !== 3) {
       emit({ kind: "retry_recorded", mode }); setFeedback("Almost. We need three equal pieces out of four."); return;
     }
-    run.current.finished = true;
-    emit({ kind: "mission_completed", objective: run.current.session.objective, correctness: DEMO_CORRECTNESS, mode, ...(mode === "chunk" ? { strategy: "chunking" as const } : mode === "visual" || mode === "visual_gesture" ? { strategy: "visual_hint" as const } : {}) });
-    setPhase("complete"); setFeedback(""); setCompleted(count => count + 1);
-    // A failed upload retains the exact completion ID for retries, including reload.
-    if (queue.current) { const delivery = new AbortController(); controller.current = delivery; void queue.current.flush(client, delivery.signal).catch(() => {}); }
+    if (phase === "stuck" && !supportReady.current) {
+      void operation(async signal => { await adapt("visual_gesture", signal, true); if (!signal.aborted) finish("visual_gesture"); });
+    } else finish(mode);
   };
   const close = () => {
     controller.current?.abort(); controller.current = null; pending.current = false; setBusy(false);
@@ -116,10 +130,10 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient }: { qua
     run.current = null; setPhase(null); setSlices([]); setCamera("globe"); setDestination(null); setFeedback("");
     requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('[aria-label="Selected destination"] button')?.focus());
   };
-  const activityVisible = phase === "activity";
-  return <UniverseCanvas quality={quality} className={`${styles.atlas} ${phase ? styles.active : ""}`} mode={camera} onModeChange={setCamera} destination={destination} onDestinationChange={setDestination} selectedLandmark={landmark} onLandmarkSelect={setLandmark} onMissionStart={start} pizza={{ visible: activityVisible, selectedSlices: slices, onSliceSelect: index => { if (!activityVisible || pending.current) return; interact(); setFeedback(""); setSlices(current => current.includes(index) ? current.filter(slice => slice !== index) : [...current, index]); } }}>
+  const activityVisible = phase === "activity" || phase === "stuck";
+  return <UniverseCanvas quality={quality} className={`${styles.atlas} ${phase ? styles.active : ""} ${phase === "stuck" ? styles.simplified : ""}`} mode={camera} onModeChange={setCamera} destination={destination} onDestinationChange={setDestination} selectedLandmark={landmark} onLandmarkSelect={setLandmark} onMissionStart={start} pizza={{ visible: activityVisible, selectedSlices: slices, onSliceSelect: index => { if (!activityVisible || (pending.current && phase !== "stuck")) return; interact(); setFeedback(""); setSlices(current => current.includes(index) ? current.filter(slice => slice !== index) : [...current, index]); } }}>
     <div className={styles.atlasHud} aria-label="Mission Atlas progress"><span>MISSION ATLAS</span><strong>{completed} discoveries</strong><small>✳ {completed * WIGGLE_REWARD} Wiggle Energy</small></div>
     {!phase && busy ? <p className={styles.starting} role="status">Your mission is coming into view…</p> : null}
-    {phase ? <FractionMission phase={phase} mode={mode} selectedSlices={slices} report={report} answer={answer} feedback={feedback} busy={busy} correctness={DEMO_CORRECTNESS} onAnswer={value => { interact(); setAnswer(value); setFeedback(""); }} onStuck={() => { interact(); emit({ kind: "stuck_requested", mode }); setFeedback(""); setPhase("stuck"); }} onSimulate={simulate} onSelect={select} onCheck={check} onClose={close} onBack={() => setPhase(mode === "standard" ? "standard" : "activity")} /> : null}
+    {phase ? <FractionMission phase={phase} mode={mode} selectedSlices={slices} report={report} answer={answer} feedback={feedback} busy={busy} correctness={DEMO_CORRECTNESS} onAnswer={value => { interact(); setAnswer(value); setFeedback(""); }} onStuck={() => { interact(); emit({ kind: "stuck_requested", mode }); setFeedback(""); setPhase("stuck"); supportReady.current = false; void operation(signal => adapt("visual_gesture", signal, true)); }} onSimulate={simulate} onSelect={select} onCheck={check} onClose={close} onBack={() => setPhase(mode === "standard" ? "standard" : "activity")} /> : null}
   </UniverseCanvas>;
 }
