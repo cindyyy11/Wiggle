@@ -25,7 +25,7 @@
 - `reducedMotion`: optional override, otherwise follows the OS preference live.
 - `children`: DOM overlay slot within the world section. Overlays should provide their own positioned layout and focus management.
 
-The default route currently renders the exploration shell. The 2D replacement deliberately does not own or reset mission state: it continues invoking the provided mission callbacks. Avatar and camera motion live in refs and R3F render callbacks, not React state.
+The default route renders `MissionAtlas`, which owns the fraction lesson and passes these controls into the exploration shell. The 2D replacement deliberately does not own or reset mission state: it continues invoking the provided mission callbacks. Avatar and camera motion live in refs and R3F render callbacks, not React state.
 
 ## Checks
 

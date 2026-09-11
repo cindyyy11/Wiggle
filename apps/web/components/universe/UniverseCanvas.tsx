@@ -101,6 +101,7 @@ export function UniverseCanvas({ mode: controlledMode, onModeChange, quality: pr
     <div className={styles.scene}>
       {mapVisible ? <NumeriaMap /> : <GraphicsBoundary onFailure={graphicsFailed}><Scene mode={mode} quality={quality === "high" ? "high" : "low"} reducedMotion={reducedMotion} input={input} selectedLandmark={selectedLandmark} onLandmarkSelect={selectLandmark} onDestinationChange={onDestinationChange} onContextLost={graphicsFailed} onQualityChange={lowerQuality} pizza={pizza} /></GraphicsBoundary>}
     </div>
+    {mapVisible && pizza?.visible ? <div className={styles.mapPizza} role="img" aria-label={`Pizza with ${pizza.selectedSlices.length} of four equal slices selected`}><div>{[0, 1, 2, 3].map(index => <span key={index} data-selected={pizza.selectedSlices.includes(index)} />)}</div></div> : null}
     <div className={styles.cameraControls} role="group" aria-label="View controls">
       <button type="button" aria-label="Globe view" aria-pressed={mode === "globe"} onClick={() => changeMode("globe")} title="Globe view">◎<span>Globe view</span></button>
       <button type="button" aria-label="Follow explorer" aria-pressed={mode === "follow"} onClick={() => changeMode("follow")} title="Follow explorer">♙<span>Follow explorer</span></button>

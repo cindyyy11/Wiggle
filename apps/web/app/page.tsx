@@ -1,5 +1,5 @@
-import { UniverseCanvas } from "../components/universe/UniverseCanvas";
+import { MissionAtlas } from "../components/mission/MissionAtlas";
 
 export default function HomePage() {
-  return <main><UniverseCanvas /></main>;
+  return <main><MissionAtlas /></main>;
 }
