@@ -5,6 +5,12 @@ import { LessonMorph } from "./LessonMorph";
 import { PizzaActivity } from "./PizzaActivity";
 import { SimulationHologram } from "./SimulationHologram";
 import { StuckMode } from "./StuckMode";
+import { GestureControls } from "./GestureControls";
+import { LexiBeacon } from "../lexi/LexiBeacon";
+import { LexiPanel, type LexiAction } from "../lexi/LexiPanel";
+import { ResetStation } from "./ResetStation";
+import { RealityMission } from "./RealityMission";
+import type { MissionInputCommands } from "../../features/gestures/commands";
 import styles from "./mission.module.css";
 
 export type MissionPhase = "standard" | "stuck" | "simulation" | "activity" | "complete";
@@ -13,14 +19,17 @@ export interface FractionMissionProps {
   answer: number | null; feedback: string; busy: boolean; correctness: number;
   onAnswer: (answer: number) => void; onStuck: () => void; onSimulate: () => void;
   onSelect: (strategy: StrategyName) => void; onCheck: () => void; onClose: () => void; onBack: () => void;
+  commands: MissionInputCommands; cameraEnabled: boolean; onCameraEnable(): void; onCameraDisable(): void;
+  support: "lexi" | "reset" | "reality" | null; supportText: string;
+  onLexiRequest(action: LexiAction): void; onSupportClose(): void; onSupportComplete(): void;
 }
 
 export function FractionMission(props: FractionMissionProps) {
   const panel = useRef<HTMLElement>(null);
-  useEffect(() => { panel.current?.focus({ preventScroll: true }); }, [props.phase, props.mode]);
+  useEffect(() => { if (!props.support) panel.current?.focus({ preventScroll: true }); }, [props.phase, props.mode, props.support]);
   return <section ref={panel} tabIndex={-1} className={styles.panel} aria-label="Fraction mission" aria-busy={props.busy} data-mission-phase={props.phase}>
     {props.phase !== "complete" ? <button className={styles.close} onClick={props.onClose} aria-label="Leave mission">×</button> : null}
-    <fieldset disabled={props.busy}>
+    {props.support === "lexi" ? <LexiPanel text={props.supportText} busy={props.busy} onRequest={props.onLexiRequest} onClose={props.onSupportClose} /> : props.support === "reset" ? <ResetStation onComplete={props.onSupportComplete} onCancel={props.onSupportClose} /> : props.support === "reality" ? <RealityMission prompt={props.supportText} onComplete={props.onSupportComplete} onCancel={props.onSupportClose} /> : <fieldset disabled={props.busy}>
       {props.phase === "stuck" ? <StuckMode onExplore={props.onSimulate} onCheck={props.onCheck} selectedSlices={props.selectedSlices} /> : null}
       {props.phase === "simulation" ? <SimulationHologram report={props.report} onSelect={props.onSelect} /> : null}
       {props.phase === "complete" ? <CompletionMoment correctness={props.correctness} onReturn={props.onClose} /> : null}
@@ -30,7 +39,9 @@ export function FractionMission(props: FractionMissionProps) {
         <div className={styles.modes} role="group" aria-label="Learning mode">{([{ label: "Standard", strategy: "standard", mode: "standard" }, { label: "Visual", strategy: "visual", mode: "visual" }, { label: "Gesture", strategy: "gesture", mode: "gesture" }, { label: "Tiny steps", strategy: "chunked", mode: "chunk" }] as const).map(item => <button key={item.strategy} aria-pressed={props.mode === item.mode} onClick={() => props.onSelect(item.strategy)}>{item.label}</button>)}</div>
         <button className={styles.quiet} onClick={props.onStuck}>I'm stuck</button>
       </> : null}
-    </fieldset>
+      {props.phase === "activity" && (props.mode === "gesture" || props.mode === "visual_gesture") ? <GestureControls enabled={props.cameraEnabled} onEnable={props.onCameraEnable} onDisable={props.onCameraDisable} commands={props.commands} /> : null}
+      {props.phase !== "complete" ? <LexiBeacon onSummon={props.commands.summonLexi} /> : null}
+    </fieldset>}
     <p className={styles.feedback} role="status">{props.busy ? "A little moment…" : props.feedback}</p>
   </section>;
 }

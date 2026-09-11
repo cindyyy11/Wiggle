@@ -21,6 +21,28 @@ def start(client: TestClient, key: str = "start") -> str:
     return response.json()["sessionId"]
 
 
+def test_reality_mission_events_are_telemetry_not_main_completion() -> None:
+    app = create_app()
+    client = TestClient(app)
+    session = start(client)
+    before = client.get(f"/twin/{DEMO_CHILD_ID}").json()
+    for kind in ["reality_mission_started", "reality_mission_completed"]:
+        response = client.post("/events", json={"events": [{
+            "id": kind,
+            "childId": DEMO_CHILD_ID,
+            "sessionId": session,
+            "occurredAt": "2026-09-11T12:00:00Z",
+            "type": kind,
+            "payload": {"kind": kind, "mode": "movement"},
+        }]})
+        assert response.status_code == 200, response.text
+    assert client.get(f"/twin/{DEMO_CHILD_ID}").json() == before
+    assert not any(
+        event.payload.kind == "mission_completed"
+        for event in app.state.repository.list_events(DEMO_CHILD_ID)
+    )
+
+
 def test_lexi_tools_and_parent_check_in() -> None:
     app = create_app()
     client = TestClient(app)

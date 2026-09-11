@@ -9,6 +9,8 @@ import { emitLearningEvent } from "../../features/events/emitLearningEvent";
 import { ApiClient } from "../../lib/api/client";
 import { DEMO_CHILD_ID, DEMO_CORRECTNESS, DEMO_MISSION_ID, WIGGLE_REWARD, demoSession, demoSimulation, modeForStrategy } from "../../lib/demo/seed";
 import { FractionMission, type MissionPhase } from "./FractionMission";
+import type { LexiAction } from "../lexi/LexiPanel";
+import { REALITY_PROMPT } from "./RealityMission";
 import styles from "./mission.module.css";
 
 interface Run { session: StartSessionResponse; transport: "local" | "api"; startedAt: number; interacted: boolean; finished: boolean }
@@ -32,6 +34,11 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient }: { qua
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState("");
   const [completed, setCompleted] = useState(0);
+  const [cameraEnabled, setCameraEnabled] = useState(false);
+  const [support, setSupport] = useState<"lexi" | "reset" | "reality" | null>(null);
+  const [supportText, setSupportText] = useState("");
+  const supportStarted = useRef(0);
+  const lexiKey = useRef<{ action: string; key: string } | null>(null);
 
   useEffect(() => {
     queue.current = new EventQueue();
@@ -97,7 +104,11 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient }: { qua
     setCamera("mission"); setDestination(MISSION_DESTINATION);
     emit({ kind: "mode_changed", mode: nextMode });
   };
-  const select = (strategy: StrategyName) => { void operation(signal => adapt(strategy, signal)); };
+  const select = (strategy: StrategyName) => {
+    if (pending.current) return;
+    setCameraEnabled(strategy === "gesture" || strategy === "visual_gesture");
+    void operation(signal => adapt(strategy, signal));
+  };
   const simulate = () => { void operation(async signal => {
     if (!run.current || !queue.current) return;
     let next = demoSimulation;
@@ -128,12 +139,66 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient }: { qua
     controller.current?.abort(); controller.current = null; pending.current = false; setBusy(false);
     if (phase !== "complete") emit({ kind: "mission_abandoned", mode });
     run.current = null; setPhase(null); setSlices([]); setCamera("globe"); setDestination(null); setFeedback("");
+    setCameraEnabled(false); setSupport(null); lexiKey.current = null;
     requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('[aria-label="Selected destination"] button')?.focus());
   };
+  const closeSupport = () => {
+    controller.current?.abort(); controller.current = null; pending.current = false; setBusy(false);
+    setSupport(null); setFeedback("");
+  };
+  const requestLexi = (action: LexiAction) => { void operation(async signal => {
+    if (!run.current || !queue.current) return;
+    interact();
+    const local = run.current.transport === "local";
+    const serialized = JSON.stringify(action);
+    if (lexiKey.current?.action !== serialized) lexiKey.current = { action: serialized, key: crypto.randomUUID() };
+    let response;
+    if (!local) {
+      await queue.current.flush(client, signal, run.current.session.sessionId);
+      try { response = await client.lexi({ sessionId: run.current.session.sessionId, ...action }, lexiKey.current.key, signal); }
+      catch (error) { if (signal.aborted || !["request_hint", "create_reality_mission"].includes(action.tool ?? "")) throw error; }
+    }
+    if (signal.aborted) return;
+    // Only explicit child-selected tools drive behavior; generated suggestedTool is never executed.
+    if (action.tool === "request_hint") {
+      emit({ kind: "hint_requested", mode });
+      setSupportText(response?.content.text || "Choose three equal slices. Leave one on the plate.");
+    } else if (action.tool === "start_reset_station") {
+      if (!local && !response?.resetStarted) throw new Error("Reset not acknowledged");
+      if (local) emit({ kind: "reset_started", mode });
+      supportStarted.current = Date.now(); setSupport("reset");
+    } else if (action.tool === "create_reality_mission") {
+      emit({ kind: "reality_mission_started", mode: "movement" });
+      setSupportText(response?.realityMission || REALITY_PROMPT);
+      supportStarted.current = Date.now(); setSupport("reality");
+    } else if (action.tool === "switch_learning_mode") {
+      if (!local && response?.mode !== "chunk") throw new Error("Mode not acknowledged");
+      setCameraEnabled(false); setMode("chunk"); setPhase("activity"); setSupport(null);
+      emit({ kind: "mode_changed", mode: "chunk" });
+    } else if (action.tool === "record_self_report") {
+      if (local) emit({ kind: "difficulty_self_reported", mode, difficulty: action.difficulty });
+      setSupportText(response?.content.text || "Thanks for telling me. We can take one small step.");
+    }
+    lexiKey.current = null;
+  }); };
+  const completeSupport = () => {
+    if (support !== "reset" && support !== "reality") return;
+    emit({ kind: support === "reset" ? "reset_completed" : "reality_mission_completed", mode: support === "reset" ? mode : "movement", responseTimeMs: Math.min(86400000, Math.max(0, Date.now() - supportStarted.current)) });
+    closeSupport();
+  };
   const activityVisible = phase === "activity" || phase === "stuck";
-  return <UniverseCanvas quality={quality} className={`${styles.atlas} ${phase ? styles.active : ""} ${phase === "stuck" ? styles.simplified : ""}`} mode={camera} onModeChange={setCamera} destination={destination} onDestinationChange={setDestination} selectedLandmark={landmark} onLandmarkSelect={setLandmark} onMissionStart={start} pizza={{ visible: activityVisible, selectedSlices: slices, onSliceSelect: index => { if (!activityVisible || (pending.current && phase !== "stuck")) return; interact(); setFeedback(""); setSlices(current => current.includes(index) ? current.filter(slice => slice !== index) : [...current, index]); } }}>
+  const changeSlice = (index: number, grab = false) => {
+    if (!activityVisible || support || (pending.current && phase !== "stuck") || !Number.isInteger(index) || index < 0 || index > 3) return;
+    interact(); setFeedback("");
+    setSlices(current => current.includes(index) ? grab ? current : current.filter(slice => slice !== index) : [...current, index]);
+  };
+  const commands = {
+    selectSlice: (index: number) => changeSlice(index), grabSlice: (index: number) => changeSlice(index, true),
+    summonLexi: () => { if (pending.current || !run.current || run.current.finished) return; interact(); setCameraEnabled(false); setSupportText(""); setSupport("lexi"); },
+  };
+  return <UniverseCanvas quality={quality} className={`${styles.atlas} ${phase ? styles.active : ""} ${phase === "stuck" ? styles.simplified : ""}`} mode={camera} onModeChange={setCamera} destination={destination} onDestinationChange={setDestination} selectedLandmark={landmark} onLandmarkSelect={setLandmark} onMissionStart={start} pizza={{ visible: activityVisible && !support, selectedSlices: slices, onSliceSelect: commands.selectSlice }}>
     <div className={styles.atlasHud} aria-label="Mission Atlas progress"><span>MISSION ATLAS</span><strong>{completed} discoveries</strong><small>✳ {completed * WIGGLE_REWARD} Wiggle Energy</small></div>
     {!phase && busy ? <p className={styles.starting} role="status">Your mission is coming into view…</p> : null}
-    {phase ? <FractionMission phase={phase} mode={mode} selectedSlices={slices} report={report} answer={answer} feedback={feedback} busy={busy} correctness={DEMO_CORRECTNESS} onAnswer={value => { interact(); setAnswer(value); setFeedback(""); }} onStuck={() => { interact(); emit({ kind: "stuck_requested", mode }); setFeedback(""); setPhase("stuck"); supportReady.current = false; void operation(signal => adapt("visual_gesture", signal, true)); }} onSimulate={simulate} onSelect={select} onCheck={check} onClose={close} onBack={() => setPhase(mode === "standard" ? "standard" : "activity")} /> : null}
+    {phase ? <FractionMission phase={phase} mode={mode} selectedSlices={slices} report={report} answer={answer} feedback={feedback} busy={busy} correctness={DEMO_CORRECTNESS} onAnswer={value => { interact(); setAnswer(value); setFeedback(""); }} onStuck={() => { interact(); setCameraEnabled(false); emit({ kind: "stuck_requested", mode }); setFeedback(""); setPhase("stuck"); supportReady.current = false; void operation(signal => adapt("visual_gesture", signal, true)); }} onSimulate={simulate} onSelect={select} onCheck={check} onClose={close} onBack={() => setPhase(mode === "standard" ? "standard" : "activity")} commands={commands} cameraEnabled={cameraEnabled} onCameraEnable={() => setCameraEnabled(true)} onCameraDisable={() => setCameraEnabled(false)} support={support} supportText={supportText} onLexiRequest={requestLexi} onSupportClose={closeSupport} onSupportComplete={completeSupport} /> : null}
   </UniverseCanvas>;
 }
