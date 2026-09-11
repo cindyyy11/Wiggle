@@ -16,9 +16,13 @@
       "dependsOn": ["^build"],
       "outputs": []
     },
+    "@wiggle/contracts#build": {
+      "outputs": []
+    },
     "build": {
       "dependsOn": ["^build"],
-      "outputs": []
+      "env": ["NEXT_PUBLIC_API_URL", "NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"],
+      "outputs": [".next/**", "!.next/cache/**"]
     }
   }
 }

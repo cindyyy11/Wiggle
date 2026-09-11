@@ -66,7 +66,7 @@ export function ParentDashboard({ mode, onLock }: { mode: ParentDataMode; onLock
         try { await parentRequest("settings", { breakIntervalMinutes: interval }); setSaved("Break preference saved."); }
         catch (error) { setSaved(error instanceof Error ? error.message : "Please try again."); }
         finally { setSaving(false); }
-      }}><label htmlFor="break-interval">Minutes between reminders</label><input id="break-interval" type="number" min={5} max={480} value={interval} onChange={event => setInterval(Number(event.target.value))} required /><button disabled={saving}>{saving ? "Saving…" : "Save break preference"}</button><p role="status">{saved}</p></form><small>{mode === "household" ? "This preference is saved for your household." : "This demo preference lasts only for this server session."} Breaks can always be started from the mission’s Reset Station.</small></section>
+      }}><label htmlFor="break-interval">Minutes between reminders</label><input id="break-interval" type="number" min={5} max={120} value={interval} onChange={event => setInterval(Number(event.target.value))} required /><button disabled={saving}>{saving ? "Saving…" : "Save break preference"}</button><p role="status">{saved}</p></form><small>{mode === "household" ? "This preference is saved for your household." : "This demo preference lasts only for this server session."} Breaks can always be started from the mission’s Reset Station.</small></section>
       <HomeworkCheckIn key={childId} childId={childId} />
     </div>}
     <footer className={styles.footer}>Progress has its own pace. This space describes learning activity and is not a clinical assessment.</footer>

@@ -13,7 +13,7 @@ export default function SignIn() {
       try {
         const { error } = await createClient().auth.signInWithPassword({ email: String(form.get("email")), password: String(form.get("password")) });
         if (error) { setError("Sign-in was not accepted. Check your email and password."); return; }
-        window.location.assign("/parent");
+        window.location.assign(new URLSearchParams(window.location.search).get("next") === "/" ? "/" : "/parent");
       } catch { setError("Household sign-in is unavailable. Please try again later."); }
       finally { setBusy(false); }
     }}><label htmlFor="email">Email</label><input id="email" name="email" type="email" autoComplete="email" required />

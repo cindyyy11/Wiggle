@@ -35,7 +35,7 @@ export async function demoParentRequest(endpoint: string, request: Request, tick
   if (endpoint === "settings") {
     if (request.method === "POST") {
       const { breakIntervalMinutes } = await request.json();
-      if (!Number.isInteger(breakIntervalMinutes) || breakIntervalMinutes < 5 || breakIntervalMinutes > 480) return Response.json({}, { status: 422 });
+      if (!Number.isInteger(breakIntervalMinutes) || breakIntervalMinutes < 5 || breakIntervalMinutes > 120) return Response.json({}, { status: 422 });
       state.interval = breakIntervalMinutes;
     }
     return Response.json({ breakIntervalMinutes: state.interval });

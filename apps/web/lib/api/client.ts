@@ -13,7 +13,7 @@ export class ApiClient {
     const abort = () => controller.abort();
     if (signal.aborted) controller.abort();
     signal.addEventListener("abort", abort, { once: true });
-    const timeout = setTimeout(abort, 5000);
+    const timeout = setTimeout(abort, 15_000);
     try {
       const response = await fetch(`${this.baseUrl.replace(/\/$/, "")}${path}`, {
         method: "POST", signal: controller.signal, credentials: "same-origin",
