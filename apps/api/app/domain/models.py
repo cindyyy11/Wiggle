@@ -1,7 +1,10 @@
 """Shared, validated data shapes for the Learner Digital Twin domain."""
 
+from collections.abc import Mapping
 from datetime import UTC, datetime, timedelta
 from enum import StrEnum
+from re import compile as re_compile
+from types import MappingProxyType
 from typing import Annotated, Literal
 
 from pydantic import (
@@ -9,12 +12,14 @@ from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
+    field_serializer,
     field_validator,
     model_validator,
 )
 from pydantic.alias_generators import to_camel
 
 Probability = Annotated[float, Field(ge=0, le=1)]
+_ZULU_TIMESTAMP = re_compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?Z$")
 
 
 class DomainModel(BaseModel):
@@ -100,6 +105,15 @@ class LearningEvent(DomainModel):
     )
     payload: EventPayload
 
+    @field_validator("occurred_at", mode="before")
+    @classmethod
+    def require_zulu_wire_timestamp(cls, value: object) -> object:
+        """Keep JSON wire timestamps aligned with TypeScript's trailing-Z rule."""
+
+        if isinstance(value, str) and _ZULU_TIMESTAMP.fullmatch(value) is None:
+            raise ValueError("occurred_at must be an ISO-8601 UTC timestamp ending in Z")
+        return value
+
     @field_validator("occurred_at")
     @classmethod
     def require_utc(cls, value: datetime) -> datetime:
@@ -132,7 +146,7 @@ class StrategyEffectiveness(DomainModel):
 
 
 class LearnerTwin(DomainModel):
-    mastery: dict[str, Probability] = Field(default_factory=dict)
+    mastery: Mapping[str, Probability] = Field(default_factory=dict, validate_default=True)
     initiation_friction: Probability = 0.5
     persistence_friction: Probability = 0.5
     cognitive_load: Probability = 0.5
@@ -140,6 +154,19 @@ class LearnerTwin(DomainModel):
     fatigue_estimate: Probability = 0.5
     modality_effectiveness: ModalityEffectiveness = Field(default_factory=ModalityEffectiveness)
     strategy_effectiveness: StrategyEffectiveness = Field(default_factory=StrategyEffectiveness)
+
+    @field_validator("mastery")
+    @classmethod
+    def freeze_mastery(cls, value: Mapping[str, Probability]) -> Mapping[str, Probability]:
+        """Prevent callers from mutating learner state outside pure domain updates."""
+
+        return MappingProxyType(dict(value))
+
+    @field_serializer("mastery")
+    def serialize_mastery(self, value: Mapping[str, Probability]) -> dict[str, Probability]:
+        """Emit a normal JSON object while keeping the in-memory mapping read-only."""
+
+        return dict(value)
 
 
 class AuditChange(DomainModel):

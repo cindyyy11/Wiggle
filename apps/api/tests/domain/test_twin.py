@@ -93,6 +93,37 @@ def test_event_payloads_are_discriminated_and_timestamps_must_be_utc() -> None:
         )
 
 
+@pytest.mark.parametrize(
+    ("occurred_at", "is_valid"),
+    [
+        ("2026-09-11T00:00:00Z", True),
+        ("2026-09-11T00:00:00+00:00", False),
+        ("2026-09-11T08:00:00+08:00", False),
+        ("2026-09-11T00:00:00", False),
+        ("2026-09-11T00:00Z", False),
+    ],
+)
+def test_event_wire_timestamps_match_the_typescript_zulu_rule(
+    occurred_at: str, is_valid: bool
+) -> None:
+    event_data = {
+        "id": "event-1",
+        "childId": "child-1",
+        "sessionId": "session-1",
+        "occurredAt": occurred_at,
+        "type": "stuck_requested",
+        "payload": {"kind": "stuck_requested"},
+    }
+
+    if is_valid:
+        assert LearningEvent.model_validate(event_data).occurred_at == datetime(
+            2026, 9, 11, tzinfo=UTC
+        )
+    else:
+        with pytest.raises(ValidationError, match="ending in Z"):
+            LearningEvent.model_validate(event_data)
+
+
 def test_event_wire_shape_uses_the_shared_typescript_aliases() -> None:
     event = LearningEvent.model_validate(
         {
@@ -109,6 +140,29 @@ def test_event_wire_shape_uses_the_shared_typescript_aliases() -> None:
     assert wire_event["type"] == "stuck_requested"
     assert wire_event["childId"] == "child-1"
     assert wire_event["occurredAt"] == "2026-09-11T00:00:00Z"
+
+
+@pytest.mark.parametrize(
+    "mode",
+    ["standard", "visual", "gesture", "visual_gesture", "chunk", "voice", "movement", "story"],
+)
+def test_every_completion_mode_without_strategy_produces_an_auditable_update(
+    default_twin, event_factory, mode: str
+) -> None:
+    result = update_twin(
+        default_twin,
+        [event_factory("mission_completed", correctness=0.92, mode=mode)],
+    )
+
+    assert 0 <= result.twin.mastery["fractions.three_quarters"] <= 1
+    assert any(change.field == "persistence_friction" for change in result.changes)
+
+
+def test_mastery_mapping_cannot_be_mutated_externally(default_twin) -> None:
+    with pytest.raises(TypeError):
+        default_twin.mastery["fractions.three_quarters"] = 0.9
+
+    assert default_twin.mastery["fractions.three_quarters"] == 0.5
 
 
 def test_updates_are_clamped_and_include_explainable_audit_values(

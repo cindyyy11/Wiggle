@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { assertLearnerTwin, validateLearningEvent, type LearnerTwin } from "./index.js";
+import {
+  assertLearnerTwin,
+  validateLearningEvent,
+  type LearnerTwin,
+  type LearningEvent,
+} from "./index.js";
 
 const twin: LearnerTwin = {
   mastery: { "fractions.three_quarters": 0.5 },
@@ -57,5 +62,47 @@ describe("Wiggle contracts", () => {
     expect(() =>
       validateLearningEvent({ ...event, type: "stuck_requested" }),
     ).toThrow("must match payload.kind");
+
+    // @ts-expect-error Generic event type must determine the payload discriminant.
+    const staticallyMismatchedEvent: LearningEvent = {
+      id: "event-2",
+      childId: "child-1",
+      sessionId: "session-1",
+      occurredAt: "2026-09-11T00:00:00Z",
+      type: "session_started",
+      payload: { kind: "task_started" },
+    };
+    expect(() => validateLearningEvent(staticallyMismatchedEvent)).toThrow(
+      "must match payload.kind",
+    );
+  });
+
+  it("accepts and rejects the same UTC wire timestamps as the Python contract", () => {
+    for (const occurredAt of [
+      "2026-09-11T00:00:00+00:00",
+      "2026-09-11T08:00:00+08:00",
+      "2026-09-11T00:00Z",
+    ]) {
+      expect(() =>
+        validateLearningEvent({
+          id: "event-3",
+          childId: "child-1",
+          sessionId: "session-1",
+          occurredAt,
+          type: "stuck_requested",
+          payload: { kind: "stuck_requested" },
+        }),
+      ).toThrow("UTC");
+    }
+    expect(
+      validateLearningEvent({
+        id: "event-4",
+        childId: "child-1",
+        sessionId: "session-1",
+        occurredAt: "2026-09-11T00:00:00Z",
+        type: "stuck_requested",
+        payload: { kind: "stuck_requested" },
+      }).occurredAt,
+    ).toBe("2026-09-11T00:00:00Z");
   });
 });
