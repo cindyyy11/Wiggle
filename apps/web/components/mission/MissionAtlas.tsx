@@ -6,7 +6,7 @@ import { UniverseCanvas } from "../universe/UniverseCanvas";
 import { MISSION_DESTINATION, type CameraMode, type Destination, type LandmarkId, type QualityPreference } from "../universe/world";
 import { EventQueue } from "../../features/events/eventQueue";
 import { emitLearningEvent } from "../../features/events/emitLearningEvent";
-import { ApiClient } from "../../lib/api/client";
+import { ApiClient, ApiError } from "../../lib/api/client";
 import { DEMO_CHILD_ID, DEMO_CORRECTNESS, DEMO_MISSION_ID, WIGGLE_REWARD, demoSession, demoSimulation, modeForStrategy } from "../../lib/demo/seed";
 import { FractionMission, type MissionPhase } from "./FractionMission";
 import type { LexiAction } from "../lexi/LexiPanel";
@@ -14,8 +14,10 @@ import { REALITY_PROMPT } from "./RealityMission";
 import styles from "./mission.module.css";
 
 interface Run { session: StartSessionResponse; transport: "local" | "api"; startedAt: number; interacted: boolean; finished: boolean }
-export function MissionAtlas({ quality = "auto", client: suppliedClient }: { quality?: QualityPreference; client?: ApiClient }) {
-  const [client] = useState(() => suppliedClient ?? new ApiClient());
+export function MissionAtlas({ quality = "auto", client: suppliedClient, childId = DEMO_CHILD_ID, allowLocalFallback = true }: { quality?: QualityPreference; client?: ApiClient; childId?: string; allowLocalFallback?: boolean }) {
+  const [client] = useState(() => suppliedClient ?? (allowLocalFallback ? new ApiClient() : new ApiClient("/api/backend")));
+  const startKey = useRef<string | null>(null);
+  const correctness = allowLocalFallback ? DEMO_CORRECTNESS : 1;
   const queue = useRef<EventQueue | null>(null);
   const controller = useRef<AbortController | null>(null);
   const run = useRef<Run | null>(null);
@@ -73,11 +75,16 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient }: { qua
   const start = () => {
     if (phase || pending.current) return;
     void operation(async signal => {
-      const key = crypto.randomUUID();
+      const key = startKey.current ??= crypto.randomUUID();
       let session: StartSessionResponse; let transport: Run["transport"] = "api";
-      try { session = await client.start({ childId: DEMO_CHILD_ID, missionId: DEMO_MISSION_ID }, key, signal); }
-      catch { if (signal.aborted) return; session = demoSession(crypto.randomUUID()); transport = "local"; }
+      try { session = await client.start({ childId, ...(allowLocalFallback ? { missionId: DEMO_MISSION_ID } : {}) }, key, signal); }
+      catch (error) {
+        if (signal.aborted) return;
+        if (!allowLocalFallback || (error instanceof ApiError && [401, 403].includes(error.status))) throw error;
+        session = demoSession(crypto.randomUUID()); transport = "local";
+      }
       if (signal.aborted) return;
+      startKey.current = null;
       run.current = { session, transport, startedAt: Date.now(), interacted: false, finished: false };
       setSlices([]); setAnswer(null); setMode("standard"); setReport(demoSimulation); selectionKey.current = null; supportReady.current = false;
       setLandmark("fraction-forest"); setDestination(MISSION_DESTINATION); setCamera("mission"); setPhase("standard");
@@ -121,7 +128,7 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient }: { qua
   const finish = (resultMode: LearningMode) => {
     if (!run.current || run.current.finished) return;
     run.current.finished = true;
-    emit({ kind: "mission_completed", objective: run.current.session.objective, correctness: DEMO_CORRECTNESS, mode: resultMode, ...(resultMode === "chunk" ? { strategy: "chunking" as const } : resultMode === "visual" || resultMode === "visual_gesture" ? { strategy: "visual_hint" as const } : {}) });
+    emit({ kind: "mission_completed", objective: run.current.session.objective, correctness, mode: resultMode, ...(resultMode === "chunk" ? { strategy: "chunking" as const } : resultMode === "visual" || resultMode === "visual_gesture" ? { strategy: "visual_hint" as const } : {}) });
     setPhase("complete"); setFeedback(""); setCompleted(count => count + 1);
     if (queue.current) { const delivery = controller.current ?? new AbortController(); controller.current = delivery; void queue.current.flush(client, delivery.signal, run.current.session.sessionId).catch(() => {}).finally(() => wakeQueue.current?.()); }
   };
@@ -201,6 +208,7 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient }: { qua
   return <UniverseCanvas quality={quality} className={`${styles.atlas} ${phase ? styles.active : ""} ${phase === "stuck" ? styles.simplified : ""}`} mode={camera} onModeChange={setCamera} destination={destination} onDestinationChange={setDestination} selectedLandmark={landmark} onLandmarkSelect={setLandmark} onMissionStart={start} pizza={{ visible: activityVisible && !support, selectedSlices: slices, onSliceSelect: commands.selectSlice }}>
     <div className={styles.atlasHud} aria-label="Mission Atlas progress"><span>MISSION ATLAS</span><strong>{completed} discoveries</strong><small>✳ {completed * WIGGLE_REWARD} Wiggle Energy</small></div>
     {!phase && busy ? <p className={styles.starting} role="status">Your mission is coming into view…</p> : null}
-    {phase ? <FractionMission phase={phase} mode={mode} selectedSlices={slices} report={report} answer={answer} feedback={feedback} busy={busy} correctness={DEMO_CORRECTNESS} onAnswer={value => { interact(); setAnswer(value); setFeedback(""); }} onStuck={() => { interact(); setCameraEnabled(false); emit({ kind: "stuck_requested", mode }); setFeedback(""); setPhase("stuck"); supportReady.current = false; void operation(signal => adapt("visual_gesture", signal, true)); }} onSimulate={simulate} onSelect={select} onCheck={check} onClose={close} onBack={() => setPhase(mode === "standard" ? "standard" : "activity")} commands={commands} cameraEnabled={cameraEnabled} onCameraEnable={() => setCameraEnabled(true)} onCameraDisable={() => setCameraEnabled(false)} support={support} supportText={supportText} onLexiRequest={requestLexi} onSupportClose={closeSupport} onSupportComplete={completeSupport} /> : null}
+    {!phase && feedback ? <p className={styles.starting} role="alert">{feedback}</p> : null}
+    {phase ? <FractionMission phase={phase} mode={mode} selectedSlices={slices} report={report} answer={answer} feedback={feedback} busy={busy} correctness={correctness} onAnswer={value => { interact(); setAnswer(value); setFeedback(""); }} onStuck={() => { interact(); setCameraEnabled(false); emit({ kind: "stuck_requested", mode }); setFeedback(""); setPhase("stuck"); supportReady.current = false; void operation(signal => adapt("visual_gesture", signal, true)); }} onSimulate={simulate} onSelect={select} onCheck={check} onClose={close} onBack={() => setPhase(mode === "standard" ? "standard" : "activity")} commands={commands} cameraEnabled={cameraEnabled} onCameraEnable={() => setCameraEnabled(true)} onCameraDisable={() => setCameraEnabled(false)} support={support} supportText={supportText} onLexiRequest={requestLexi} onSupportClose={closeSupport} onSupportComplete={completeSupport} /> : null}
   </UniverseCanvas>;
 }

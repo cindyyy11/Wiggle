@@ -18,7 +18,7 @@ class PinRequest(RequestModel):
 
 
 class BreakRequest(RequestModel):
-    break_interval_minutes: int = Field(ge=5, le=480)
+    break_interval_minutes: int = Field(ge=5, le=120)
 
 
 def pins(request: Request, sessions: Sessions) -> ParentPinService:

@@ -1,3 +1,4 @@
+import logging
 import os
 import tempfile
 from pathlib import Path
@@ -5,9 +6,11 @@ from threading import Lock
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.demo import DEMO_PARENT_ID, seed_demo
+from app.observability import request_summary
 from app.providers.base import AIProvider
 from app.providers.gemini import provider_from_env
 from app.repositories.memory import MemoryRepository
@@ -22,6 +25,23 @@ def create_app(
     *, repository: WiggleRepository | None = None, provider: AIProvider | None = None
 ) -> FastAPI:
     app = FastAPI(title="Wiggle API", version="0.1.0")
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    app.middleware("http")(request_summary)
+    origins = [
+        origin.strip()
+        for origin in os.getenv("WIGGLE_ALLOWED_ORIGINS", "").split(",")
+        if origin.strip()
+    ]
+    if "*" in origins:
+        raise ValueError("WIGGLE_ALLOWED_ORIGINS must contain exact origins, not a wildcard")
+    if origins:
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=origins,
+            allow_methods=["GET", "POST"],
+            allow_headers=["Content-Type", "Authorization", "Idempotency-Key", "X-Parent-Pin"],
+            expose_headers=["X-Request-ID"],
+        )
     settings = RepositorySettings.from_env()
     if repository is None and settings.backend == "memory":
         memory = MemoryRepository(DEMO_PARENT_ID)

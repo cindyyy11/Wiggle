@@ -1,0 +1,34 @@
+# Reviewed configuration only. Applying this blueprint creates paid resources.
+services:
+  - type: web
+    name: wiggle-api
+    runtime: docker
+    plan: starter
+    numInstances: 1
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: ./apps/api
+    healthCheckPath: /health
+    autoDeployTrigger: "off"
+    disk:
+      name: wiggle-parent-pin
+      mountPath: /var/lib/wiggle
+      sizeGB: 1
+    envVars:
+      - key: WIGGLE_REPOSITORY_BACKEND
+        value: supabase
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: WIGGLE_PIN_STORE_PATH
+        value: /var/lib/wiggle/parent-pin.sqlite
+      - key: WIGGLE_ALLOWED_ORIGINS
+        sync: false
+      - key: WIGGLE_AI_PROVIDER
+        value: local
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.5-flash
+      - key: GEMINI_TIMEOUT_SECONDS
+        value: "3"

@@ -13,7 +13,8 @@
     "lint": "turbo run lint && pnpm run api:lint",
     "typecheck": "turbo run typecheck && pnpm run api:typecheck",
     "build": "turbo run build",
-    "api:dev": "cd apps/api && python -m uvicorn app.main:app --reload",
+    "test:e2e": "pnpm --filter @wiggle/web test:e2e",
+    "api:dev": "node scripts/api-dev.mjs",
     "api:test": "cd apps/api && python -m pytest -v",
     "api:lint": "cd apps/api && ruff check .",
     "api:typecheck": "cd apps/api && mypy app"

@@ -9,4 +9,13 @@ __pycache__/
 *.pyc
 *.tsbuildinfo
 .env
+.env.*
+!.env.example
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+*.sqlite
+*.sqlite-*
+.vercel/
 

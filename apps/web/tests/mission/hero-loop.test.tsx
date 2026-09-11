@@ -10,6 +10,20 @@ import { emitLearningEvent } from "../../features/events/emitLearningEvent";
 import type { SelectAdaptationResponse } from "@wiggle/contracts";
 
 vi.mock("next/dynamic", () => ({ default: () => () => null }));
+
+it("keeps household failures out of demo play and retains the session-start retry key", async () => {
+  const client = new ApiClient();
+  const start = vi.spyOn(client, "start").mockRejectedValue(new ApiError(503));
+  render(<MissionAtlas quality="fallback" client={client} childId="owned-child" allowLocalFallback={false} />);
+  fireEvent.click(screen.getByRole("button", { name: "Start fractions mission" }));
+  await screen.findByRole("alert");
+  expect(screen.queryByRole("heading", { name: "Make three quarters" })).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Start fractions mission" }));
+  await waitFor(() => expect(start).toHaveBeenCalledTimes(2));
+  expect(start.mock.calls[0][0]).toEqual({ childId: "owned-child" });
+  expect(start.mock.calls[0][1]).toBe(start.mock.calls[1][1]);
+  expect(new EventQueue().entries()).toEqual([]);
+});
 beforeEach(() => {
   localStorage.clear();
   Object.defineProperty(window, "matchMedia", { writable: true, value: () => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }) });

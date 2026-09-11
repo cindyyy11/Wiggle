@@ -140,7 +140,16 @@ class GeminiProvider:
             IndexError,
             TypeError,
         ) as error:
-            logger.warning("Gemini fallback for %s (%s)", operation, type(error).__name__)
+            logger.warning(
+                json.dumps(
+                    {
+                        "event": "provider_fallback",
+                        "provider": "gemini",
+                        "operation": operation,
+                        "reason": type(error).__name__,
+                    }
+                )
+            )
             return fallback(context)
 
     def generate_activity(self, context: ProviderContext) -> ActivityContent:

@@ -41,8 +41,9 @@ provider. No camera frames or raw learner-state values are sent to the model.
 For Supabase, set `WIGGLE_REPOSITORY_BACKEND=supabase`, `SUPABASE_URL`, and
 `SUPABASE_ANON_KEY`, and send a household `Authorization: Bearer ...` access token. The API
 verifies the token with Supabase Auth and uses that token for RLS-protected persistence.
-Authentication failure never falls back to the public demo household. Parent PIN gating is
-a separate parent-access feature and must be integrated before a production child session.
+Authentication failure never falls back to the public demo household. Parent routes also
+require the integrated PIN gate; configure `WIGGLE_PIN_STORE_PATH` on a persistent private
+single-host volume. See `docs/operations/deployment.md` from the repository root.
 
 Workflow baselines and outcomes are persisted in intervention snapshots. Twin replay is
 deterministic and can recover partial writes after restart. Run one API worker for this MVP:
