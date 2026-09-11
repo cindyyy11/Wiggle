@@ -1,4 +1,4 @@
-import type { AppendLearningEventsRequest, AppendLearningEventsResponse, CompleteSessionRequest, CompleteSessionResponse, SelectAdaptationRequest, SelectAdaptationResponse, SimulateRequest, SimulationReport, StartSessionRequest, StartSessionResponse } from "@wiggle/contracts";
+import type { AppendLearningEventsRequest, AppendLearningEventsResponse, CompleteSessionRequest, CompleteSessionResponse, LexiRequest, LexiResponse, SelectAdaptationRequest, SelectAdaptationResponse, SimulateRequest, SimulationReport, StartSessionRequest, StartSessionResponse } from "@wiggle/contracts";
 
 export class ApiError extends Error {
   constructor(readonly status: number) { super(`Mission request failed (${status})`); }
@@ -29,4 +29,5 @@ export class ApiClient {
   select(body: SelectAdaptationRequest, key: string, signal: AbortSignal) { return this.post<SelectAdaptationResponse>("/adaptation/select", body, signal, key); }
   complete(body: CompleteSessionRequest, key: string, signal: AbortSignal) { return this.post<CompleteSessionResponse>("/session/complete", body, signal, key); }
   events(body: AppendLearningEventsRequest, signal: AbortSignal) { return this.post<AppendLearningEventsResponse>("/events", body, signal); }
+  lexi(body: LexiRequest, key: string, signal: AbortSignal) { return this.post<LexiResponse>("/lexi/chat", body, signal, key); }
 }

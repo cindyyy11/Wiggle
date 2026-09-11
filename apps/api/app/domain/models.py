@@ -42,6 +42,8 @@ class EventType(StrEnum):
     STUCK_REQUESTED = "stuck_requested"
     RESET_STARTED = "reset_started"
     RESET_COMPLETED = "reset_completed"
+    REALITY_MISSION_STARTED = "reality_mission_started"
+    REALITY_MISSION_COMPLETED = "reality_mission_completed"
     MODE_CHANGED = "mode_changed"
     DIFFICULTY_SELF_REPORTED = "difficulty_self_reported"
     PARENT_CHECK_IN = "parent_check_in"
@@ -82,6 +84,8 @@ class GenericEventPayload(DomainModel):
         "mission_abandoned",
         "reset_started",
         "reset_completed",
+        "reality_mission_started",
+        "reality_mission_completed",
         "mode_changed",
         "difficulty_self_reported",
         "parent_check_in",

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const allowed = new Set(["session/start", "session/complete", "twin/simulate", "adaptation/select", "events"]);
+const allowed = new Set(["session/start", "session/complete", "twin/simulate", "adaptation/select", "events", "lexi/chat"]);
 
 /** Same-origin transport avoids browser CORS; the upstream URL is server-only. */
 export async function POST(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {

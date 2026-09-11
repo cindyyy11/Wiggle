@@ -14,6 +14,8 @@ export const eventTypes = [
   "stuck_requested",
   "reset_started",
   "reset_completed",
+  "reality_mission_started",
+  "reality_mission_completed",
   "mode_changed",
   "difficulty_self_reported",
   "parent_check_in",
