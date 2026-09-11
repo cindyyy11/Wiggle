@@ -23,12 +23,12 @@ pnpm install
 pnpm dev
 ```
 
-In another terminal, install the API development dependencies and run FastAPI:
+`pnpm dev` starts both the web app and the FastAPI service. Install the API
+development dependencies before the first run:
 
 ```sh
 cd apps/api
 python -m pip install -e ".[dev]"
-uvicorn app.main:app --reload
 ```
 
 The API health endpoint is available at `http://localhost:8000/health`.
@@ -40,5 +40,8 @@ pnpm lint
 pnpm typecheck
 pnpm test
 pnpm build
-cd apps/api && python -m pytest -v && ruff check . && mypy app
 ```
+
+The root lint, type-check, and test commands include the API's Ruff, mypy, and
+pytest gates. To run one API gate on its own, use `pnpm api:test`,
+`pnpm api:lint`, or `pnpm api:typecheck`.
