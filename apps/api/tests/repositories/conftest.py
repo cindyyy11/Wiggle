@@ -1,7 +1,9 @@
 import os
 from collections.abc import Iterator
 from dataclasses import dataclass
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
+from urllib.request import Request, urlopen
 
 import pytest
 
@@ -36,6 +38,18 @@ def repository_pair(request: pytest.FixtureRequest) -> Iterator[RepositoryPair]:
         pytest.skip("local Supabase contract credentials are unavailable")
     if urlparse(url).hostname not in {"127.0.0.1", "localhost", "::1"}:
         pytest.skip("WIGGLE_TEST_SUPABASE_URL must point to a local Supabase stack")
+    try:
+        request = Request(
+            f"{url.rstrip('/')}/auth/v1/health",
+            headers={"apikey": anon_key},
+            method="GET",
+        )
+        with urlopen(request, timeout=1):  # noqa: S310
+            pass
+    except HTTPError as error:
+        pytest.fail(f"configured local Supabase health check returned HTTP {error.code}")
+    except URLError:
+        pytest.skip("configured local Supabase services are unavailable")
 
     yield RepositoryPair(
         SupabaseRepository(

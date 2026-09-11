@@ -137,6 +137,25 @@ class SupabaseRepository:
         query = {"select": "*", **{name: f"eq.{value}" for name, value in filters.items()}}
         return self._request("GET", table, query=query)
 
+    @staticmethod
+    def _required_id(record: Mapping[str, object], field: str) -> str:
+        value = record.get(field)
+        if not isinstance(value, str) or not value:
+            raise RepositoryError(f"record requires a non-empty string {field}")
+        return value
+
+    def _require_owned_child(self, child_id: str) -> Record:
+        child = self.get_child(child_id)
+        if child is None:
+            raise RepositoryAccessError("child does not belong to this parent")
+        return child
+
+    def _require_owned_session(self, session_id: str, child_id: str) -> Record:
+        session = self.get_session(session_id)
+        if session is None or session.get("child_id") != child_id:
+            raise RepositoryAccessError("session does not belong to this child and parent")
+        return session
+
     def _select_all(
         self,
         table: str,
@@ -237,6 +256,7 @@ class SupabaseRepository:
         return LearnerTwin.model_validate(self._one(rows, "learner twin")["twin"])
 
     def create_mission(self, mission: Mapping[str, object]) -> Record:
+        self._require_owned_child(self._required_id(mission, "child_id"))
         return self._insert("missions", mission)
 
     def get_mission(self, mission_id: str) -> Record | None:
@@ -249,6 +269,12 @@ class SupabaseRepository:
         )
 
     def create_session(self, session: Mapping[str, object]) -> Record:
+        child_id = self._required_id(session, "child_id")
+        self._require_owned_child(child_id)
+        mission_id = self._required_id(session, "mission_id")
+        mission = self.get_mission(mission_id)
+        if mission is None or mission.get("child_id") != child_id:
+            raise RepositoryAccessError("mission does not belong to this child and parent")
         return self._insert("sessions", session)
 
     def get_session(self, session_id: str) -> Record | None:
@@ -261,6 +287,8 @@ class SupabaseRepository:
         return self._update("sessions", session_id, changes)
 
     def append_event(self, event: LearningEvent, *, idempotency_key: str) -> LearningEvent:
+        self._require_owned_child(event.child_id)
+        self._require_owned_session(event.session_id, event.child_id)
         record = event.model_dump(mode="json")
         record["idempotency_key"] = idempotency_key
         try:
@@ -289,6 +317,9 @@ class SupabaseRepository:
         return [self._event_from_row(row) for row in rows]
 
     def create_intervention(self, intervention: Mapping[str, object]) -> Record:
+        child_id = self._required_id(intervention, "child_id")
+        self._require_owned_child(child_id)
+        self._require_owned_session(self._required_id(intervention, "session_id"), child_id)
         return self._insert("interventions", intervention)
 
     def update_intervention(self, intervention_id: str, changes: Mapping[str, object]) -> Record:
@@ -322,6 +353,7 @@ class SupabaseRepository:
         requested_parent = record.setdefault("parent_id", self.owner_id)
         if requested_parent != self.owner_id:
             raise RepositoryAccessError("cannot create another parent's check-in")
+        self._require_owned_child(self._required_id(record, "child_id"))
         return self._insert("parent_check_ins", record)
 
     def list_check_ins(self, child_id: str) -> list[Record]:
