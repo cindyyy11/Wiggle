@@ -12,7 +12,7 @@ export const demoSimulation: SimulationReport = {
   ranked: [
     { strategy: "visual_gesture", predictedSuccess: .87, predictedFriction: .18, expectedMasteryGain: .21, factors: [] },
     { strategy: "visual", predictedSuccess: .68, predictedFriction: .32, expectedMasteryGain: .16, factors: [] },
-    { strategy: "standard", predictedSuccess: .46, predictedFriction: .51, expectedMasteryGain: .1, factors: [] },
+    { strategy: "standard", predictedSuccess: .43, predictedFriction: .51, expectedMasteryGain: .1, factors: [] },
   ],
 };
 export function demoSession(sessionId: string): StartSessionResponse {

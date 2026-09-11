@@ -1,5 +1,10 @@
 import type { AppendLearningEventsRequest, AppendLearningEventsResponse, CompleteSessionRequest, CompleteSessionResponse, SelectAdaptationRequest, SelectAdaptationResponse, SimulateRequest, SimulationReport, StartSessionRequest, StartSessionResponse } from "@wiggle/contracts";
 
+export class ApiError extends Error {
+  constructor(readonly status: number) { super(`Mission request failed (${status})`); }
+  get permanent() { return this.status >= 400 && this.status < 500 && ![401, 403, 408, 425, 429].includes(this.status); }
+}
+
 export class ApiClient {
   constructor(readonly baseUrl = process.env.NEXT_PUBLIC_API_URL || "/api/backend") {}
 
@@ -15,7 +20,7 @@ export class ApiClient {
         headers: { "Content-Type": "application/json", ...(key ? { "Idempotency-Key": key } : {}) },
         body: JSON.stringify(body),
       });
-      if (!response.ok) throw new Error(`Mission request failed (${response.status})`);
+      if (!response.ok) throw new ApiError(response.status);
       return await response.json() as T;
     } finally { clearTimeout(timeout); signal.removeEventListener("abort", abort); }
   }

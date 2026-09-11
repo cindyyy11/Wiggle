@@ -20,8 +20,13 @@ for (const fallback of [false, true]) {
     await page.getByRole("button", { name: "Start fractions mission", exact: true }).click();
     await page.getByRole("button", { name: "2 of 4", exact: true }).click();
     await page.getByRole("button", { name: "I'm stuck", exact: true }).click();
-    await page.getByRole("button", { name: "Find my way", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Select three pizza slices", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Slice 1", exact: true })).toBeVisible();
+    await expect(page.getByRole("group", { name: "Learning mode", exact: true })).toHaveCount(0);
+    await page.screenshot({ path: testInfo.outputPath(`stuck-${fallback}.png`) });
+    await page.getByRole("button", { name: "See my learning paths", exact: true }).click();
     await expect(page.getByTestId("prediction")).toHaveCount(3);
+    await expect(page.getByTestId("prediction")).toHaveText(["43%", "68%", "87%"]);
     await page.screenshot({ path: testInfo.outputPath(`simulation-${fallback}.png`) });
     await page.getByRole("button", { name: "Try Gesture + Visual", exact: true }).click();
     for (const index of [1, 2, 3]) await page.getByRole("button", { name: `Slice ${index}`, exact: true }).click();
