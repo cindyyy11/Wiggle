@@ -8,5 +8,5 @@ export const dynamic = "force-dynamic";
 export default async function ParentPage() {
   const configured = Boolean(authConfig());
   if (configured && !await householdSession()) redirect("/parent/sign-in");
-  return <main className={styles.shell}><ParentPortal demo={!configured && !process.env.WIGGLE_API_URL} /></main>;
+  return <main className={styles.shell}><ParentPortal /></main>;
 }

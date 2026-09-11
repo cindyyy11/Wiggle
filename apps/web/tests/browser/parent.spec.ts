@@ -3,6 +3,7 @@ import { expect, test } from "@playwright/test";
 test("parent PIN, responsive dashboard, settings, check-in and relock", async ({ page }) => {
   await page.goto("/parent");
   await expect(page.getByRole("heading", { name: "Parent mission control" })).toBeVisible();
+  await expect(page.getByText(/Local demo · PIN/)).toBeVisible();
   await expect(page.getByRole("heading", { name: "Mastery today" })).toHaveCount(0);
   const denied = await page.request.get("/api/parent/insights?child_id=10000000-0000-0000-0000-000000000011");
   expect(denied.status()).toBe(403);
@@ -12,6 +13,7 @@ test("parent PIN, responsive dashboard, settings, check-in and relock", async ({
   await page.getByLabel("Parent PIN").fill("123456");
   await page.getByRole("button", { name: "Enter mission control" }).click();
   await expect(page.getByRole("heading", { name: "Mastery today" })).toBeVisible();
+  await expect(page.getByText(/Local demo · Sample starting state for Nova/)).toBeVisible();
   await expect(page.getByRole("heading", { name: "Growing independence" })).toBeVisible();
   const cookies = await page.context().cookies();
   expect(cookies.find(cookie => cookie.name === "wiggle-parent-pin")?.httpOnly).toBe(true);

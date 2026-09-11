@@ -1,3 +1,6 @@
+export type ParentDataMode = "local_demo" | "memory_demo" | "household";
+export interface ParentPinStatus { setupRequired: boolean; dataMode: ParentDataMode }
+
 export class ParentApiError extends Error {
   constructor(readonly status: number) {
     super(status === 429 ? "Too many attempts. Try again in 5 minutes." : status === 401 ? "Please sign in to your household again." : status === 403 ? "Enter your parent PIN to continue." : "Could not save or load this right now. Please try again.");
