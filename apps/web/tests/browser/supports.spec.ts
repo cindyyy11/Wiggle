@@ -1,4 +1,34 @@
 import { expect, test } from "@playwright/test";
+import { demoSession } from "../../lib/demo/seed";
+
+test("offline API telemetry does not block curated supports and replays after reconnect", async ({ page }) => {
+  let online = false;
+  const replayed: string[] = [];
+  await page.route("**/api/backend/session/start", route => route.fulfill({ json: demoSession("offline-browser-session") }));
+  await page.route("**/api/backend/lexi/chat", route => route.abort("internetdisconnected"));
+  await page.route("**/api/backend/events", route => {
+    if (!online) return route.abort("internetdisconnected");
+    const { events } = route.request().postDataJSON() as { events: { id: string }[] };
+    const ids = events.map(event => event.id); replayed.push(...ids);
+    return route.fulfill({ json: { acceptedEventIds: ids } });
+  });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Start fractions mission", exact: true }).click();
+  await page.getByRole("button", { name: "Ask Lexi", exact: true }).click();
+  await page.getByRole("button", { name: "Give me a hint" }).click();
+  await expect(page.getByText("Choose three equal slices. Leave one on the plate.")).toBeVisible();
+  await page.getByRole("button", { name: "Try a Reality Mission" }).click();
+  await expect(page.getByRole("heading", { name: "A little mission around you" })).toBeVisible();
+  await page.getByRole("button", { name: "I found my three quarters" }).click();
+  await expect(page.getByRole("heading", { name: "Make three quarters" })).toBeVisible();
+  const queued = await page.evaluate(() => JSON.parse(localStorage.getItem("wiggle.learning-events.v1")!).entries as { transport: string; event: { id: string; type: string } }[]);
+  expect(queued.every(entry => entry.transport === "api")).toBe(true);
+  expect(queued.map(entry => entry.event.type)).toEqual(expect.arrayContaining(["task_started", "hint_requested", "reality_mission_started", "reality_mission_completed"]));
+  online = true;
+  await page.evaluate(() => window.dispatchEvent(new Event("online")));
+  await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem("wiggle.learning-events.v1")!).entries.length), { timeout: 10000 }).toBe(0);
+  expect(replayed).toEqual(expect.arrayContaining(queued.map(entry => entry.event.id)));
+});
 
 test("opted-in camera runs local inference and stops every track on exit", async ({ page }) => {
   test.setTimeout(90000);
