@@ -102,6 +102,17 @@ describe("Numeria quality and accessible controls", () => {
     expect(screen.getByRole("button", { name: "Slice 4" }).getAttribute("aria-pressed")).toBe("false");
   });
 
+  it("starts local exploration in follow view and exposes a compact constellation", () => {
+    const select = vi.fn();
+    render(<UniverseCanvas quality="fallback" onLandmarkSelect={select} />);
+    expect(screen.getByRole("button", { name: "Follow explorer" }).getAttribute("aria-pressed")).toBe("true");
+    expect(screen.getByRole("button", { name: "Globe view" }).getAttribute("aria-pressed")).toBe("false");
+    const places = screen.getByRole("button", { name: "Places" });
+    expect(places.getAttribute("aria-expanded")).toBe("true");
+    fireEvent.click(screen.getByRole("button", { name: /Visit Number Valley/ }));
+    expect(select).toHaveBeenCalledWith("number-valley");
+  });
+
   it("shows an optional child-facing hand cursor without moving fallback controls into the canvas", async () => {
     render(<UniverseCanvas pizza={{ visible: true, selectedSlices: [], hand: { enabled: true, latest: { current: { pointer: { x: .2, y: -.4 }, handedness: "right", confidence: .9, isTracking: true } }, gesture: "point", phase: null, status: "ready" } }} />);
     expect((await screen.findByTestId("hand-cursor")).getAttribute("aria-hidden")).toBe("true");
