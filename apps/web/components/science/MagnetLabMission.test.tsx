@@ -35,11 +35,25 @@ it.each(["denied", "unavailable", "off"] as CameraStatus[])("offers adult help a
 it("keeps the video element across status changes and shows the ready mission", () => {
   const { container, rerender } = render(<MagnetLabMission onExit={vi.fn()} onComplete={vi.fn()} />);
   const video = container.querySelector("video");
+  expect(video?.closest("[aria-hidden='true']")).toBeTruthy();
+  expect(video?.closest("[aria-hidden='true']")?.className).not.toMatch(/Ready/);
   mock.status = "ready";
   rerender(<MagnetLabMission onExit={vi.fn()} onComplete={vi.fn()} />);
   expect(container.querySelector("video")).toBe(video);
+  expect(video?.closest("[aria-hidden='true']")?.className).toMatch(/Ready/);
   expect(screen.getByText("Move your open hand to guide the magnet!")).toBeTruthy();
   expect(screen.getByText("Your Hand")).toBeTruthy();
+  expect(screen.queryByText("Getting ready…")).toBeNull();
+});
+it.each(["denied", "unavailable", "off"] as CameraStatus[])("hides the camera backdrop when readiness is lost to %s", (status) => {
+  mock.status = "ready";
+  const props = { onExit: vi.fn(), onComplete: vi.fn() };
+  const { container, rerender } = render(<MagnetLabMission {...props} />);
+  expect(container.querySelector("video")?.closest("[aria-hidden='true']")?.className).toMatch(/Ready/);
+  mock.status = status;
+  rerender(<MagnetLabMission {...props} />);
+  expect(container.querySelector("video")?.closest("[aria-hidden='true']")?.className).not.toMatch(/Ready/);
+  expect(screen.getByText("Camera needed")).toBeTruthy();
 });
 it("traps focus, exits on Escape, and restores the previous start control", () => {
   const start = document.createElement("button"); start.textContent = "Start Magnet Lab"; document.body.append(start); start.focus();

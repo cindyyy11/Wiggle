@@ -85,6 +85,9 @@ export function MagnetLabMission({ onExit, onComplete, manageFocus = true }: Mag
     : handStatus + " " + count + " of " + total + " discoveries.";
 
   return <section ref={section} className={styles.mission} aria-label="Magnet Lab mission">
+    <div className={ready ? styles.cameraBackdropReady : styles.cameraBackdrop} aria-hidden="true">
+      <video ref={tracking.video} muted playsInline className={styles.cameraBackdropVideo} />
+    </div>
     <button className={styles.exit} type="button" onClick={onExit}>Back to Science Planet</button>
     <header className={styles.missionCard}>
       <h1>{needsHelp ? "Ask an adult to turn on the camera" : !ready ? "Let's get your hand ready" : titles[state.checkpoint]}</h1>
@@ -105,10 +108,7 @@ export function MagnetLabMission({ onExit, onComplete, manageFocus = true }: Mag
     </div>
     <aside className={styles.cameraCard}>
       <h2>Your Hand</h2>
-      <div className={styles.videoFrame}>
-        <video ref={tracking.video} muted playsInline className={ready ? styles.video : styles.videoStarting} aria-label="Your local camera preview" />
-        {!ready && <p>{needsHelp ? "Camera needed" : "Getting ready…"}</p>}
-      </div>
+      {!ready && <p className={styles.cameraStatus}>{needsHelp ? "Camera needed" : "Getting ready…"}</p>}
       <p>Your hand guides the magnet.</p>
     </aside>
   </section>;
