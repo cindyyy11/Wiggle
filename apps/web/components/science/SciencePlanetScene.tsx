@@ -47,6 +47,16 @@ function RendererHealth({ onContextLost, onQualityChange, quality }: Pick<Scienc
   return null;
 }
 
+function CanvasFallback({ onFailure }: { onFailure: () => void }) {
+  const reported = useRef(false);
+  useEffect(() => {
+    if (reported.current) return;
+    reported.current = true;
+    onFailure();
+  }, [onFailure]);
+  return null;
+}
+
 export default function SciencePlanetScene(props: SciencePlanetSceneProps) {
   return <Canvas
     className="science-planet-canvas"
@@ -54,7 +64,7 @@ export default function SciencePlanetScene(props: SciencePlanetSceneProps) {
     dpr={props.quality === "low" ? 1 : [1, 1.5]}
     camera={{ position: [0, .35, 8.9], fov: 42, near: .1, far: 30 }}
     gl={{ antialias: props.quality === "high", alpha: true, powerPreference: "low-power", failIfMajorPerformanceCaveat: true }}
-    fallback="Choose a discovery spot using the Science topic buttons."
+    fallback={<CanvasFallback onFailure={props.onContextLost} />}
   >
     <ambientLight intensity={1.45} color="#e9f5e9" />
     <hemisphereLight args={["#fff5dc", "#3f6f78", 1.25]} />
