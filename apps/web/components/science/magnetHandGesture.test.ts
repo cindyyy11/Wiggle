@@ -20,7 +20,7 @@ describe("MagnetHandGestureController", () => {
     const controller = new MagnetHandGestureController();
     controller.update({ isTracking: true, gesture: "pinch", target: "paper-clip", at: 0 });
     expect(controller.update({ isTracking: false, gesture: null, target: "attracted", at: 100 })).toBeNull();
-    expect(controller.update({ isTracking: false, gesture: null, target: "toolbox", at: 501 })).toBeNull();
+    expect(controller.update({ isTracking: false, gesture: null, target: "toolbox", at: 501 })).toEqual({ type: "cancel", id: "paper-clip" });
     expect(controller.update({ isTracking: true, gesture: "open_palm", target: "attracted", at: 600 })).toBeNull();
   });
 

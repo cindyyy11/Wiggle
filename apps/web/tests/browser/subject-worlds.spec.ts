@@ -1,8 +1,8 @@
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
 import { SCIENCE_ZONES } from "../../components/science/scienceWorld";
-import { enterNumeria, enterScience, keyboardActivate, launchWiggle } from "./helpers";
+import { denyCamera, enterNumeria, enterScience, keyboardActivate, launchWiggle } from "./helpers";
 
-const SUBJECT_PORTALS = ["Explore Numeria", "Explore Science Planet", "English (coming soon)", "Bahasa Melayu (coming soon)"] as const;
+const SUBJECT_PORTALS = ["Show Numeria", "Show Science Planet", "Show English", "Show Bahasa Melayu"] as const;
 
 async function expectInteractiveOrbit(page: Page) {
   const orbit = page.getByTestId("subject-orbit");
@@ -34,7 +34,7 @@ async function expectOrbitAfterSplash(page: Page) {
 }
 
 async function expectOrbitControlsFit(page: Page, testInfo: TestInfo) {
-  for (const name of ["Explore Numeria", "Explore Science Planet"] as const) {
+  for (const name of ["Show Numeria", "Show Science Planet"] as const) {
     const box = await page.getByRole("button", { name, exact: true }).boundingBox();
     expect(box).not.toBeNull();
     expect(box!.height).toBeGreaterThanOrEqual(44);
@@ -46,23 +46,19 @@ async function expectOrbitControlsFit(page: Page, testInfo: TestInfo) {
   await page.screenshot({ path: testInfo.outputPath(`subject-orbit-${testInfo.project.name}.png`) });
 }
 
-async function completeMagnetLab(page: Page) {
-  for (const [object, answer] of [
-    ["paper clip", "Attracted"],
-    ["iron nail", "Attracted"],
-    ["wooden block", "Not attracted"],
-    ["plastic button", "Not attracted"],
-  ]) {
-    await page.getByRole("button", { name: `Test ${object}`, exact: true }).click();
-    await page.getByRole("button", { name: "Try the magnet", exact: true }).click();
-    await page.getByRole("button", { name: answer, exact: true }).click();
-  }
+async function expectCameraHelpAndExit(page: Page) {
+  await expect(page.getByRole("heading", { name: "Ask an adult to turn on the camera" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Use hand gestures|Try the magnet|Test paper clip|Not attracted/ })).toHaveCount(0);
+  await page.getByRole("button", { name: "Back to Science Planet", exact: true }).click();
 }
+
+test.beforeEach(async ({ page }) => { await denyCamera(page); });
 
 test("splash, Worlds, Science, and Magnet Lab stay on a native-control path", async ({ page }) => {
   await page.goto("/");
   await launchWiggle(page);
   await expectOrbitAfterSplash(page);
+  await page.getByRole("button", { name: "Show Science Planet", exact: true }).click();
   const sciencePortal = page.getByRole("button", { name: "Explore Science Planet", exact: true });
   await expect(sciencePortal).toBeVisible();
   await expect(sciencePortal).toBeEnabled();
@@ -70,10 +66,10 @@ test("splash, Worlds, Science, and Magnet Lab stay on a native-control path", as
   await page.getByRole("button", { name: "Start Magnet Lab", exact: true }).click();
   await expect(page.getByRole("region", { name: "Magnet Lab mission" })).toBeVisible();
 
-  await completeMagnetLab(page);
+  await expectCameraHelpAndExit(page);
 
   await expect(page.getByRole("region", { name: "Science Planet" })).toBeVisible();
-  await expect(page.getByText("Magnet Lab discovery complete.", { exact: true })).toBeVisible();
+  await expect(page.getByText("Magnet Lab discovery complete.", { exact: true })).toHaveCount(0);
   await expect(page.getByText(/\b(?:token|reward|claim)\b/i)).toHaveCount(0);
 });
 
@@ -112,6 +108,7 @@ test("locked subject worlds retain focus and do not open a fake lesson", async (
     ["English (coming soon)", "English is coming soon"],
     ["Bahasa Melayu (coming soon)", "Bahasa Melayu is coming soon"],
   ]) {
+    await page.getByRole("button", { name: `Show ${name.replace(" (coming soon)", "")}`, exact: true }).click();
     const locked = page.getByRole("button", { name, exact: true });
     await locked.focus();
     await locked.click();
@@ -159,8 +156,8 @@ test("reduced motion keeps the subject orbit interactive through Magnet Lab", as
   await expect(page.getByRole("region", { name: "Science Planet" })).toHaveAttribute("data-reduced-motion", "true");
   await page.getByRole("button", { name: "Start Magnet Lab", exact: true }).click();
 
-  await completeMagnetLab(page);
-  await expect(page.getByText("Magnet Lab discovery complete.", { exact: true })).toBeVisible();
+  await expectCameraHelpAndExit(page);
+  await expect(page.getByText("Magnet Lab discovery complete.", { exact: true })).toHaveCount(0);
 });
 
 test("forced WebGL fallback keeps the subject orbit and all destinations usable", async ({ page }) => {
@@ -183,7 +180,7 @@ test("forced WebGL fallback keeps the subject orbit and all destinations usable"
   await expect(page.getByRole("img", { name: "Science Planet map" })).toBeVisible();
   await page.getByRole("button", { name: "Start Magnet Lab", exact: true }).click();
 
-  await completeMagnetLab(page);
+  await expectCameraHelpAndExit(page);
   await page.getByRole("button", { name: "Back to Worlds", exact: true }).click();
   await expect(page.getByRole("region", { name: "Choose a subject world" })).toBeVisible();
 });
@@ -191,6 +188,7 @@ test("forced WebGL fallback keeps the subject orbit and all destinations usable"
 test("keyboard navigation reaches splash, Science, and Magnet Lab without pointer input", async ({ page }) => {
   await page.goto("/");
   await keyboardActivate(page, "Let's Wiggle");
+  await keyboardActivate(page, "Show Science Planet");
   await keyboardActivate(page, "Explore Science Planet");
   await keyboardActivate(page, "Start Magnet Lab");
 
@@ -214,6 +212,7 @@ test("keyboard navigation reaches splash, Numeria, and Science from the orbit", 
 
   await page.goto("/");
   await keyboardActivate(page, "Let's Wiggle");
+  await keyboardActivate(page, "Show Science Planet");
   await keyboardActivate(page, "Explore Science Planet");
   await keyboardActivate(page, "Start Magnet Lab");
   await expect(page.getByRole("region", { name: "Magnet Lab mission" })).toBeVisible();

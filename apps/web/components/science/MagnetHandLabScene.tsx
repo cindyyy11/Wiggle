@@ -5,6 +5,7 @@ import { Canvas, useFrame } from "@react-three/fiber";
 import { CanvasTexture, Group, MeshStandardMaterial, Vector3 } from "three";
 import type React from "react";
 import type { HandTrackingLatest } from "../../features/gestures/useHandTracking";
+import { GESTURE_CONFIG } from "../../features/gestures/config";
 import {
   handPointerToTable,
   isWithinMagnetField,
@@ -87,6 +88,19 @@ function targetForCheckpoint(point: TablePoint, state: MagnetPlayState): MagnetG
   if (state.checkpoint === "sort") return targetForSort(point, state);
   if (state.checkpoint === "hidden" && isNear(point, toolboxTarget, TOOLBOX_HIT_RADIUS)) return "toolbox";
   return null;
+}
+
+export function trackedTablePoint(frame: HandTrackingLatest): TablePoint | null {
+  const pointer = frame.pointer;
+  return frame.isTracking && frame.confidence >= GESTURE_CONFIG.minConfidence && pointer &&
+    Number.isFinite(pointer.x) && Number.isFinite(pointer.y) ? handPointerToTable(pointer) : null;
+}
+
+/** Shared frame adapter keeps missing or unreliable hands from earning curriculum actions. */
+export function actionForHandFrame(state: MagnetPlayState, frame: HandTrackingLatest, controller: MagnetHandGestureController, at: number): MagnetPlayAction | null {
+  const point = trackedTablePoint(frame);
+  if (state.checkpoint === "explore") return point ? observationActionForTablePoint(state, point) : null;
+  return controller.update({ gesture: frame.gesture, target: point ? targetForCheckpoint(point, state) : null, isTracking: point !== null, at });
 }
 
 function handStatus(checkpoint: MagnetPlayState["checkpoint"], isTracking: boolean) {
@@ -283,9 +297,9 @@ function LabInteraction({ props }: { props: MagnetHandLabSceneProps }) {
   }, [props.state.checkpoint]);
 
   useFrame(({ clock }) => {
-    const pointer = props.latest.current.pointer;
-    const target = pointer ? handPointerToTable(pointer) : previousTarget.current;
-    if (pointer) previousTarget.current = target;
+    const point = trackedTablePoint(props.latest.current);
+    const target = point ?? previousTarget.current;
+    if (point) previousTarget.current = target;
 
     magnetTarget.current.set(tableX(target.x), tableY(target.y), .35);
     if (magnet.current) {
@@ -293,8 +307,9 @@ function LabInteraction({ props }: { props: MagnetHandLabSceneProps }) {
       else magnet.current.position.lerp(magnetTarget.current, .16);
     }
 
+    const frameAction = actionForHandFrame(props.state, props.latest.current, controller.current, clock.elapsedTime * 1000);
     if (props.state.checkpoint === "explore") {
-      const observation = observationActionForTablePoint(props.state, target);
+      const observation = frameAction;
       if (observation?.type === "observe" && !observed.current.has(observation.id)) {
         observed.current.add(observation.id);
         action.current(observation);
@@ -302,20 +317,14 @@ function LabInteraction({ props }: { props: MagnetHandLabSceneProps }) {
     }
 
     if (props.state.checkpoint === "sort" || props.state.checkpoint === "hidden") {
-      const gestureAction = controller.current.update({
-        gesture: props.latest.current.gesture,
-        target: targetForCheckpoint(target, props.state),
-        isTracking: props.latest.current.isTracking,
-        at: clock.elapsedTime * 1000,
-      });
-      if (gestureAction) action.current(gestureAction);
+      if (frameAction) action.current(frameAction);
     }
 
     if (props.state.checkpoint === "hidden") return;
     for (const object of MAGNET_OBJECTS) {
       const model = objectGroups.current[object.id];
       if (!model) continue;
-      const withinField = props.state.checkpoint === "explore" && isWithinMagnetField(target, toTablePoint(object));
+      const withinField = point !== null && props.state.checkpoint === "explore" && isWithinMagnetField(target, toTablePoint(object));
       const shouldFollow = props.state.checkpoint === "explore" && object.result === "attracted" && withinField;
       const sorted = props.state.sorted.includes(object.id);
       const held = props.state.held === object.id;
