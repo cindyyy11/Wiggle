@@ -17,6 +17,7 @@ vi.mock("../../features/audio/useWiggleSound", () => ({
 }));
 
 vi.mock("../mission/MissionAtlas", () => ({
+  MATHS_MISSION_BLOCKED_MESSAGE: "Finish or leave your Maths mission before changing worlds.",
   MissionAtlas: (props: {
     childId?: string;
     allowLocalFallback?: boolean;
