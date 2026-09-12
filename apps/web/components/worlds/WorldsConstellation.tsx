@@ -13,10 +13,13 @@ const Scene = dynamic(() => import("./WorldsConstellationScene"), {
 });
 
 export type WorldsConstellationProps = {
-  selectedWorld: SubjectWorldId;
+  activeWorld?: SubjectWorldId | null;
+  /** Temporary source-compatibility bridge until the selector owns active-world state. */
+  selectedWorld?: SubjectWorldId;
   quality?: QualityPreference;
   reducedMotion?: boolean;
   onSelect: (world: SubjectWorldId) => void;
+  onActiveWorldChange?: (world: SubjectWorldId | null) => void;
 };
 
 type LegacyWorldDecorationCounts = { stars: number; debris: number };
@@ -34,10 +37,12 @@ class GraphicsBoundary extends Component<{ children: ReactNode; onFailure: () =>
   render() { return this.state.failed ? null : this.props.children; }
 }
 
-export function WorldsConstellation({ selectedWorld, quality: preference = "auto", reducedMotion: reducedMotionOverride, onSelect }: WorldsConstellationProps) {
+export function WorldsConstellation({ activeWorld: activeWorldProp, selectedWorld, quality: preference = "auto", reducedMotion: reducedMotionOverride, onSelect, onActiveWorldChange }: WorldsConstellationProps) {
   const [quality, setQuality] = useState<SceneQuality>("fallback");
   const [systemReducedMotion, setSystemReducedMotion] = useState(false);
   const reducedMotion = reducedMotionOverride ?? systemReducedMotion;
+  const activeWorld = activeWorldProp ?? selectedWorld ?? null;
+  const changeActiveWorld = onActiveWorldChange ?? (() => undefined);
 
   useEffect(() => {
     if (typeof window.matchMedia !== "function") return;
@@ -62,13 +67,14 @@ export function WorldsConstellation({ selectedWorld, quality: preference = "auto
   }, [preference]);
 
   const displayQuality = quality === "high" ? "high" : "low";
-  return <section className={styles.constellation} aria-hidden="true" data-quality={quality} data-reduced-motion={String(reducedMotion)}>
+  return <section className={styles.constellation} data-quality={quality} data-reduced-motion={String(reducedMotion)}>
     {quality === "fallback" ? null : <GraphicsBoundary onFailure={() => setQuality("fallback")}><Scene
-      selectedWorld={selectedWorld}
+      activeWorld={activeWorld}
       reducedMotion={reducedMotion}
       onSelect={onSelect}
+      onActiveWorldChange={changeActiveWorld}
       quality={displayQuality}
-      counts={worldDecorationCounts(displayQuality)}
+      counts={orbitDecorationCounts(displayQuality)}
       onQualityChange={() => setQuality("low")}
       onContextLost={() => setQuality("fallback")}
     /></GraphicsBoundary>}
