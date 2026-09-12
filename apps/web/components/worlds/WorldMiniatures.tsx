@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, type ReactNode } from "react";
-import { Color, Float32BufferAttribute, IcosahedronGeometry, InstancedMesh, MeshStandardMaterial, Object3D } from "three";
+import { Color, Float32BufferAttribute, IcosahedronGeometry, InstancedMesh, MeshBasicMaterial, MeshStandardMaterial, Object3D } from "three";
 import type { SubjectWorldId } from "./subjectRoute";
 import { isOrbitPress, SUBJECT_ORBIT_LAYOUT, type OrbitDecorationCounts } from "./worldOrbit";
 
@@ -22,6 +22,8 @@ const magnetMatte = new MeshStandardMaterial({ color: "#ef8b78", roughness: 1, f
 const scienceFragment = new MeshStandardMaterial({ color: "#f4c95d", roughness: 1, flatShading: true });
 const englishMoon = new MeshStandardMaterial({ color: "#b9a9dc", roughness: 1, flatShading: true });
 const bmMoon = new MeshStandardMaterial({ color: "#8fbda2", roughness: 1, flatShading: true });
+const activeGlow = new MeshBasicMaterial({ color: "#fff3c9", transparent: true, opacity: .1 });
+const lockKeyhole = new MeshBasicMaterial({ color: "#725998" });
 
 export type WorldMiniaturesProps = {
   quality: "high" | "low";
@@ -57,7 +59,7 @@ function InteractiveMiniWorld({ world, active, position, scale, onSelect, onActi
     onPointerCancel={() => { pressStart.current = null; }}
   >
     {children}
-    {active ? <mesh scale={1.18}><sphereGeometry args={[1, 12, 8]} /><meshBasicMaterial color="#fff3c9" transparent opacity={.1} /></mesh> : null}
+    {active ? <mesh scale={1.18} material={activeGlow}><sphereGeometry args={[1, 12, 8]} /></mesh> : null}
   </group>;
 }
 
@@ -167,7 +169,7 @@ function LockBadge() {
   return <group position={[0, .08, 1.01]}>
     <mesh material={creamMatte}><boxGeometry args={[.32, .25, .09]} /></mesh>
     <mesh position={[0, .15, .01]} rotation={[0, 0, Math.PI]} material={creamMatte}><torusGeometry args={[.1, .035, 5, 10, Math.PI]} /></mesh>
-    <mesh position={[0, -.015, .055]}><sphereGeometry args={[.025, 6, 5]} /><meshBasicMaterial color="#725998" /></mesh>
+    <mesh position={[0, -.015, .055]} material={lockKeyhole}><sphereGeometry args={[.025, 6, 5]} /></mesh>
   </group>;
 }
 
