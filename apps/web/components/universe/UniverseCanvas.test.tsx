@@ -102,6 +102,13 @@ describe("Numeria quality and accessible controls", () => {
     expect(screen.getByRole("button", { name: "Slice 4" }).getAttribute("aria-pressed")).toBe("false");
   });
 
+  it("shows an optional child-facing hand cursor without moving fallback controls into the canvas", async () => {
+    render(<UniverseCanvas pizza={{ visible: true, selectedSlices: [], hand: { enabled: true, pointer: { x: .2, y: -.4 }, gesture: "point", phase: null, isTracking: true, status: "ready" } }} />);
+    expect((await screen.findByTestId("hand-cursor")).getAttribute("aria-hidden")).toBe("true");
+    expect(screen.getByText("Hand ready")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Slice 1" })).toBeTruthy();
+  });
+
   it("keeps a newly held pointer direction when focus moves between pad buttons", async () => {
     render(<UniverseCanvas />);
     await screen.findByTestId("scene");
