@@ -367,13 +367,14 @@ export function MagnetHandLabScene(props: MagnetHandLabSceneProps): React.JSX.El
     probedWebgl.current = true;
     let cancelled = false;
     let supported = false;
-    let context: WebGL2RenderingContext | null = null;
     try {
       const probe = document.createElement("canvas");
-      context = probe.getContext("webgl2", { failIfMajorPerformanceCaveat: true });
-      supported = Boolean(context);
+      const context = probe.getContext("webgl2", { failIfMajorPerformanceCaveat: true });
+      if (context) {
+        context.getExtension("WEBGL_lose_context")?.loseContext();
+        supported = true;
+      }
     } catch { supported = false; }
-    context?.getExtension("WEBGL_lose_context")?.loseContext();
     if (cancelled) return;
     if (supported) setWebglSupported(true);
     else reportGraphicsFailure();
