@@ -20,26 +20,30 @@ export interface HandTrackingState {
   handedness: string | null;
   confidence: number;
   isTracking: boolean;
+  /** Imperative frame data for render loops; updates do not schedule React work. */
+  latest: React.RefObject<HandTrackingLatest>;
 }
+export interface HandTrackingLatest { pointer: PointerNdc | null; handedness: string | null; confidence: number; isTracking: boolean }
 
-const emptyState = { status: "off" as CameraStatus, gesture: null, pointer: null, handedness: null, confidence: 0, isTracking: false };
+const createEmptyLatest = (): HandTrackingLatest => ({ pointer: null, handedness: null, confidence: 0, isTracking: false });
+const emptyState: { status: CameraStatus; gesture: Gesture | null } = { status: "off", gesture: null };
 
 /** Browser-local camera lifecycle plus stable hand gesture phases for scene consumers. */
 export function useHandTracking({ enabled, onGestureStart, onGestureHold, onGestureEnd }: HandTrackingCallbacks): HandTrackingState {
   const video = useRef<HTMLVideoElement>(null);
   const callbacks = useRef({ onGestureStart, onGestureHold, onGestureEnd });
-  const [state, setState] = useState<Omit<HandTrackingState, "video">>(emptyState);
+  const latest = useRef<HandTrackingLatest>(createEmptyLatest());
+  const [state, setState] = useState(emptyState);
   useEffect(() => { callbacks.current = { onGestureStart, onGestureHold, onGestureEnd }; }, [onGestureStart, onGestureHold, onGestureEnd]);
 
   useEffect(() => {
-    if (!enabled) { setState(emptyState); return; }
+    if (!enabled) { latest.current = createEmptyLatest(); setState(emptyState); return; }
     let cancelled = false;
     let stream: MediaStream | undefined;
     let tracker: LocalHandTracker | undefined;
     let animation = 0;
     let lastInferenceAt = -Infinity;
     let lastVideoTime = -1;
-    let pointer: PointerNdc | null = null;
     const element = video.current;
     const machine = new GestureStateMachine();
     const stop = () => {
@@ -51,7 +55,7 @@ export function useHandTracking({ enabled, onGestureStart, onGestureHold, onGest
       tracker = undefined;
       if (element) element.srcObject = null;
     };
-    const setUnavailable = () => { stop(); if (!cancelled) setState({ ...emptyState, status: "unavailable" }); };
+    const setUnavailable = () => { stop(); latest.current = createEmptyLatest(); if (!cancelled) setState({ ...emptyState, status: "unavailable" }); };
     const emit = (phases: GesturePhase[]) => {
       for (const phase of phases) {
         if (phase.type === "start") callbacks.current.onGestureStart?.(phase);
@@ -62,11 +66,17 @@ export function useHandTracking({ enabled, onGestureStart, onGestureHold, onGest
     const publish = (frame: HandFrame | null, at: number) => {
       const raw = frame?.confidence && frame.confidence >= GESTURE_CONFIG.minConfidence
         ? (requireGesture(frame) ?? null) : null;
-      if (frame && raw) pointer = smoothPointer(pointer, mirroredPointerNdc(frame.pointer ?? frame.landmarks[8]), GESTURE_CONFIG.pointerSmoothing, GESTURE_CONFIG.pointerDeadZone);
-      emit(machine.update(raw, at));
-      if (!cancelled) setState({ status: "ready", gesture: machine.gesture, pointer, handedness: frame?.handedness ?? null, confidence: frame?.confidence ?? 0, isTracking: Boolean(frame) });
+      if (frame && raw) latest.current.pointer = smoothPointer(latest.current.pointer, mirroredPointerNdc(frame.pointer ?? frame.landmarks[8]), GESTURE_CONFIG.pointerSmoothing, GESTURE_CONFIG.pointerDeadZone);
+      latest.current.handedness = frame?.handedness ?? null;
+      latest.current.confidence = frame?.confidence ?? 0;
+      latest.current.isTracking = Boolean(frame);
+      const phases = machine.update(raw, at);
+      emit(phases);
+      if (phases.some(phase => phase.type !== "hold") && !cancelled) {
+        setState(previous => previous.gesture === machine.gesture ? previous : { ...previous, gesture: machine.gesture });
+      }
     };
-    const onHidden = () => { if (document.hidden) { cancelled = true; stop(); setState(emptyState); } };
+    const onHidden = () => { if (document.hidden) { cancelled = true; stop(); latest.current = createEmptyLatest(); setState(emptyState); } };
     const onPageHide = () => { cancelled = true; stop(); };
     document.addEventListener("visibilitychange", onHidden);
     window.addEventListener("pagehide", onPageHide);
@@ -106,7 +116,16 @@ export function useHandTracking({ enabled, onGestureStart, onGestureHold, onGest
       window.removeEventListener("pagehide", onPageHide);
     };
   }, [enabled]);
-  return { video, ...state };
+  return {
+    video,
+    latest,
+    status: state.status,
+    gesture: state.gesture,
+    get pointer() { return latest.current.pointer; },
+    get handedness() { return latest.current.handedness; },
+    get confidence() { return latest.current.confidence; },
+    get isTracking() { return latest.current.isTracking; },
+  };
 }
 
 // Kept as a function indirection so the classifier remains the sole gesture-definition module.
