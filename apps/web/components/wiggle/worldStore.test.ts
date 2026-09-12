@@ -17,6 +17,11 @@ describe("world store", () => {
     expect(useWorldStore.getState().phase).toBe("opening");
   });
 
+  it("enters the hub from the opening", () => {
+    useWorldStore.getState().enterHub();
+    expect(useWorldStore.getState()).toMatchObject({ phase: "hub", selectedPlanetId: null });
+  });
+
   it("selects a planet for preview", () => {
     useWorldStore.getState().selectPlanet("lexicon");
     expect(useWorldStore.getState()).toMatchObject({ phase: "preview", selectedPlanetId: "lexicon" });

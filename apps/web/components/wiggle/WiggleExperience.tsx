@@ -18,6 +18,7 @@ type WiggleExperienceProps = {
 export function WiggleExperience({ quality, client, childId, allowLocalFallback }: WiggleExperienceProps) {
   const phase = useWorldStore((state) => state.phase);
   const reducedMotion = useWorldStore((state) => state.reducedMotion);
+  const enterHub = useWorldStore((state) => state.enterHub);
   const enterNumeria = useWorldStore((state) => state.enterNumeria);
 
   if (phase === "numeria") {
@@ -25,7 +26,7 @@ export function WiggleExperience({ quality, client, childId, allowLocalFallback 
   }
 
   if (phase === "opening") {
-    return <OpeningMoment reducedMotion={reducedMotion} onEnter={() => useWorldStore.setState({ phase: "hub" })} />;
+    return <OpeningMoment reducedMotion={reducedMotion} onEnter={enterHub} />;
   }
 
   return (

@@ -24,13 +24,13 @@ describe("WiggleExperience", () => {
   it("shows one entry action and a meaningful logo alternative", () => {
     render(<WiggleExperience />);
     expect(screen.getAllByRole("button")).toHaveLength(1);
-    expect(screen.getByRole("button", { name: "Let's Wiggle" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Let’s Wiggle" })).toBeTruthy();
     expect(screen.getByRole("img", { name: "Wiggle character mark" })).toBeTruthy();
   });
 
   it("moves from the opening into the hub", () => {
     render(<WiggleExperience />);
-    fireEvent.click(screen.getByRole("button", { name: "Let's Wiggle" }));
+    fireEvent.click(screen.getByRole("button", { name: "Let’s Wiggle" }));
     expect(useWorldStore.getState().phase).toBe("hub");
     expect(screen.getByRole("heading", { name: "Your learning universe is ready." })).toBeTruthy();
   });
@@ -38,7 +38,9 @@ describe("WiggleExperience", () => {
   it("renders reduced-motion opening state without waiting for animation completion", () => {
     useWorldStore.getState().setReducedMotion(true);
     render(<WiggleExperience />);
-    fireEvent.click(screen.getByRole("button", { name: "Let's Wiggle" }));
+    const entryAction = screen.getByRole("button", { name: "Let’s Wiggle" });
+    expect(entryAction).toBeTruthy();
+    fireEvent.click(entryAction);
     expect(screen.getByRole("heading", { name: "Your learning universe is ready." })).toBeTruthy();
   });
 });
