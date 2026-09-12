@@ -14,7 +14,9 @@ export type WiggleSoundName =
   | "tryAgain"
   | "whoosh"
   | "constellationUnlock"
-  | "celebrate";
+  | "celebrate"
+  | "magnetPull"
+  | "magnetStay";
 
 const MUTE_KEY = "wiggle:muted";
 
@@ -51,12 +53,32 @@ function playWhoosh(context: AudioContext) {
   source.start();
 }
 
-const SEQUENCES: Readonly<Record<Exclude<WiggleSoundName, "whoosh">, (context: AudioContext) => void>> = {
+/** Soft magnetic buzz for metal that sticks — gentle “zzzz”, never a loud alarm. */
+function playMagnetPull(context: AudioContext) {
+  const now = context.currentTime;
+  for (const [frequency, start, duration] of [[180, 0, 0.28], [240, 0.04, 0.32], [320, 0.1, 0.26]] as const) {
+    tone(context, { frequency, start, duration, gain: 0.045, type: "triangle" });
+  }
+  const oscillator = context.createOscillator();
+  const envelope = context.createGain();
+  oscillator.type = "sawtooth";
+  oscillator.frequency.setValueAtTime(90, now);
+  oscillator.frequency.linearRampToValueAtTime(140, now + 0.22);
+  envelope.gain.setValueAtTime(0, now);
+  envelope.gain.linearRampToValueAtTime(0.028, now + 0.03);
+  envelope.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+  oscillator.connect(envelope).connect(context.destination);
+  oscillator.start(now);
+  oscillator.stop(now + 0.4);
+}
+
+const SEQUENCES: Readonly<Record<Exclude<WiggleSoundName, "whoosh" | "magnetPull">, (context: AudioContext) => void>> = {
   missionStart: context => { tone(context, { frequency: 440, start: 0, duration: 0.22 }); tone(context, { frequency: 660, start: 0.08, duration: 0.24 }); },
   correct: context => { [523, 659, 784].forEach((frequency, index) => tone(context, { frequency, start: index * 0.07, duration: 0.2, gain: 0.07 })); },
   tryAgain: context => tone(context, { frequency: 330, start: 0, duration: 0.32, gain: 0.06, type: "sine" }),
   constellationUnlock: context => { [523, 659, 784, 988].forEach((frequency, index) => tone(context, { frequency, start: index * 0.09, duration: 0.35, gain: 0.06 })); },
   celebrate: context => { [392, 523, 659, 784, 1046].forEach((frequency, index) => tone(context, { frequency, start: index * 0.06, duration: 0.4, gain: 0.06 })); },
+  magnetStay: context => { tone(context, { frequency: 220, start: 0, duration: 0.18, gain: 0.04 }); tone(context, { frequency: 196, start: 0.1, duration: 0.22, gain: 0.035 }); },
 };
 
 export function useWiggleSound() {
@@ -79,6 +101,7 @@ export function useWiggleSound() {
       context.current ??= new AudioContext();
       if (context.current.state === "suspended") void context.current.resume();
       if (name === "whoosh") playWhoosh(context.current);
+      else if (name === "magnetPull") playMagnetPull(context.current);
       else SEQUENCES[name](context.current);
     } catch { /* Sound is a nice-to-have, never a requirement to proceed. */ }
   }, [muted]);

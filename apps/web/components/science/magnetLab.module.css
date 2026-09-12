@@ -58,13 +58,41 @@
   transform: scaleX(-1);
   opacity: .3;
 }
-.cameraCard { grid-column: 3; grid-row: 1 / 3; align-self: start; z-index: 2; min-width: 0; padding: .8rem 1rem; background: #f9e7ce; color: #342c43; border-radius: 1.4rem; box-shadow: 0 .75rem 2rem #100d2040; }
+.cameraCard { grid-column: 3; grid-row: 1; align-self: start; z-index: 2; min-width: 0; padding: .8rem 1rem; background: #f9e7ce; color: #342c43; border-radius: 1.4rem; box-shadow: 0 .75rem 2rem #100d2040; }
 .cameraCard h2 { font-size: 1rem; margin: .15rem 0 .45rem; }
 .cameraCard > p { font-size: .8rem; margin: .55rem 0 0; }
 .cameraStatus { margin: 0; font-weight: 700; color: #654d5c; }
+.objectKey {
+  grid-column: 3;
+  grid-row: 2;
+  align-self: end;
+  z-index: 2;
+  min-width: 0;
+  padding: .75rem .9rem;
+  background: #fff0d4;
+  color: #342c43;
+  border-radius: 1.25rem;
+  box-shadow: 0 .5rem 1.5rem #100d2040;
+}
+.objectKey h2 { margin: 0 0 .55rem; font-size: .95rem; }
+.objectKey ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; }
+.objectKey li {
+  display: flex;
+  justify-content: space-between;
+  gap: .75rem;
+  align-items: center;
+  padding: .45rem .55rem;
+  border-radius: .7rem;
+  background: #f9e7ce;
+  font-size: .78rem;
+}
+.objectKey li strong { font-size: .72rem; letter-spacing: .02em; text-transform: uppercase; }
+.objectKey li[data-result="attracted"] strong { color: #8a5a12; }
+.objectKey li[data-result="not-attracted"] strong { color: #355978; }
+.objectKey li[data-result="mystery"] strong { color: #654d5c; }
 @media (max-width: 48rem) {
   .mission { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; gap: 1rem; padding: 1rem; border-radius: 1.3rem; }
-  .exit, .missionCard, .guide, .workbench, .cameraCard { grid-column: 1; grid-row: auto; }
+  .exit, .missionCard, .guide, .workbench, .cameraCard, .objectKey { grid-column: 1; grid-row: auto; }
   .missionCard { padding: 1.1rem; }
   .guide { display: grid; grid-template-columns: 3rem minmax(0, 1fr); align-items: center; gap: .65rem; }
   .guideMark { width: 3rem; height: 3rem; margin: 0; }
@@ -72,6 +100,7 @@
   .retry { grid-column: 2; margin-top: 0; }
   .workbench { height: clamp(20rem, 75vw, 30rem); }
   .cameraCard { padding: .75rem 1rem; }
+  .objectKey { order: 5; }
 }
 @media (prefers-reduced-motion: reduce) {
   .mission button { transition: none; }

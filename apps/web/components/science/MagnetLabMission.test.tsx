@@ -43,6 +43,8 @@ it("keeps the video element across status changes and shows the ready mission", 
   expect(video?.closest("[aria-hidden='true']")?.className).toMatch(/Ready/);
   expect(screen.getByText("Move your open hand to guide the magnet!")).toBeTruthy();
   expect(screen.getByText("Your Hand")).toBeTruthy();
+  expect(screen.getByLabelText("Magnet Lab objects")).toBeTruthy();
+  expect(screen.getByText("Paper Clip")).toBeTruthy();
   expect(screen.queryByText("Getting ready…")).toBeNull();
 });
 it.each(["denied", "unavailable", "off"] as CameraStatus[])("hides the camera backdrop when readiness is lost to %s", (status) => {
@@ -80,7 +82,7 @@ it("advances through reducer actions and completes exactly once", () => {
   const onComplete = vi.fn();
   render(<MagnetLabMission onExit={vi.fn()} onComplete={onComplete} />);
   for (const object of MAGNET_OBJECTS) act(() => mock.scene!.onAction({ type: "observe", id: object.id }));
-  expect(screen.getByText("Pinch an object, move it to a tray, then open your hand.")).toBeTruthy();
+  expect(screen.getByText("Pinch an object, drop it on PULLS or NO PULL.")).toBeTruthy();
   for (const object of MAGNET_OBJECTS) {
     act(() => mock.scene!.onAction({ type: "grab", id: object.id }));
     act(() => mock.scene!.onAction({ type: "drop", id: object.id, target: object.result }));

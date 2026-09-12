@@ -2,6 +2,7 @@
 
 import { useEffect, useReducer, useRef, useState } from "react";
 import { useHandTracking } from "../../features/gestures/useHandTracking";
+import { useWiggleSound } from "../../features/audio/useWiggleSound";
 import { MagnetHandLabScene } from "./MagnetHandLabScene";
 import { initialMagnetPlay, magnetPlayReducer } from "./magnetHandPlay";
 import { MAGNET_OBJECTS } from "./scienceWorld";
@@ -11,13 +12,14 @@ export type MagnetLabMissionProps = { onExit(): void; onComplete(): void; manage
 
 const copy = {
   explore: "Move your open hand to guide the magnet!",
-  sort: "Pinch an object, move it to a tray, then open your hand.",
+  sort: "Pinch an object, drop it on PULLS or NO PULL.",
   hidden: "Point around the campsite to find the hidden magnet.",
 };
 const titles = { explore: "What does a magnet pull?", sort: "Find each object's home", hidden: "A campsite mystery!" };
 
 export function MagnetLabMission({ onExit, onComplete, manageFocus = true }: MagnetLabMissionProps) {
   const tracking = useHandTracking({ enabled: true });
+  const sound = useWiggleSound();
   const [state, dispatch] = useReducer(magnetPlayReducer, initialMagnetPlay);
   const [handStatus, setHandStatus] = useState("Show your hand to the camera.");
   const [reducedMotion, setReducedMotion] = useState(false);
@@ -25,7 +27,9 @@ export function MagnetLabMission({ onExit, onComplete, manageFocus = true }: Mag
   const notified = useRef(false);
   const wasReady = useRef(false);
   const exit = useRef(onExit);
+  const playSound = useRef(sound.play);
   exit.current = onExit;
+  playSound.current = sound.play;
 
   useEffect(() => {
     if (!manageFocus) return;
@@ -104,8 +108,27 @@ export function MagnetLabMission({ onExit, onComplete, manageFocus = true }: Mag
       {needsHelp && <button className={styles.retry} type="button" onClick={tracking.retry}>Try again</button>}
     </aside>
     <div className={styles.workbench}>
-      {ready && <MagnetHandLabScene latest={tracking.latest} state={state} reducedMotion={reducedMotion} onAction={dispatch} onHandStatus={setHandStatus} />}
+      {ready && <MagnetHandLabScene
+        latest={tracking.latest}
+        state={state}
+        reducedMotion={reducedMotion}
+        onAction={dispatch}
+        onHandStatus={setHandStatus}
+        onAttractionCue={(cue) => playSound.current(cue === "pull" ? "magnetPull" : "magnetStay")}
+      />}
     </div>
+    {ready && state.checkpoint !== "hidden" && <aside className={styles.objectKey} aria-label="Magnet Lab objects">
+      <h2>Objects</h2>
+      <ul>
+        {MAGNET_OBJECTS.map((object) => {
+          const learned = state.explored.includes(object.id) || state.sorted.includes(object.id) || state.checkpoint === "sort";
+          return <li key={object.id} data-result={learned ? object.result : "mystery"}>
+            <span>{object.name.replace(/\b\w/g, (letter) => letter.toUpperCase())}</span>
+            <strong>{learned ? (object.result === "attracted" ? "Pulls" : "No pull") : "Try it"}</strong>
+          </li>;
+        })}
+      </ul>
+    </aside>}
     <aside className={styles.cameraCard}>
       <h2>Your Hand</h2>
       {!ready && <p className={styles.cameraStatus}>{needsHelp ? "Camera needed" : "Getting ready…"}</p>}
