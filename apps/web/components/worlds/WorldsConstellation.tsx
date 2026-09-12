@@ -4,6 +4,7 @@ import { Component, useEffect, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { resolveQuality, type QualityPreference, type SceneQuality } from "../universe/world";
 import type { SubjectWorldId } from "./subjectRoute";
+import { orbitDecorationCounts } from "./worldOrbit";
 import styles from "./SubjectWorlds.module.css";
 
 const Scene = dynamic(() => import("./WorldsConstellationScene"), {
@@ -18,9 +19,7 @@ export type WorldsConstellationProps = {
   onSelect: (world: SubjectWorldId) => void;
 };
 
-export function worldDecorationCounts(quality: "high" | "low") {
-  return quality === "high" ? { stars: 40, debris: 40 } : { stars: 18, debris: 18 };
-}
+export const worldDecorationCounts = orbitDecorationCounts;
 
 class GraphicsBoundary extends Component<{ children: ReactNode; onFailure: () => void }, { failed: boolean }> {
   state = { failed: false };
