@@ -103,8 +103,8 @@ export function actionForHandFrame(state: MagnetPlayState, frame: HandTrackingLa
   return controller.update({ gesture: frame.gesture, target: point ? targetForCheckpoint(point, state) : null, isTracking: point !== null, at });
 }
 
-function handStatus(checkpoint: MagnetPlayState["checkpoint"], isTracking: boolean) {
-  if (!isTracking) return "Show your hand to the camera to use the Magnet Lab workbench.";
+export function handStatusForFrame(checkpoint: MagnetPlayState["checkpoint"], frame: HandTrackingLatest) {
+  if (!trackedTablePoint(frame)) return "Show your hand to the camera to use the Magnet Lab workbench.";
   if (checkpoint === "explore") return "Move the magnet near each object and watch what happens.";
   if (checkpoint === "sort") return "Pinch an object, then open your hand over the matching tray.";
   return "Point at the toolbox in the campsite to investigate it.";
@@ -129,15 +129,15 @@ function HandStatusReporter({ latest, checkpoint, onHandStatus }: Pick<MagnetHan
   const previous = useRef("");
   const callback = useRef(onHandStatus);
   callback.current = onHandStatus;
-  const report = (isTracking: boolean) => {
-    const next = handStatus(checkpoint, isTracking);
+  const report = (frame: HandTrackingLatest) => {
+    const next = handStatusForFrame(checkpoint, frame);
     if (next === previous.current) return;
     previous.current = next;
     callback.current(next);
   };
 
-  useEffect(() => { report(latest.current.isTracking); }, [checkpoint]);
-  useFrame(() => { report(latest.current.isTracking); });
+  useEffect(() => { report(latest.current); }, [checkpoint]);
+  useFrame(() => { report(latest.current); });
   return null;
 }
 

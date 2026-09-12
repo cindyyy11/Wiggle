@@ -77,6 +77,27 @@ it("advances through reducer actions and completes exactly once", () => {
   act(() => mock.scene!.onAction({ type: "investigate", target: "toolbox" }));
   expect(onComplete).toHaveBeenCalledTimes(1);
 });
+it("cancels a held object when camera readiness is lost so retry can grab again", () => {
+  mock.status = "ready";
+  const props = { onExit: vi.fn(), onComplete: vi.fn() };
+  const { rerender } = render(<MagnetLabMission {...props} />);
+  for (const object of MAGNET_OBJECTS) act(() => mock.scene!.onAction({ type: "observe", id: object.id }));
+
+  act(() => mock.scene!.onAction({ type: "grab", id: MAGNET_OBJECTS[0].id }));
+  expect(mock.scene!.state.held).toBe(MAGNET_OBJECTS[0].id);
+
+  mock.status = "denied";
+  rerender(<MagnetLabMission {...props} />);
+  expect(screen.queryByTestId("scene")).toBeNull();
+
+  mock.status = "ready";
+  rerender(<MagnetLabMission {...props} />);
+  expect(mock.scene!.state.held).toBeNull();
+  expect(mock.scene!.state.sorted).toEqual([]);
+
+  act(() => mock.scene!.onAction({ type: "grab", id: MAGNET_OBJECTS[1].id }));
+  expect(mock.scene!.state.held).toBe(MAGNET_OBJECTS[1].id);
+});
 it("keeps navigation available when graphics fail", () => {
   mock.status = "ready";
   render(<MagnetLabMission onExit={vi.fn()} onComplete={vi.fn()} />);

@@ -6,7 +6,7 @@ import type { HandTrackingLatest } from "../../features/gestures/useHandTracking
 import { initialMagnetPlay, magnetPlayReducer, type MagnetPlayState } from "./magnetHandPlay";
 import { MagnetHandGestureController } from "./magnetHandGesture";
 import { MAGNET_OBJECTS } from "./scienceWorld";
-import { MagnetHandLabScene, observationActionForTablePoint, actionForHandFrame } from "./MagnetHandLabScene";
+import { MagnetHandLabScene, observationActionForTablePoint, actionForHandFrame, handStatusForFrame } from "./MagnetHandLabScene";
 
 const canvasState = vi.hoisted(() => ({ throwOnRender: false }));
 const webgl = vi.hoisted(() => ({ supported: true, cleanupThrows: false, probeCalls: 0 }));
@@ -58,6 +58,13 @@ it("rejects stale, missing, low-confidence and non-finite pointers for every che
       expect(actionForHandFrame({ ...initialMagnetPlay, checkpoint }, frame, new MagnetHandGestureController(), 0)).toBeNull();
     }
   }
+});
+
+it("asks for a hand when the tracked table point is low-confidence or non-finite", () => {
+  const prompt = "Show your hand to the camera to use the Magnet Lab workbench.";
+  expect(handStatusForFrame("sort", { ...latest.current, confidence: .1 })).toBe(prompt);
+  expect(handStatusForFrame("sort", { ...latest.current, pointer: { x: NaN, y: 0 } })).toBe(prompt);
+  expect(handStatusForFrame("sort", latest.current)).toBe("Pinch an object, then open your hand over the matching tray.");
 });
 
 it("cancels a lost grab without scoring and accepts a new object after reacquisition", () => {
