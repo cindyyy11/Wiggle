@@ -3,6 +3,7 @@
 import React, { Component, useCallback, useEffect, useId, useRef, useState, type ReactNode, type CSSProperties, type PointerEvent } from "react";
 import dynamic from "next/dynamic";
 import { LANDMARKS, MISSION_DESTINATION, createExplorerInput, resolveQuality, type CameraMode, type Destination, type LandmarkId, type PizzaPresentation, type QualityPreference, type SceneQuality } from "./world";
+import { ExplorationHud } from "./ExplorationHud";
 import styles from "./universe.module.css";
 
 const Scene = dynamic(() => import("./UniverseScene"), { ssr: false, loading: () => <div className={styles.loading} role="status">Gathering a little stardust…</div> });
@@ -30,7 +31,7 @@ export interface UniverseCanvasProps {
 }
 
 export function UniverseCanvas({ mode: controlledMode, onModeChange, quality: preference = "auto", reducedMotion: reducedMotionOverride, destination, onDestinationChange, selectedLandmark: controlledLandmark, onLandmarkSelect, onMissionStart, pizza, children, className = "" }: UniverseCanvasProps) {
-  const [localMode, setLocalMode] = useState<CameraMode>("globe");
+  const [localMode, setLocalMode] = useState<CameraMode>("follow");
   const [localLandmark, setLocalLandmark] = useState<LandmarkId>("fraction-forest");
   const [quality, setQuality] = useState<SceneQuality>("fallback");
   const [userMap, setUserMap] = useState(false);
@@ -100,7 +101,6 @@ export function UniverseCanvas({ mode: controlledMode, onModeChange, quality: pr
 
   return <section className={`${styles.universe} ${className}`} aria-label="Explore Numeria" data-camera-mode={mode} data-quality={mapVisible ? "fallback" : quality}>
     <div className={styles.stars} aria-hidden="true" />
-    <header className={styles.heading}><a className={styles.wordmark} href="/" aria-label="Wiggle home"><img className={styles.wordmarkImage} src="/brand/wiggle-mark.png" alt="" /></a><div className={styles.worldTitle}><span>YOUR LEARNING UNIVERSE</span><h1>Numeria</h1><p>A little curiosity goes a long way.</p></div></header>
     <div className={styles.scene}>
       {mapVisible ? <NumeriaMap /> : <GraphicsBoundary onFailure={graphicsFailed}><Scene mode={mode} quality={quality === "high" ? "high" : "low"} reducedMotion={reducedMotion} input={input} selectedLandmark={selectedLandmark} onLandmarkSelect={selectLandmark} onDestinationChange={onDestinationChange} onContextLost={graphicsFailed} onQualityChange={lowerQuality} pizza={pizza} /></GraphicsBoundary>}
     </div>
@@ -110,24 +110,7 @@ export function UniverseCanvas({ mode: controlledMode, onModeChange, quality: pr
       {handDebug ? <output className={styles.handDebug} aria-label="Hand tracking debug">gesture: {hand.gesture ?? "none"} · pointer: {handFrame?.pointer ? `${handFrame.pointer.x.toFixed(2)}, ${handFrame.pointer.y.toFixed(2)}` : "none"} · tracking: {String(handFrame?.isTracking ?? false)}</output> : null}
     </div> : null}
     {mapVisible && pizza?.visible ? <div className={styles.mapPizza} role="img" aria-label={`Pizza with ${pizza.selectedSlices.length} of four equal slices selected`}><div>{[0, 1, 2, 3].map(index => <span key={index} data-selected={pizza.selectedSlices.includes(index)} />)}</div></div> : null}
-    <div className={styles.cameraControls} role="group" aria-label="View controls">
-      <button type="button" aria-label="Globe view" aria-pressed={mode === "globe"} onClick={() => changeMode("globe")} title="Globe view">◎<span>Globe view</span></button>
-      <button type="button" aria-label="Follow explorer" aria-pressed={mode === "follow"} onClick={() => changeMode("follow")} title="Follow explorer">♙<span>Follow explorer</span></button>
-      <button type="button" aria-pressed={help} onClick={() => setHelp(!help)} aria-label="How to explore">?</button>
-      <button type="button" onClick={() => { setUserMap(!mapVisible); if (mapVisible) { setFailed(false); setQuality("low"); } }} aria-label={mapVisible ? "Try 3D view" : "Use 2D map"}>{mapVisible ? "3D" : "2D"}</button>
-      <a className={styles.parentLink} href="/parent" aria-label="Parent mission control">Parent</a>
-    </div>
-    <div className={styles.orbitCaption} aria-label="Future worlds"><span>◉ &nbsp; WORDWELL <small>LOCKED</small></span><span>◌ &nbsp; NOVA <small>LOCKED</small></span></div>
-    <nav className={styles.destinations} aria-label="Numeria destinations">
-      <p>WHERE SHALL WE GO?</p>
-      {LANDMARKS.map(item => <button type="button" key={item.id} onClick={() => selectLandmark(item.id)} aria-label={`Visit ${item.name}`} aria-pressed={item.id === selectedLandmark} style={{ "--region": item.color } as CSSProperties}><span className={styles.regionSymbol} aria-hidden="true">{item.symbol}</span><span>{item.name}</span><span className={styles.regionArrow} aria-hidden="true">↗</span></button>)}
-    </nav>
-    <aside className={styles.destinationCard} style={{ "--region": landmark.color } as CSSProperties} aria-label="Selected destination">
-      <span className={styles.eyebrow}>{selectedLandmark === "fraction-forest" ? "YOUR NEXT DISCOVERY" : "FOLLOW YOUR CURIOSITY"}</span>
-      <h2>{landmark.name}</h2><p>{landmark.subtitle}</p>
-      {onMissionStart ? <button type="button" className={styles.missionButton} onClick={startMission}>Start fractions mission <span aria-hidden="true">↗</span></button> : <button type="button" className={styles.missionButton} onClick={() => { selectLandmark(selectedLandmark); changeMode("follow"); }}>Let's explore <span aria-hidden="true">↗</span></button>}
-    </aside>
-    {help ? <aside className={styles.help} aria-label="Exploration instructions"><h2>Make yourself at home.</h2><p id={instructionsId}>Drag to look around. Scroll or pinch to zoom. Tap the ground to walk. Focus the movement pad and use arrows or WASD. Hold Shift to run. Space to hop.</p><p>You can also choose any destination by name. The 2D map has the same mission controls.</p><button type="button" onClick={() => setHelp(false)}>Got it</button></aside> : null}
+    <ExplorationHud mode={mode} mapVisible={mapVisible} selectedLandmark={selectedLandmark} landmark={landmark} help={help} onHelpChange={setHelp} onModeChange={changeMode} onToggleMap={() => { setUserMap(!mapVisible); if (mapVisible) { setFailed(false); setQuality("low"); } }} onSelectLandmark={selectLandmark} onMissionStart={onMissionStart ? startMission : undefined} instructionsId={instructionsId} missionVisible={mode === "mission" || !!pizza?.visible} />
     {!mapVisible ? <div className={styles.explorerControls}>
       <div className={styles.movementPad} tabIndex={0} role="group" aria-label="Move explorer. Arrow keys or WASD to walk, Shift to run, Space to hop." onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) input.current.keys.clear(); }} onKeyDown={event => {
         const key = event.key.toLowerCase();

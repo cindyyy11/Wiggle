@@ -56,18 +56,18 @@ export function Astronaut({ input, reducedMotion }: { input: InputRef; reducedMo
   });
 
   return <group ref={explorer} name="Wiggle explorer" position={surfacePoint(INITIAL_DESTINATION, RADIUS + .03)} scale={.83}>
-    <mesh position={[0, .025, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[.2, 14]} /><meshBasicMaterial color="#224445" transparent opacity={.3} depthWrite={false} /></mesh>
-    <group ref={leftLeg} position={[-.073, .19, 0]}><mesh position={[0, -.08, 0]}><capsuleGeometry args={[.057, .105, 2, 6]} /><meshStandardMaterial color="#e9ecdb" roughness={.85} /></mesh><mesh position={[0, -.15, .04]}><boxGeometry args={[.115, .08, .16]} /><meshStandardMaterial color="#dfbc83" /></mesh></group>
-    <group ref={rightLeg} position={[.073, .19, 0]}><mesh position={[0, -.08, 0]}><capsuleGeometry args={[.057, .105, 2, 6]} /><meshStandardMaterial color="#e9ecdb" roughness={.85} /></mesh><mesh position={[0, -.15, .04]}><boxGeometry args={[.115, .08, .16]} /><meshStandardMaterial color="#dfbc83" /></mesh></group>
-    <mesh position={[0, .31, 0]}><capsuleGeometry args={[.13, .14, 3, 8]} /><meshStandardMaterial color="#edf0df" roughness={.82} /></mesh>
-    <mesh position={[0, .31, -.13]}><boxGeometry args={[.2, .24, .12]} /><meshStandardMaterial color="#b9cbc5" roughness={1} /></mesh>
-    <mesh position={[0, .33, .119]}><boxGeometry args={[.13, .095, .026]} /><meshStandardMaterial color="#d9b77e" /></mesh>
-    <mesh position={[-.17, .31, 0]} rotation={[0, 0, -.2]}><capsuleGeometry args={[.05, .15, 2, 6]} /><meshStandardMaterial color="#d9e9d8" /></mesh>
-    <mesh position={[.17, .31, 0]} rotation={[0, 0, .2]}><capsuleGeometry args={[.05, .15, 2, 6]} /><meshStandardMaterial color="#d9e9d8" /></mesh>
-    <mesh position={[0, .55, 0]}><sphereGeometry args={[.205, 12, 9]} /><meshStandardMaterial color="#f0eddb" roughness={.45} /></mesh>
-    <mesh position={[0, .557, .113]} scale={[1, .78, .56]}><sphereGeometry args={[.174, 12, 8]} /><meshStandardMaterial color="#233f54" metalness={.2} roughness={.22} /></mesh>
-    <mesh position={[-.062, .62, .188]} scale={[1, .3, .1]} rotation={[0, 0, -.3]}><sphereGeometry args={[.053, 8, 5]} /><meshBasicMaterial color="#b2e0dc" /></mesh>
-    <mesh position={[.13, .72, 0]}><cylinderGeometry args={[.009, .009, .14, 4]} /><meshStandardMaterial color="#b8d6cb" /></mesh>
-    <mesh position={[.13, .8, 0]}><sphereGeometry args={[.025, 6, 4]} /><meshBasicMaterial color="#fcda86" /></mesh>
+    <mesh position={[0, .025, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[.2, 14]} /><meshBasicMaterial color="#285c85" transparent opacity={.16} depthWrite={false} /></mesh>
+    <group ref={leftLeg} position={[-.073, .19, 0]}><mesh position={[0, -.08, 0]}><capsuleGeometry args={[.057, .105, 2, 6]} /><meshStandardMaterial color="#fff7e7" roughness={.92} /></mesh><mesh position={[0, -.15, .04]}><boxGeometry args={[.115, .08, .16]} /><meshStandardMaterial color="#ef8b78" roughness={.9} /></mesh></group>
+    <group ref={rightLeg} position={[.073, .19, 0]}><mesh position={[0, -.08, 0]}><capsuleGeometry args={[.057, .105, 2, 6]} /><meshStandardMaterial color="#fff7e7" roughness={.92} /></mesh><mesh position={[0, -.15, .04]}><boxGeometry args={[.115, .08, .16]} /><meshStandardMaterial color="#ef8b78" roughness={.9} /></mesh></group>
+    <mesh position={[0, .31, 0]}><capsuleGeometry args={[.13, .14, 3, 8]} /><meshStandardMaterial color="#fff7e7" roughness={.9} /></mesh>
+    <mesh position={[0, .31, -.13]}><boxGeometry args={[.2, .24, .12]} /><meshStandardMaterial color="#9dc99a" roughness={1} /></mesh>
+    <mesh position={[0, .33, .119]}><boxGeometry args={[.13, .095, .026]} /><meshStandardMaterial color="#f4c95d" roughness={.88} /></mesh>
+    <mesh position={[-.17, .31, 0]} rotation={[0, 0, -.2]}><capsuleGeometry args={[.05, .15, 2, 6]} /><meshStandardMaterial color="#d9efd7" roughness={.9} /></mesh>
+    <mesh position={[.17, .31, 0]} rotation={[0, 0, .2]}><capsuleGeometry args={[.05, .15, 2, 6]} /><meshStandardMaterial color="#d9efd7" roughness={.9} /></mesh>
+    <mesh position={[0, .55, 0]}><sphereGeometry args={[.205, 12, 9]} /><meshStandardMaterial color="#fff7e7" roughness={.72} /></mesh>
+    <mesh position={[0, .557, .113]} scale={[1, .78, .56]}><sphereGeometry args={[.174, 12, 8]} /><meshStandardMaterial color="#285c85" metalness={0} roughness={.42} /></mesh>
+    <mesh position={[-.062, .62, .188]} scale={[1, .3, .1]} rotation={[0, 0, -.3]}><sphereGeometry args={[.053, 8, 5]} /><meshBasicMaterial color="#a9d9ee" /></mesh>
+    <mesh position={[.13, .72, 0]}><cylinderGeometry args={[.009, .009, .14, 4]} /><meshStandardMaterial color="#9dc99a" roughness={.9} /></mesh>
+    <mesh position={[.13, .8, 0]}><sphereGeometry args={[.025, 6, 4]} /><meshBasicMaterial color="#f4c95d" /></mesh>
   </group>;
 }

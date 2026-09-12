@@ -33,7 +33,7 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
   const selectionKey = useRef<{ strategy: StrategyName; key: string } | null>(null);
   const [phase, setPhase] = useState<MissionPhase | null>(null);
   const [mode, setMode] = useState<LearningMode>("standard");
-  const [camera, setCamera] = useState<CameraMode>("globe");
+  const [camera, setCamera] = useState<CameraMode>("follow");
   const [destination, setDestination] = useState<Destination | null>(null);
   const [landmark, setLandmark] = useState<LandmarkId>("fraction-forest");
   const [slices, setSlices] = useState<number[]>([]);
@@ -201,7 +201,7 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
   const close = () => {
     controller.current?.abort(); controller.current = null; pending.current = false; setBusy(false);
     if (phase !== "complete") emit({ kind: "mission_abandoned", mode });
-    run.current = null; setPhase(null); setSlices([]); setCamera("globe"); setDestination(null); setFeedback("");
+    run.current = null; setPhase(null); setSlices([]); setCamera("follow"); setDestination(null); setFeedback("");
     heldSliceRef.current = null; lastGesturePlacement.current = null; setHeldSlice(null); setFocusedSlice(null); setGesturePhase(null); setCameraEnabled(false); setSupport(null); lexiKey.current = null;
     requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('[aria-label="Selected destination"] button')?.focus());
   };
