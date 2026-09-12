@@ -51,6 +51,7 @@ export function UniverseCanvas({ mode: controlledMode, onModeChange, quality: pr
   const landmark = LANDMARKS.find(item => item.id === selectedLandmark) ?? LANDMARKS[0];
   const reducedMotion = reducedMotionOverride ?? systemReducedMotion;
   const mapVisible = quality === "fallback" || userMap || failed;
+  const shellNavigationDisabled = Boolean(onWorldsRequest && worldsDisabled);
   const hand = pizza?.hand;
   const handFrame = hand?.latest.current;
   const handDebug = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("handDebug") === "1";
@@ -119,7 +120,9 @@ export function UniverseCanvas({ mode: controlledMode, onModeChange, quality: pr
       <button type="button" aria-label="Follow explorer" aria-pressed={mode === "follow"} onClick={() => changeMode("follow")} title="Follow explorer">♙<span>Follow explorer</span></button>
       <button type="button" aria-pressed={help} onClick={() => setHelp(!help)} aria-label="How to explore">?</button>
       <button type="button" onClick={() => { setUserMap(!mapVisible); if (mapVisible) { setFailed(false); setQuality("low"); } }} aria-label={mapVisible ? "Try 3D view" : "Use 2D map"}>{mapVisible ? "3D" : "2D"}</button>
-      <a className={styles.parentLink} href="/parent" aria-label="Parent mission control">Parent</a>
+      {shellNavigationDisabled
+        ? <button type="button" className={styles.parentLink} disabled aria-label="Parent mission control" aria-describedby={worldsMessageId}>Parent</button>
+        : <a className={styles.parentLink} href="/parent" aria-label="Parent mission control">Parent</a>}
     </div>
     <div className={styles.orbitCaption} aria-label="Future worlds"><span>◉ &nbsp; WORDWELL <small>LOCKED</small></span><span>◌ &nbsp; NOVA <small>LOCKED</small></span></div>
     <nav className={styles.destinations} aria-label="Numeria destinations">

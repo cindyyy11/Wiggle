@@ -77,7 +77,7 @@ it("aborts a pending adaptation when the child leaves, without restoring the old
 });
 afterEach(cleanup);
 
-it("reports an active overlay and blocks Worlds until the existing leave action closes it", async () => {
+it("blocks shell Worlds and Parent navigation until the existing leave action closes an active Maths mission", async () => {
   const onMissionOverlayChange = vi.fn();
   const onWorldsRequest = vi.fn();
   render(
@@ -91,10 +91,41 @@ it("reports an active overlay and blocks Worlds until the existing leave action 
   fireEvent.click(screen.getByRole("button", { name: "Start fractions mission" }));
   await screen.findByRole("region", { name: "Fraction mission" });
   expect(screen.getByRole("button", { name: "Back to Worlds" })).toBeDisabled();
+  const parent = screen.getByRole("button", { name: "Parent mission control" });
+  expect(parent).toBeDisabled();
+  expect(parent.getAttribute("aria-describedby")).toBeTruthy();
+  expect(screen.queryByRole("link", { name: "Parent mission control" })).toBeNull();
+  fireEvent.click(parent);
+  expect(onWorldsRequest).not.toHaveBeenCalled();
+  expect(screen.getByRole("region", { name: "Fraction mission" })).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Leave mission" }));
   expect(onMissionOverlayChange).toHaveBeenLastCalledWith(false);
+  expect(screen.getByRole("link", { name: "Parent mission control" })).toHaveAttribute("href", "/parent");
   fireEvent.click(screen.getByRole("button", { name: "Back to Worlds" }));
   expect(onWorldsRequest).toHaveBeenCalledOnce();
+});
+
+it("blocks the shell Parent control while a Maths mission is still starting", async () => {
+  const client = new ApiClient();
+  let resolveStart: (value: ReturnType<typeof demoSession>) => void = () => {};
+  vi.spyOn(client, "start").mockImplementation(() => new Promise<ReturnType<typeof demoSession>>(resolve => { resolveStart = resolve; }));
+  render(<MissionAtlas quality="fallback" showSplash={false} client={client} onWorldsRequest={vi.fn()} />);
+
+  fireEvent.click(screen.getByRole("button", { name: "Start fractions mission" }));
+  expect(screen.getByText("Your mission is coming into view…")).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Parent mission control" })).toBeDisabled();
+  expect(screen.queryByRole("link", { name: "Parent mission control" })).toBeNull();
+
+  resolveStart(demoSession("starting-session"));
+  await screen.findByRole("region", { name: "Fraction mission" });
+});
+
+it("preserves the live Parent route for direct MissionAtlas use", async () => {
+  render(<MissionAtlas quality="fallback" showSplash={false} />);
+
+  fireEvent.click(screen.getByRole("button", { name: "Start fractions mission" }));
+  await screen.findByRole("region", { name: "Fraction mission" });
+  expect(screen.getByRole("link", { name: "Parent mission control" })).toHaveAttribute("href", "/parent");
 });
 
 it("completes the child hero loop through the accessible local world", async () => {

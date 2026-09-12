@@ -15,7 +15,7 @@ export type ScienceFallbackProps = {
 };
 
 export function ScienceFallback(props: ScienceFallbackProps) {
-  return <main className={styles.planet} aria-label="Science Planet">
+  return <section className={styles.planet} aria-label="Science Planet">
     <ScienceHud {...props} />
     <section className={styles.map}>
       <div className={styles.mapVisual} role="img" aria-label="Science Planet map">
@@ -38,5 +38,5 @@ export function ScienceFallback(props: ScienceFallbackProps) {
       </div>
     </section>
     <p className={styles.mapHint}>Choose any numbered discovery spot on the map, or use the topic buttons above.</p>
-  </main>;
+  </section>;
 }
