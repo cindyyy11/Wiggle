@@ -18,6 +18,8 @@ import { PIZZA_SLICE_IDS } from "../universe/Landmarks";
 import styles from "./mission.module.css";
 
 interface Run { session: StartSessionResponse; transport: "local" | "api"; startedAt: number; interacted: boolean; finished: boolean }
+type SplashState = "ready" | "leaving" | "complete";
+const SPLASH_EXIT_DELAY_MS = 320;
 export function MissionAtlas({ quality = "auto", client: suppliedClient, childId = DEMO_CHILD_ID, allowLocalFallback = true }: { quality?: QualityPreference; client?: ApiClient; childId?: string; allowLocalFallback?: boolean }) {
   const [client] = useState(() => suppliedClient ?? (allowLocalFallback ? new ApiClient() : new ApiClient("/api/backend")));
   const startKey = useRef<string | null>(null);
@@ -47,6 +49,36 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
   const [heldSlice, setHeldSlice] = useState<number | null>(null);
   const heldSliceRef = useRef<number | null>(null);
   const lastGesturePlacement = useRef<{ gesture: "pinch" | "fist"; objectId: (typeof PIZZA_SLICE_IDS)[number] } | null>(null);
+  const [splashState, setSplashState] = useState<SplashState>("ready");
+  const splashStarting = useRef(false);
+  const splashTimeout = useRef<number | null>(null);
+
+  useEffect(() => () => {
+    if (splashTimeout.current !== null) window.clearTimeout(splashTimeout.current);
+  }, []);
+
+  const startSplash = () => {
+    if (splashStarting.current) return;
+    splashStarting.current = true;
+    setSplashState("leaving");
+    try {
+      const audio = new AudioContext();
+      const oscillator = audio.createOscillator();
+      const gain = audio.createGain();
+      oscillator.frequency.setValueAtTime(440, audio.currentTime);
+      oscillator.frequency.exponentialRampToValueAtTime(660, audio.currentTime + 0.22);
+      gain.gain.setValueAtTime(0.08, audio.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audio.currentTime + 0.3);
+      oscillator.connect(gain).connect(audio.destination);
+      oscillator.start();
+      oscillator.stop(audio.currentTime + 0.31);
+      window.setTimeout(() => void audio.close(), 500);
+    } catch { /* Audio is optional. */ }
+    splashTimeout.current = window.setTimeout(
+      () => setSplashState("complete"),
+      SPLASH_EXIT_DELAY_MS,
+    );
+  };
   const [support, setSupport] = useState<"lexi" | "reset" | "reality" | null>(null);
   const [supportText, setSupportText] = useState("");
   const realityStarted = useRef(false);
