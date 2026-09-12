@@ -21,9 +21,11 @@ type ExplorationHudProps = {
   onWorldsRequest?: () => void;
   worldsDisabled?: boolean;
   worldsDisabledMessage?: string;
+  childId?: string;
 };
 
-export function ExplorationHud({ mode, mapVisible, selectedLandmark, landmark, help, onHelpChange, onModeChange, onToggleMap, onSelectLandmark, onMissionStart, instructionsId, missionVisible, onWorldsRequest, worldsDisabled = false, worldsDisabledMessage = "Worlds are unavailable right now." }: ExplorationHudProps) {
+export function ExplorationHud({ mode, mapVisible, selectedLandmark, landmark, help, onHelpChange, onModeChange, onToggleMap, onSelectLandmark, onMissionStart, instructionsId, missionVisible, onWorldsRequest, worldsDisabled = false, worldsDisabledMessage = "Worlds are unavailable right now.", childId }: ExplorationHudProps) {
+  const twinHref = childId ? `/twin?child=${encodeURIComponent(childId)}` : "/twin";
   const [navigatorOpen, setNavigatorOpen] = useState(false);
   const worldsMessageId = useId();
   const showNavigator = mapVisible || navigatorOpen;
@@ -43,6 +45,7 @@ export function ExplorationHud({ mode, mapVisible, selectedLandmark, landmark, h
     <a className={styles.brand} href="/" aria-label="Wiggle home"><img src="/brand/wiggle-mark.png" alt="" /></a>
     <div className={styles.location} aria-label="Current world"><span>WIGGLE SPACE</span><strong>Numeria</strong></div>
     <div className={styles.actions}>
+      <a className={styles.parent} href={twinHref} aria-label="My Wiggle Twin">My Twin</a>
       {shellNavigationDisabled ? <div className={styles.worldsControl}>
         <button type="button" className={styles.parent} disabled aria-label="Parent mission control" aria-describedby={worldsMessageId}>Parent</button>
         <p id={worldsMessageId} className={styles.worldsMessage} role="status">{worldsDisabledMessage}</p>
@@ -66,6 +69,7 @@ export function ExplorationHud({ mode, mapVisible, selectedLandmark, landmark, h
         <button type="button" className={styles.tool} onClick={() => setNavigatorOpen(value => !value)} aria-expanded={showNavigator} aria-controls="numeria-places">Places</button>
         <button type="button" className={styles.tool} onClick={onToggleMap} aria-label={mapVisible ? "Try 3D view" : "Use 2D map"}>{mapVisible ? "3D" : "2D"}</button>
         <button type="button" className={styles.tool} onClick={() => onHelpChange(!help)} aria-label="How to explore" aria-expanded={help}>Help</button>
+        <a className={styles.parent} href={twinHref} aria-label="My Wiggle Twin">My Twin</a>
         {shellNavigationDisabled
           ? <button type="button" className={styles.parent} disabled aria-label="Parent mission control" aria-describedby={worldsMessageId}>Parent</button>
           : <a className={styles.parent} href="/parent" aria-label="Parent mission control">Parent</a>}

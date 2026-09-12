@@ -5,6 +5,7 @@ from app.domain.strategies import StrategyName
 from app.providers.base import LexiContent, ProviderContext
 from app.schemas import AppendEventsRequest, LexiRequest, LexiResponse, SelectAdaptationRequest
 from app.services.adaptation import AdaptationService, mode_for_strategy
+from app.services.safety import SAFETY_RESPONSE, detect_crisis
 from app.services.sessions import SessionService, WorkflowError, stable_id
 
 
@@ -16,6 +17,10 @@ class LexiService:
         session = self.sessions.session(request.session_id)
         if session["status"] == "abandoned":
             raise WorkflowError("session_closed", "Cannot use tools in an abandoned session")
+        # The safety check runs before any provider call and before tool dispatch: no
+        # prompt, tool schema, or "helpful" AI phrasing can override this redirect.
+        if detect_crisis(request.message):
+            return LexiResponse(content=SAFETY_RESPONSE)
         active = self.sessions.active_intervention(session)
         mode, _ = mode_for_strategy(str(active["selected_strategy"]))
         context = ProviderContext(message=request.message, mode=mode)

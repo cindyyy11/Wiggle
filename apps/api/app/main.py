@@ -16,7 +16,7 @@ from app.providers.gemini import provider_from_env
 from app.repositories.memory import MemoryRepository
 from app.repositories.protocols import RepositoryAccessError, RepositoryError, WiggleRepository
 from app.repositories.supabase import RepositorySettings
-from app.routes import adaptation, events, lexi, parent, sessions, twin
+from app.routes import adaptation, child, events, lexi, parent, sessions, twin
 from app.services.parent_pin import PinStore
 from app.services.sessions import WorkflowError
 
@@ -114,6 +114,7 @@ def create_app(
         adaptation.router,
         lexi.router,
         parent.router,
+        child.router,
     ):
         app.include_router(router)
     return app
