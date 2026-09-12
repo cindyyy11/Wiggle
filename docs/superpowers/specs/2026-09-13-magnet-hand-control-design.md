@@ -66,5 +66,5 @@ Checkpoint 3 reduces the overlay again so walking and environmental searching st
 - Unit test pointer updates when a hand is confidently seen but unclassified.
 - Unit test bounded magnet mapping and magnetic/non-magnetic attraction decisions.
 - Unit test checkpoint progress, loss grace, and no accidental release.
-- Browser tests cover automatic permission request state, denied-camera adult screen and retry, checkpoint completion with mocked hand frames, focus return, reduced motion, desktop, and mobile.
+- Component and pure interaction tests cover checkpoint completion with mocked hand frames. Browser tests cover automatic permission request state, denied-camera adult screen and retry, focus return, reduced motion, desktop, and mobile without requiring a physical camera or remote inference.
 - Visually inspect the 3D bench, camera card, magnet movement, and narrow mobile layout.
