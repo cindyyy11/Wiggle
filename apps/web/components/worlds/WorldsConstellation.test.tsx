@@ -55,3 +55,16 @@ it("observes reduced-motion preference and passes it to the decorative scene", a
   expect(sceneState.reducedMotion).toBe(true);
   expect(view.container.querySelector('[data-reduced-motion="true"]')).toBeTruthy();
 });
+
+it("defaults to motion when matchMedia is unavailable", () => {
+  Object.defineProperty(window, "matchMedia", {
+    configurable: true,
+    writable: true,
+    value: undefined,
+  });
+  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({ getExtension: () => null } as never);
+
+  render(<WorldsConstellation selectedWorld="science" quality="low" onSelect={vi.fn()} />);
+
+  expect(screen.getByTestId("worlds-constellation-scene").getAttribute("data-reduced-motion")).toBe("false");
+});

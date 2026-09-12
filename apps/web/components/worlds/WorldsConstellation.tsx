@@ -35,6 +35,7 @@ export function WorldsConstellation({ selectedWorld, quality: preference = "auto
   const reducedMotion = reducedMotionOverride ?? systemReducedMotion;
 
   useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => setSystemReducedMotion(media.matches);
     update();
