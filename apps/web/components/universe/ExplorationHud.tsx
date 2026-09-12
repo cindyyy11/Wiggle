@@ -39,7 +39,16 @@ export function ExplorationHud({ mode, mapVisible, selectedLandmark, landmark, h
 
   useEffect(() => { if (missionVisible) setNavigatorOpen(false); }, [missionVisible]);
 
-  if (missionVisible && !mapVisible) return null;
+  if (missionVisible && !mapVisible) return <header className={styles.topbar}>
+    <a className={styles.brand} href="/" aria-label="Wiggle home"><img src="/brand/wiggle-mark.png" alt="" /></a>
+    <div className={styles.location} aria-label="Current world"><span>WIGGLE SPACE</span><strong>Numeria</strong></div>
+    <div className={styles.actions}>
+      {shellNavigationDisabled ? <div className={styles.worldsControl}>
+        <button type="button" className={styles.parent} disabled aria-label="Parent mission control" aria-describedby={worldsMessageId}>Parent</button>
+        <p id={worldsMessageId} className={styles.worldsMessage} role="status">{worldsDisabledMessage}</p>
+      </div> : <a className={styles.parent} href="/parent" aria-label="Parent mission control">Parent</a>}
+    </div>
+  </header>;
 
   return <>
     <header className={styles.topbar}>
