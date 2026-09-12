@@ -109,6 +109,7 @@ it("announces locked worlds without changing the route and blocks navigation awa
   render(<SubjectWorlds childId="owned" allowLocalFallback={false} initialRoute={{ world: null, child: "owned" }} />);
 
   enterWorlds();
+  fireEvent.click(screen.getByRole("button", { name: "Show English" }));
   const english = screen.getByRole("button", { name: "English (coming soon)" });
   english.focus();
   fireEvent.click(english);
@@ -116,6 +117,7 @@ it("announces locked worlds without changing the route and blocks navigation awa
   expect(screen.getByRole("status").textContent).toContain("English is coming soon");
   expect(window.location.search).toBe("");
 
+  fireEvent.click(screen.getByRole("button", { name: "Show Numeria" }));
   fireEvent.click(screen.getByRole("button", { name: "Explore Numeria" }));
   fireEvent.click(screen.getByRole("button", { name: "Open Maths mission" }));
   window.history.pushState({}, "", "/?child=owned&world=science&zone=magnet-lab");
@@ -123,4 +125,20 @@ it("announces locked worlds without changing the route and blocks navigation awa
   expect(screen.getByTestId("maths-props")).toBeTruthy();
   expect(window.location.search).toBe("?child=owned&world=math");
   expect(screen.getByText("Finish or leave your Maths mission before changing worlds.")).toBeTruthy();
+});
+
+it("slides between planets without navigating and keeps locked planets on the chooser", () => {
+  vi.useFakeTimers();
+  render(<SubjectWorlds initialRoute={{ world: null }} quality="fallback" />);
+  enterWorlds();
+  expect(screen.getByRole("heading", { name: "Numeria" })).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Next planet" }));
+  expect(screen.getByRole("heading", { name: "Science Planet" })).toBeTruthy();
+  expect(window.location.search).toBe("");
+  fireEvent.click(screen.getByRole("button", { name: "Next planet" }));
+  fireEvent.click(screen.getByRole("button", { name: "Bahasa Melayu (coming soon)" }));
+  expect(window.location.search).toBe("");
+  expect(screen.getByRole("status").textContent).toContain("Bahasa Melayu is coming soon");
+  fireEvent.click(screen.getByRole("button", { name: "Previous planet" }));
+  expect(screen.getByRole("button", { name: "Explore Science Planet" })).toBeTruthy();
 });

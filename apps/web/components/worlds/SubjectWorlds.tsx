@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MissionAtlas } from "../mission/MissionAtlas";
 import { SciencePlanet } from "../science/SciencePlanet";
 import type { ApiClient } from "../../lib/api/client";
@@ -38,6 +38,15 @@ export function SubjectWorlds({ childId, allowLocalFallback, client, quality, in
   const [route, setRoute] = useState<SubjectRoute>(() => routeForChild(initialRoute, childId));
   const [mathsOverlayOpen, setMathsOverlayOpen] = useState(false);
   const [activeWorld, setActiveWorld] = useState<SubjectWorldId | null>(null);
+  const [selectedWorld, setSelectedWorld] = useState<SubjectWorldId>("math");
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
+  const suppressClick = useRef(false);
+  const order: SubjectWorldId[] = ["math", "science", "bm", "english"];
+  const chooseWorld = (world: SubjectWorldId) => { setSelectedWorld(world); setStatusMessage(""); };
+  const slide = (direction: number) => {
+    setSelectedWorld(world => order[Math.max(0, Math.min(order.length - 1, order.indexOf(world) + direction))]);
+    setStatusMessage("");
+  };
   const [statusMessage, setStatusMessage] = useState("");
   const currentChild = childId ?? route.child;
 
@@ -103,8 +112,19 @@ export function SubjectWorlds({ childId, allowLocalFallback, client, quality, in
   />;
 
   return <section className={styles.worldsView} aria-label="Subject worlds">
-    <div className={styles.constellationLayer}>
+    <div className={styles.constellationLayer}
+      onPointerDownCapture={event => { if (event.button !== 0) return; swipeStart.current = { x: event.clientX, y: event.clientY }; suppressClick.current = false; }}
+      onPointerUpCapture={event => {
+        const start = swipeStart.current; swipeStart.current = null;
+        if (!start) return;
+        const dx = event.clientX - start.x; const dy = event.clientY - start.y;
+        if (Math.abs(dx) > 35 && Math.abs(dx) > Math.abs(dy)) { suppressClick.current = true; slide(dx < 0 ? 1 : -1); }
+      }}
+      onPointerCancel={() => { swipeStart.current = null; }}
+      onClickCapture={event => { if (suppressClick.current) { event.stopPropagation(); suppressClick.current = false; } }}>
       <WorldsConstellation
+        selectedWorld={selectedWorld}
+        onChoose={chooseWorld}
         activeWorld={activeWorld}
         quality={quality}
         onActiveWorldChange={setActiveWorld}
@@ -112,6 +132,9 @@ export function SubjectWorlds({ childId, allowLocalFallback, client, quality, in
       />
     </div>
     <WorldSelector
+      selectedWorld={selectedWorld}
+      onChoose={chooseWorld}
+      onSlide={slide}
       activeWorld={activeWorld}
       onActiveWorldChange={setActiveWorld}
       onSelect={selectWorld}
