@@ -19,6 +19,7 @@ import {
 import { WiggleSplash } from "./WiggleSplash";
 import { WorldsConstellation } from "./WorldsConstellation";
 import { WorldSelector } from "./WorldSelector";
+import { useWiggleSound } from "../../features/audio/useWiggleSound";
 import styles from "./SubjectWorlds.module.css";
 
 export type SubjectWorldsProps = {
@@ -44,10 +45,13 @@ export function SubjectWorlds({ childId, allowLocalFallback, client, quality, in
   const [selectedWorld, setSelectedWorld] = useState<SubjectWorldId>("math");
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const suppressClick = useRef(false);
+  const sound = useWiggleSound();
   const order: SubjectWorldId[] = ["math", "science", "bm", "english"];
   const chooseWorld = (world: SubjectWorldId) => { setSelectedWorld(world); setStatusMessage(""); };
   const slide = (direction: number) => {
-    setSelectedWorld(world => order[Math.max(0, Math.min(order.length - 1, order.indexOf(world) + direction))]);
+    const next = order[Math.max(0, Math.min(order.length - 1, order.indexOf(selectedWorld) + direction))];
+    if (next !== selectedWorld) sound.play("slideWhoosh");
+    setSelectedWorld(next);
     setStatusMessage("");
   };
   const [statusMessage, setStatusMessage] = useState("");
