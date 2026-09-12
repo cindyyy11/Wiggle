@@ -66,6 +66,11 @@ it("asks for a hand when the tracked table point is low-confidence or non-finite
   expect(handStatusForFrame("sort", { ...latest.current, pointer: { x: NaN, y: 0 } })).toBe(prompt);
   expect(handStatusForFrame("sort", latest.current)).toBe("Pinch an object, then open your hand over the matching tray.");
 });
+it("names the nearby object and whether it pulls during explore", () => {
+  const frame = { ...latest.current, pointer: { x: (.22 - .5) / .43, y: (.28 - .5) / .43 } };
+  expect(handStatusForFrame("explore", frame)).toContain("paper clip");
+  expect(handStatusForFrame("explore", frame)).toContain("sticks");
+});
 
 it("cancels a lost grab without scoring and accepts a new object after reacquisition", () => {
   const controller = new MagnetHandGestureController();

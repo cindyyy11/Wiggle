@@ -2,7 +2,7 @@
 
 import { Component, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { CanvasTexture, Group, MeshStandardMaterial, Vector3 } from "three";
+import { CanvasTexture, Group, Line, LineBasicMaterial, MeshStandardMaterial, Vector3 } from "three";
 import type React from "react";
 import type { HandTrackingLatest } from "../../features/gestures/useHandTracking";
 import { GESTURE_CONFIG } from "../../features/gestures/config";
@@ -22,6 +22,7 @@ export type MagnetHandLabSceneProps = {
   reducedMotion: boolean;
   onAction(action: MagnetPlayAction): void;
   onHandStatus(message: string): void;
+  onAttractionCue?(cue: "pull" | "stay"): void;
 };
 
 type ObjectGroupMap = Partial<Record<MagnetObjectId, Group>>;
@@ -103,10 +104,24 @@ export function actionForHandFrame(state: MagnetPlayState, frame: HandTrackingLa
   return controller.update({ gesture: frame.gesture, target: point ? targetForCheckpoint(point, state) : null, isTracking: point !== null, at });
 }
 
-export function handStatusForFrame(checkpoint: MagnetPlayState["checkpoint"], frame: HandTrackingLatest) {
-  if (!trackedTablePoint(frame)) return "Show your hand to the camera to use the Magnet Lab workbench.";
-  if (checkpoint === "explore") return "Move the magnet near each object and watch what happens.";
-  if (checkpoint === "sort") return "Pinch an object, then open your hand over the matching tray.";
+export function handStatusForFrame(checkpoint: MagnetPlayState["checkpoint"], frame: HandTrackingLatest, state?: MagnetPlayState) {
+  const point = trackedTablePoint(frame);
+  if (!point) return "Show your hand to the camera to use the Magnet Lab workbench.";
+  if (checkpoint === "explore") {
+    const near = MAGNET_OBJECTS.find((object) => isWithinMagnetField(point, toTablePoint(object)));
+    if (near?.result === "attracted") return `Zzz! The ${near.name} sticks — magnets pull metal.`;
+    if (near?.result === "not-attracted") return `The ${near.name} stays put — not magnetic.`;
+    return "Move the magnet near each object and watch what happens.";
+  }
+  if (checkpoint === "sort") {
+    if (state?.held) {
+      const held = MAGNET_OBJECTS.find((object) => object.id === state.held);
+      return held
+        ? `Holding the ${held.name}. Drop it on ${held.result === "attracted" ? "PULLS" : "NO PULL"}.`
+        : "Pinch an object, then open your hand over the matching tray.";
+    }
+    return "Pinch an object, then open your hand over the matching tray.";
+  }
   return "Point at the toolbox in the campsite to investigate it.";
 }
 
@@ -125,18 +140,18 @@ class LabGraphicsBoundary extends Component<{ children: ReactNode; onFailure: ()
   render() { return this.state.failed ? null : this.props.children; }
 }
 
-function HandStatusReporter({ latest, checkpoint, onHandStatus }: Pick<MagnetHandLabSceneProps, "latest" | "onHandStatus"> & { checkpoint: MagnetPlayState["checkpoint"] }) {
+function HandStatusReporter({ latest, checkpoint, state, onHandStatus }: Pick<MagnetHandLabSceneProps, "latest" | "onHandStatus" | "state"> & { checkpoint: MagnetPlayState["checkpoint"] }) {
   const previous = useRef("");
   const callback = useRef(onHandStatus);
   callback.current = onHandStatus;
   const report = (frame: HandTrackingLatest) => {
-    const next = handStatusForFrame(checkpoint, frame);
+    const next = handStatusForFrame(checkpoint, frame, state);
     if (next === previous.current) return;
     previous.current = next;
     callback.current(next);
   };
 
-  useEffect(() => { report(latest.current); }, [checkpoint]);
+  useEffect(() => { report(latest.current); }, [checkpoint, state.held]);
   useFrame(() => { report(latest.current); });
   return null;
 }
@@ -192,7 +207,8 @@ function MagnetObjectModel({
   groupRef: (value: Group | null) => void;
   materialRef: (value: MeshStandardMaterial | null) => void;
 }) {
-  const material = <meshStandardMaterial ref={materialRef} color={object.color} roughness={.78} metalness={object.result === "attracted" ? .35 : 0} flatShading />;
+  const title = object.name.replace(/\b\w/g, (letter) => letter.toUpperCase());
+  const material = <meshStandardMaterial ref={materialRef} color={object.color} roughness={.78} metalness={object.result === "attracted" ? .45 : 0} flatShading />;
   return <group ref={groupRef}>
     {object.sceneKind === "clip" ? <mesh rotation={[0, 0, .35]}>{material}<torusGeometry args={[.11, .028, 5, 10]} /></mesh> : null}
     {object.sceneKind === "nail" ? <group rotation={[0, 0, -.75]}>
@@ -204,10 +220,25 @@ function MagnetObjectModel({
       <mesh>{material}<cylinderGeometry args={[.105, .105, .06, 12]} /></mesh>
       <mesh position={[0, 0, .035]}><torusGeometry args={[.06, .012, 5, 10]} /><meshStandardMaterial color="#d6ecf3" roughness={.8} flatShading /></mesh>
     </group> : null}
+    <LabelTexture text={title} color="#fff0d4" position={[0, -.24, .2]} width={1.05} height={.28} fontSize={48} />
   </group>;
 }
 
-function LabelTexture({ text, color, position }: { text: string; color: string; position: readonly [number, number, number] }) {
+function LabelTexture({
+  text,
+  color,
+  position,
+  width = .82,
+  height = .26,
+  fontSize = 56,
+}: {
+  text: string;
+  color: string;
+  position: readonly [number, number, number];
+  width?: number;
+  height?: number;
+  fontSize?: number;
+}) {
   const texture = useMemo(() => {
     if (typeof document === "undefined") return null;
     const canvas = document.createElement("canvas");
@@ -221,31 +252,94 @@ function LabelTexture({ text, color, position }: { text: string; color: string; 
     context.lineWidth = 12;
     context.strokeRect(6, 6, canvas.width - 12, canvas.height - 12);
     context.fillStyle = "#342c43";
-    context.font = "700 56px system-ui, sans-serif";
+    context.font = `700 ${fontSize}px system-ui, sans-serif`;
     context.textAlign = "center";
     context.textBaseline = "middle";
     context.fillText(text, canvas.width / 2, canvas.height / 2 + 2);
     return new CanvasTexture(canvas);
-  }, [color, text]);
+  }, [color, fontSize, text]);
 
   useEffect(() => () => texture?.dispose(), [texture]);
   if (!texture) return null;
-  return <sprite position={position} scale={[.82, .26, 1]}>
+  return <sprite position={position} scale={[width, height, 1]}>
     <spriteMaterial map={texture} transparent depthWrite={false} />
   </sprite>;
 }
 
 function SortTargets() {
   return <group>
-    <mesh position={[tableX(attractedTarget.x), tableY(attractedTarget.y) + .07, .12]} scale={[.63, .24, .08]}>
+    <mesh position={[tableX(attractedTarget.x), tableY(attractedTarget.y) + .07, .12]} scale={[.72, .28, .08]}>
       <boxGeometry args={[1, 1, 1]} /><meshStandardMaterial color="#e9bb70" roughness={1} flatShading />
     </mesh>
-    <mesh position={[tableX(notAttractedTarget.x), tableY(notAttractedTarget.y) + .07, .12]} scale={[.63, .24, .08]}>
+    <mesh position={[tableX(notAttractedTarget.x), tableY(notAttractedTarget.y) + .07, .12]} scale={[.72, .28, .08]}>
       <boxGeometry args={[1, 1, 1]} /><meshStandardMaterial color="#8db2d1" roughness={1} flatShading />
     </mesh>
-    <LabelTexture text="ATTRACTED" color="#f4c873" position={[tableX(attractedTarget.x), tableY(attractedTarget.y) - .17, .36]} />
-    <LabelTexture text="STAYS PUT" color="#a9cae4" position={[tableX(notAttractedTarget.x), tableY(notAttractedTarget.y) - .17, .36]} />
+    <LabelTexture text="PULLS!" color="#f4c873" position={[tableX(attractedTarget.x), tableY(attractedTarget.y) - .2, .4]} width={.95} height={.3} fontSize={64} />
+    <LabelTexture text="NO PULL" color="#a9cae4" position={[tableX(notAttractedTarget.x), tableY(notAttractedTarget.y) - .2, .4]} width={.95} height={.3} fontSize={58} />
   </group>;
+}
+
+/** Comic-style magnetic “zzzz” sparks between the magnet and a sticking object. */
+function MagnetZzzSparks({
+  magnet,
+  object,
+  active,
+  reducedMotion,
+}: {
+  magnet: React.RefObject<Group | null>;
+  object: React.RefObject<Group | null>;
+  active: boolean;
+  reducedMotion: boolean;
+}) {
+  const line = useRef<Line>(null);
+  const positions = useMemo(() => new Float32Array(8 * 3), []);
+  const zzz = useRef<Group>(null);
+
+  useFrame(({ clock }) => {
+    if (!line.current || !magnet.current || !object.current) return;
+    const material = line.current.material as LineBasicMaterial;
+    if (!active) {
+      material.opacity = 0;
+      if (zzz.current) zzz.current.visible = false;
+      return;
+    }
+    const start = magnet.current.position;
+    const end = object.current.position;
+    const pulse = reducedMotion ? 1 : 0.65 + Math.sin(clock.elapsedTime * 14) * 0.35;
+    material.opacity = pulse;
+    if (zzz.current) {
+      zzz.current.visible = true;
+      zzz.current.position.set((start.x + end.x) / 2, (start.y + end.y) / 2 + .18, .45);
+      if (!reducedMotion) zzz.current.position.y += Math.sin(clock.elapsedTime * 10) * .03;
+    }
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len;
+    const ny = dx / len;
+    const wobble = reducedMotion ? 0 : Math.sin(clock.elapsedTime * 18) * .08;
+    for (let index = 0; index < 8; index++) {
+      const t = index / 7;
+      const zig = index % 2 === 0 ? wobble : -wobble;
+      positions[index * 3] = start.x + dx * t + nx * zig * (index === 0 || index === 7 ? 0 : 1);
+      positions[index * 3 + 1] = start.y + dy * t + ny * zig * (index === 0 || index === 7 ? 0 : 1);
+      positions[index * 3 + 2] = .4;
+    }
+    const attribute = line.current.geometry.getAttribute("position");
+    attribute.needsUpdate = true;
+  });
+
+  return <>
+    <line ref={line as never}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+      </bufferGeometry>
+      <lineBasicMaterial color="#ffe18a" transparent opacity={0} depthWrite={false} />
+    </line>
+    <group ref={zzz} visible={false}>
+      <LabelTexture text="Zzz!" color="#ffe18a" position={[0, 0, 0]} width={.55} height={.22} fontSize={70} />
+    </group>
+  </>;
 }
 
 function Campfire() {
@@ -278,6 +372,7 @@ function Campsite({ found, reducedMotion }: { found: boolean; reducedMotion: boo
 
 function LabInteraction({ props }: { props: MagnetHandLabSceneProps }) {
   const magnet = useRef<Group>(null);
+  const feedback = useRef<Group>(null);
   const objectGroups = useRef<ObjectGroupMap>({});
   const objectMaterials = useRef<ObjectMaterialMap>({});
   const previousTarget = useRef<TablePoint>({ x: .5, y: .5 });
@@ -288,12 +383,24 @@ function LabInteraction({ props }: { props: MagnetHandLabSceneProps }) {
   const observed = useRef(new Set<MagnetObjectId>());
   const priorCheckpoint = useRef(props.state.checkpoint);
   const action = useRef(props.onAction);
+  const attractionCue = useRef(props.onAttractionCue);
+  const lastCue = useRef<"pull" | "stay" | null>(null);
+  const bannerText = useRef("");
+  const activePullId = useRef<MagnetObjectId | null>(null);
+  const [pullId, setPullId] = useState<MagnetObjectId | null>(null);
+  const [banner, setBanner] = useState<{ text: string; color: string } | null>(null);
   action.current = props.onAction;
+  attractionCue.current = props.onAttractionCue;
 
   useEffect(() => {
     if (priorCheckpoint.current === props.state.checkpoint) return;
     priorCheckpoint.current = props.state.checkpoint;
     controller.current.reset();
+    lastCue.current = null;
+    bannerText.current = "";
+    activePullId.current = null;
+    setPullId(null);
+    setBanner(null);
   }, [props.state.checkpoint]);
 
   useFrame(({ clock }) => {
@@ -305,6 +412,17 @@ function LabInteraction({ props }: { props: MagnetHandLabSceneProps }) {
     if (magnet.current) {
       if (props.reducedMotion) magnet.current.position.copy(magnetTarget.current);
       else magnet.current.position.lerp(magnetTarget.current, .16);
+      const pulling = activePullId.current !== null;
+      if (pulling && !props.reducedMotion) {
+        magnet.current.rotation.z = Math.sin(clock.elapsedTime * 28) * .12;
+        magnet.current.position.x += Math.sin(clock.elapsedTime * 32) * .012;
+      } else {
+        magnet.current.rotation.z = 0;
+      }
+      if (feedback.current) {
+        feedback.current.position.set(magnet.current.position.x, magnet.current.position.y + .48, .55);
+        feedback.current.visible = bannerText.current !== "";
+      }
     }
 
     const frameAction = actionForHandFrame(props.state, props.latest.current, controller.current, clock.elapsedTime * 1000);
@@ -321,6 +439,11 @@ function LabInteraction({ props }: { props: MagnetHandLabSceneProps }) {
     }
 
     if (props.state.checkpoint === "hidden") return;
+
+    let nextCue: "pull" | "stay" | null = null;
+    let nextPull: MagnetObjectId | null = null;
+    let nextBanner: { text: string; color: string } | null = null;
+
     for (const object of MAGNET_OBJECTS) {
       const model = objectGroups.current[object.id];
       if (!model) continue;
@@ -332,16 +455,52 @@ function LabInteraction({ props }: { props: MagnetHandLabSceneProps }) {
       else if (sorted) objectTarget.current.fromArray(sortedPositions[object.id]);
       else objectTarget.current.fromArray(homePositions.get(object.id)!);
       if (props.reducedMotion) model.position.copy(objectTarget.current);
-      else model.position.lerp(objectTarget.current, shouldFollow || held ? .2 : .12);
+      else model.position.lerp(objectTarget.current, shouldFollow || held ? .28 : .12);
 
       const nonMagneticFeedback = object.result === "not-attracted" && withinField;
-      const scale = nonMagneticFeedback && !props.reducedMotion ? 1.1 : 1;
+      if (shouldFollow) {
+        nextCue = "pull";
+        nextPull = object.id;
+        nextBanner = { text: "PULLS!", color: "#f4c873" };
+        if (!props.reducedMotion) model.rotation.z = Math.sin(clock.elapsedTime * 22) * .2;
+      } else if (nonMagneticFeedback) {
+        nextCue = nextCue ?? "stay";
+        nextBanner = nextBanner ?? { text: "NO PULL", color: "#a9cae4" };
+        model.rotation.z = 0;
+      } else if (!held) {
+        model.rotation.z = 0;
+      }
+
+      const scale = (shouldFollow || nonMagneticFeedback) && !props.reducedMotion
+        ? shouldFollow ? 1.18 : 1.1
+        : 1;
       if (props.reducedMotion) model.scale.setScalar(1);
       else model.scale.lerp(scaleTarget.current.setScalar(scale), .18);
       const material = objectMaterials.current[object.id];
-      if (material) material.color.set(nonMagneticFeedback ? "#f3ca70" : object.color);
+      if (material) {
+        if (shouldFollow) material.color.set("#ffe18a");
+        else if (nonMagneticFeedback) material.color.set("#f3ca70");
+        else material.color.set(object.color);
+        material.emissive.set(shouldFollow && !props.reducedMotion ? "#c57939" : "#000000");
+        material.emissiveIntensity = shouldFollow && !props.reducedMotion ? .55 : 0;
+      }
+    }
+
+    if (nextCue && nextCue !== lastCue.current) attractionCue.current?.(nextCue);
+    lastCue.current = nextCue;
+    if (nextPull !== activePullId.current) {
+      activePullId.current = nextPull;
+      setPullId(nextPull);
+    }
+    const nextText = nextBanner?.text ?? "";
+    if (nextText !== bannerText.current) {
+      bannerText.current = nextText;
+      setBanner(nextBanner);
     }
   });
+
+  const pullObjectRef = useRef<Group | null>(null);
+  pullObjectRef.current = pullId ? objectGroups.current[pullId] ?? null : null;
 
   return <>
     <Workbench />
@@ -354,6 +513,10 @@ function LabInteraction({ props }: { props: MagnetHandLabSceneProps }) {
         materialRef={(value) => { if (value) objectMaterials.current[object.id] = value; else delete objectMaterials.current[object.id]; }}
       />)}
       {props.state.checkpoint === "sort" ? <SortTargets /> : null}
+      {pullId ? <MagnetZzzSparks magnet={magnet} object={pullObjectRef} active reducedMotion={props.reducedMotion} /> : null}
+      <group ref={feedback} visible={false}>
+        {banner ? <LabelTexture text={banner.text} color={banner.color} position={[0, 0, 0]} width={.9} height={.3} fontSize={64} /> : null}
+      </group>
     </>}
   </>;
 }
@@ -396,19 +559,18 @@ export function MagnetHandLabScene(props: MagnetHandLabSceneProps): React.JSX.El
     <Canvas
       aria-label="Magnet Lab workbench"
       aria-hidden="true"
-      style={{ display: "block", width: "100%", minHeight: 320, background: "#211a33" }}
+      style={{ display: "block", width: "100%", minHeight: 320, background: "transparent" }}
       camera={{ position: [0, 0, 5.3], fov: 42, near: .1, far: 20 }}
       dpr={props.reducedMotion ? 1 : [1, 1.5]}
-      gl={{ antialias: !props.reducedMotion, alpha: false, powerPreference: "low-power", failIfMajorPerformanceCaveat: true }}
+      gl={{ antialias: !props.reducedMotion, alpha: true, powerPreference: "low-power", failIfMajorPerformanceCaveat: true }}
     >
-      <color attach="background" args={["#211a33"]} />
       <ambientLight intensity={1.45} color="#f7e7c5" />
       <hemisphereLight args={["#fff0d4", "#3e4664", 1.1]} />
       <directionalLight position={[-3, 4, 5]} intensity={2.35} color="#ffd991" />
       <pointLight position={[1.4, 1.1, 2]} intensity={7} distance={5} color="#f39b83" />
       <Starfield />
       <LabInteraction props={props} />
-      <HandStatusReporter latest={props.latest} checkpoint={props.state.checkpoint} onHandStatus={props.onHandStatus} />
+      <HandStatusReporter latest={props.latest} checkpoint={props.state.checkpoint} state={props.state} onHandStatus={props.onHandStatus} />
     </Canvas>
   </LabGraphicsBoundary>;
 }
