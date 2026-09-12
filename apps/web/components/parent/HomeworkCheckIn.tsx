@@ -2,6 +2,7 @@
 import { useRef, useState } from "react";
 import type { CheckInRequest, CheckInResponse } from "@wiggle/contracts";
 import { parentRequest } from "../../lib/api/parent";
+import styles from "./parent.module.css";
 
 const defaultSubmit = (body: CheckInRequest, key: string) => parentRequest<CheckInResponse>("check-in", body, key);
 export function HomeworkCheckIn({ childId, submit = defaultSubmit }: {
@@ -13,8 +14,9 @@ export function HomeworkCheckIn({ childId, submit = defaultSubmit }: {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const retry = useRef<{ body: string; key: string } | null>(null);
-  return <section aria-labelledby="check-in-title"><h2 id="check-in-title">How did homework feel?</h2>
-    <p>A little context helps. This check-in does not change mastery scores.</p>
+  return <article className={styles.panel} aria-labelledby="check-in-title">
+    <h3 id="check-in-title" className={styles.panelTitle}>How did homework feel?</h3>
+    <p className={styles.panelLead}>A little context helps. This check-in does not change mastery scores.</p>
     <form onSubmit={async event => {
       event.preventDefault(); setBusy(true); setMessage(""); setError("");
       const body = { childId, difficulty, note };
@@ -30,8 +32,8 @@ export function HomeworkCheckIn({ childId, submit = defaultSubmit }: {
       </select>
       <label htmlFor="homework-note">Anything helpful to know?</label>
       <textarea id="homework-note" maxLength={1000} rows={3} value={note} onChange={event => setNote(event.target.value)} disabled={busy} />
-      <button disabled={busy}>{busy ? "Sharing…" : "Share check-in"}</button>
+      <button type="submit" disabled={busy}>{busy ? "Sharing…" : "Share check-in"}</button>
       {message && <p role="status">{message}</p>}{error && <p role="alert">{error}</p>}
     </form>
-  </section>;
+  </article>;
 }

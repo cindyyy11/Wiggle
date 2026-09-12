@@ -3,6 +3,7 @@
 import { useEffect, useReducer, useRef, useState } from "react";
 import { useHandTracking } from "../../features/gestures/useHandTracking";
 import { useWiggleSound } from "../../features/audio/useWiggleSound";
+import { speakIfUnmuted } from "../../features/voice/voicePreference";
 import { MagnetHandLabScene } from "./MagnetHandLabScene";
 import { initialMagnetPlay, magnetPlayReducer } from "./magnetHandPlay";
 import { MAGNET_OBJECTS } from "./scienceWorld";
@@ -17,19 +18,47 @@ const copy = {
 };
 const titles = { explore: "What does a magnet pull?", sort: "Find each object's home", hidden: "A campsite mystery!" };
 
+const coachLines = {
+  starting: "Hi! I'm Wiggle. Let's get your camera ready for Magnet Lab.",
+  help: "Ask an adult to turn on the camera so we can play together.",
+  explore: "Move your hand to guide the magnet. What will it pull?",
+  sort: "Sorting time! Metal goes on PULLS. Everything else goes on NO PULL.",
+  hidden: "A magnet is hiding by the toolbox. Point to find it!",
+  complete: "You did it! Magnet Lab complete — wonderful exploring!",
+} as const;
+
+type CoachKey = keyof typeof coachLines;
+
+function coachKeyFor(ready: boolean, needsHelp: boolean, checkpoint: "explore" | "sort" | "hidden", complete: boolean): CoachKey {
+  if (needsHelp) return "help";
+  if (!ready) return "starting";
+  if (complete) return "complete";
+  return checkpoint;
+}
+
 export function MagnetLabMission({ onExit, onComplete, manageFocus = true }: MagnetLabMissionProps) {
   const tracking = useHandTracking({ enabled: true });
   const sound = useWiggleSound();
   const [state, dispatch] = useReducer(magnetPlayReducer, initialMagnetPlay);
   const [handStatus, setHandStatus] = useState("Show your hand to the camera.");
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [bubble, setBubble] = useState(coachLines.starting);
+  const [talking, setTalking] = useState(false);
+  const [bubblePop, setBubblePop] = useState(0);
   const section = useRef<HTMLElement>(null);
   const notified = useRef(false);
   const wasReady = useRef(false);
+  const spokenCoach = useRef<CoachKey | null>(null);
   const exit = useRef(onExit);
   const playSound = useRef(sound.play);
+  const unlockSound = useRef(sound.unlock);
   exit.current = onExit;
   playSound.current = sound.play;
+  unlockSound.current = sound.unlock;
+
+  useEffect(() => {
+    unlockSound.current();
+  }, []);
 
   useEffect(() => {
     if (!manageFocus) return;
@@ -49,6 +78,7 @@ export function MagnetLabMission({ onExit, onComplete, manageFocus = true }: Mag
     document.addEventListener("keydown", keydown, true);
     return () => {
       document.removeEventListener("keydown", keydown, true);
+      window.speechSynthesis?.cancel();
       const restore = () => {
         if (previous?.isConnected && previous !== document.body) previous.focus();
         else Array.from(document.querySelectorAll<HTMLButtonElement>("button")).find(button => button.textContent?.trim() === "Start Magnet Lab")?.focus();
@@ -83,12 +113,35 @@ export function MagnetLabMission({ onExit, onComplete, manageFocus = true }: Mag
 
   const count = state.checkpoint === "explore" ? state.explored.length : state.checkpoint === "sort" ? state.sorted.length : Number(state.foundHiddenMagnet);
   const total = state.checkpoint === "hidden" ? 1 : MAGNET_OBJECTS.length;
-  const announcement = needsHelp ? "This magnet activity needs your camera so your hand can guide the magnet."
-    : !ready ? "Starting your camera… Ask an adult to allow camera access."
-    : state.foundHiddenMagnet ? "You found the hidden magnet! Magnet Lab complete."
-    : handStatus + " " + count + " of " + total + " discoveries.";
+  const coachKey = coachKeyFor(ready, needsHelp, state.checkpoint, state.foundHiddenMagnet);
+  const liveTip = ready && !needsHelp && !state.foundHiddenMagnet ? handStatus : null;
 
-  return <section ref={section} className={styles.mission} aria-label="Magnet Lab mission">
+  useEffect(() => {
+    const line = coachLines[coachKey];
+    setBubble(line);
+    setBubblePop((value) => value + 1);
+    if (spokenCoach.current === coachKey) return;
+    spokenCoach.current = coachKey;
+    setTalking(true);
+    speakIfUnmuted(line);
+    const done = window.setTimeout(() => setTalking(false), reducedMotion ? 400 : 2200);
+    return () => window.clearTimeout(done);
+  }, [coachKey, reducedMotion]);
+
+  useEffect(() => {
+    if (!liveTip) return;
+    if (coachKey === "starting" || coachKey === "help" || coachKey === "complete") return;
+    // Keep the phase greeting until the hand tip becomes specific.
+    if (/^Show your hand/i.test(liveTip)) return;
+    setBubble(liveTip);
+  }, [liveTip, coachKey]);
+
+  return <section
+    ref={section}
+    className={styles.mission}
+    aria-label="Magnet Lab mission"
+    onPointerDown={() => unlockSound.current()}
+  >
     <div className={ready ? styles.cameraBackdropReady : styles.cameraBackdrop} aria-hidden="true">
       <video ref={tracking.video} muted playsInline className={styles.cameraBackdropVideo} />
     </div>
@@ -103,8 +156,18 @@ export function MagnetLabMission({ onExit, onComplete, manageFocus = true }: Mag
       </>}
     </header>
     <aside className={styles.guide}>
-      <img className={styles.guideMark} src="/brand/wiggle-mark.png" alt="" />
-      <p role="status" aria-live="polite">{announcement}</p>
+      <div className={styles.guideSpeaker} data-talking={talking || undefined}>
+        <img className={styles.guideMark} src="/brand/wiggle-mark.png" alt="" />
+      </div>
+      <p
+        key={bubblePop}
+        className={styles.speechBubble}
+        role="status"
+        aria-live="polite"
+        data-reduced-motion={reducedMotion || undefined}
+      >
+        {bubble}
+      </p>
       {needsHelp && <button className={styles.retry} type="button" onClick={tracking.retry}>Try again</button>}
     </aside>
     <div className={styles.workbench}>
@@ -114,7 +177,10 @@ export function MagnetLabMission({ onExit, onComplete, manageFocus = true }: Mag
         reducedMotion={reducedMotion}
         onAction={dispatch}
         onHandStatus={setHandStatus}
-        onAttractionCue={(cue) => playSound.current(cue === "pull" ? "magnetPull" : "magnetStay")}
+        onAttractionCue={(cue) => {
+          unlockSound.current();
+          playSound.current(cue === "pull" ? "magnetPull" : "magnetStay");
+        }}
       />}
     </div>
     {ready && state.checkpoint !== "hidden" && <aside className={styles.objectKey} aria-label="Magnet Lab objects">

@@ -6,12 +6,25 @@ import type { MagnetHandLabSceneProps } from "./MagnetHandLabScene";
 import { MAGNET_OBJECTS } from "./scienceWorld";
 import type { CameraStatus } from "../../features/gestures/useHandTracking";
 
-const mock = vi.hoisted(() => ({ status: "starting" as CameraStatus, retry: vi.fn(), tracking: vi.fn(), scene: null as MagnetHandLabSceneProps | null, video: { current: null } }));
+const mock = vi.hoisted(() => ({
+  status: "starting" as CameraStatus,
+  retry: vi.fn(),
+  tracking: vi.fn(),
+  scene: null as MagnetHandLabSceneProps | null,
+  video: { current: null },
+  speak: vi.fn(),
+  play: vi.fn(),
+  unlock: vi.fn(),
+}));
 vi.mock("../../features/gestures/useHandTracking", () => ({ useHandTracking: (options: unknown) => {
   mock.tracking(options);
   return { status: mock.status, video: mock.video, retry: mock.retry, latest: { current: { isTracking: false } } };
 } }));
 vi.mock("./MagnetHandLabScene", () => ({ MagnetHandLabScene: (props: MagnetHandLabSceneProps) => { mock.scene = props; return <div data-testid="scene" />; } }));
+vi.mock("../../features/voice/voicePreference", () => ({ speakIfUnmuted: (text: string) => mock.speak(text) }));
+vi.mock("../../features/audio/useWiggleSound", () => ({
+  useWiggleSound: () => ({ play: mock.play, unlock: mock.unlock, muted: false, setMuted: vi.fn() }),
+}));
 beforeEach(() => { mock.status = "starting"; mock.scene = null; vi.clearAllMocks(); });
 afterEach(cleanup);
 
@@ -19,8 +32,27 @@ it("enables tracking immediately and mounts the video during startup", () => {
   const { container } = render(<MagnetLabMission onExit={vi.fn()} onComplete={vi.fn()} />);
   expect(mock.tracking).toHaveBeenCalledWith({ enabled: true });
   expect(container.querySelector("video")).toBe(mock.video.current);
-  expect(screen.getByRole("status").textContent).toContain("Starting your camera");
+  expect(screen.getByRole("status").textContent).toContain("I'm Wiggle");
+  expect(mock.speak).toHaveBeenCalledWith(expect.stringContaining("I'm Wiggle"));
+  expect(mock.unlock).toHaveBeenCalled();
   expect(screen.queryByRole("button", { name: /Use hand gestures|Try the magnet|Test |^Attracted$|^Not attracted$/i })).toBeNull();
+});
+it("pops a new spoken bubble when the camera becomes ready", () => {
+  const { rerender } = render(<MagnetLabMission onExit={vi.fn()} onComplete={vi.fn()} />);
+  mock.speak.mockClear();
+  mock.status = "ready";
+  rerender(<MagnetLabMission onExit={vi.fn()} onComplete={vi.fn()} />);
+  expect(screen.getByRole("status").textContent).toContain("guide the magnet");
+  expect(mock.speak).toHaveBeenCalledWith(expect.stringContaining("guide the magnet"));
+});
+it("plays magnetPull and magnetStay when attraction cues fire", () => {
+  mock.status = "ready";
+  render(<MagnetLabMission onExit={vi.fn()} onComplete={vi.fn()} />);
+  expect(mock.scene?.onAttractionCue).toBeTypeOf("function");
+  act(() => mock.scene!.onAttractionCue!("pull"));
+  expect(mock.play).toHaveBeenCalledWith("magnetPull");
+  act(() => mock.scene!.onAttractionCue!("stay"));
+  expect(mock.play).toHaveBeenCalledWith("magnetStay");
 });
 it.each(["denied", "unavailable", "off"] as CameraStatus[])("offers adult help and retry for %s", (status) => {
   mock.status = status;
