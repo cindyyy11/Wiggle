@@ -40,7 +40,7 @@ export function QuickCheckIn({ childId, submit = defaultSubmit }: {
     }
   };
 
-  return <article className={styles.panel} aria-labelledby="quick-check-in-title">
+  return <article className={`${styles.panel} ${styles.toneSage}`} aria-labelledby="quick-check-in-title">
     <h3 id="quick-check-in-title" className={styles.panelTitle}>How did learning go today?</h3>
     <p className={styles.panelLead}>Tap one option. This is context only — it does not change scores.</p>
     <div className={styles.choiceGroup} role="group" aria-label="How did learning go today?">
