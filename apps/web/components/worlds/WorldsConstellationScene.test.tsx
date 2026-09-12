@@ -16,7 +16,7 @@ vi.mock("@react-three/fiber", () => ({
   useThree: () => ({ gl: { domElement: rendererCanvas } }),
 }));
 
-vi.mock("./WorldMiniatures", () => ({ WorldMiniatures: () => null }));
+vi.mock("./PlanetCarousel", () => ({ PlanetCarousel: () => null }));
 vi.mock("./ConstellationDressings", () => ({ ConstellationDressings: () => null }));
 
 afterEach(() => {

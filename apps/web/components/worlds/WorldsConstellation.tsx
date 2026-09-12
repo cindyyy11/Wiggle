@@ -16,6 +16,7 @@ export type WorldsConstellationProps = {
   activeWorld?: SubjectWorldId | null;
   /** Temporary source-compatibility bridge until the selector owns active-world state. */
   selectedWorld?: SubjectWorldId;
+  onChoose?: (world: SubjectWorldId) => void;
   quality?: QualityPreference;
   reducedMotion?: boolean;
   onSelect: (world: SubjectWorldId) => void;
@@ -37,7 +38,7 @@ class GraphicsBoundary extends Component<{ children: ReactNode; onFailure: () =>
   render() { return this.state.failed ? null : this.props.children; }
 }
 
-export function WorldsConstellation({ activeWorld: activeWorldProp, selectedWorld, quality: preference = "auto", reducedMotion: reducedMotionOverride, onSelect, onActiveWorldChange }: WorldsConstellationProps) {
+export function WorldsConstellation({ activeWorld: activeWorldProp, selectedWorld, onChoose, quality: preference = "auto", reducedMotion: reducedMotionOverride, onSelect, onActiveWorldChange }: WorldsConstellationProps) {
   const [quality, setQuality] = useState<SceneQuality>("fallback");
   const [systemReducedMotion, setSystemReducedMotion] = useState(false);
   const reducedMotion = reducedMotionOverride ?? systemReducedMotion;
@@ -70,6 +71,8 @@ export function WorldsConstellation({ activeWorld: activeWorldProp, selectedWorl
   return <section className={styles.constellation} data-testid="subject-orbit" data-quality={quality} data-reduced-motion={String(reducedMotion)}>
     {quality === "fallback" ? null : <GraphicsBoundary onFailure={() => setQuality("fallback")}><Scene
       activeWorld={activeWorld}
+      selectedWorld={selectedWorld}
+      onChoose={onChoose}
       reducedMotion={reducedMotion}
       onSelect={onSelect}
       onActiveWorldChange={changeActiveWorld}
