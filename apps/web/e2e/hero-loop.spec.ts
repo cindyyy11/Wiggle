@@ -35,6 +35,7 @@ test("keyboard-only navigation completes the connected mission in reduced motion
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
   await keyboardActivate(page, "Let's Wiggle");
+  await keyboardActivate(page, "Explore Numeria");
   await expect(page.getByRole("button", { name: "Start fractions mission", exact: true })).toBeVisible();
   await keyboardActivate(page, "Start fractions mission");
   await keyboardActivate(page, "Visual");

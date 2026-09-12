@@ -1,5 +1,30 @@
 # Wiggle final QA — 12 September 2026
 
+## Subject Worlds and Science Planet — Task 8 verification
+
+result: pending/blocked in this isolated worktree
+
+No Task 8 desktop or mobile screenshots were collected. The planned Playwright command for `subject-worlds.spec.ts` was started for the desktop and mobile projects, but it could not start the local Next server because `apps/web/node_modules/next/dist/bin/next` is absent. This is not recorded as a browser pass or as visual evidence.
+
+| Planned state | Screenshots collected | Verification status |
+| --- | --- | --- |
+| Worlds selector and Science entry | None | Pending browser runtime. The authored journey uses the splash, labelled Worlds controls, and the Science `main` landmark. |
+| Science Planet and Magnet Lab | None | Pending browser runtime. The authored journey completes all four classifications via labelled HTML buttons and checks that no token, reward, or claim copy appears. |
+| Numeria entry | None | Pending browser runtime. Legacy journeys now use the shared splash → Worlds → Numeria helper before their existing mission assertions. |
+| Desktop 1440 × 900 and mobile 390 × 844 | None | Pending browser runtime. The authored browser check asserts no document horizontal overflow and keeps the selected mobile topic card in the viewport. |
+| Reduced motion and forced WebGL fallback | None | Pending browser runtime. The authored checks require `data-reduced-motion="true"`, complete Magnet Lab, and use the labelled Science map after WebGL is forced unavailable. |
+
+Checks actually run in this worktree:
+
+- `npm run lint --workspace=@wiggle/web` passed.
+- The focused Science/Worlds Vitest command ran its independent suites: 4 files and 13 tests passed (`subjectRoute`, `scienceWorld`, `ScienceFallback`, and `MagnetLabMission`). Four dynamic Canvas/shell suites, including the new subject-world accessibility suite, could not collect because Vite could not resolve `next/dynamic`.
+- `npm run typecheck --workspace=@wiggle/web` and `npm run build --workspace=@wiggle/web` both stopped with `next` not recognized (`ENOENT`).
+- `npm run test:e2e --workspace=@wiggle/web -- tests/browser/subject-worlds.spec.ts --project=desktop --project=mobile` started the local API health server, then stopped before tests because the Next executable module was missing.
+- The full `npm run test --workspace=@wiggle/web` run recorded 19 passing files / 78 passing tests. It also recorded 11 uncollected dynamic/proxy suites and one failed dependency-version baseline because the `next` package is absent; it is not a full-suite pass.
+- The full desktop/mobile `npm run test:e2e --workspace=@wiggle/web -- --project=desktop --project=mobile` retry reached the same missing `next/dist/bin/next` blocker after the API health server started, before any browser test ran. A `--list` check did parse and list the 16 new desktop/mobile cases, but did not execute them or collect evidence.
+
+The five future Science zones (Sink & Float Bay, pH Lab, Animal Arena, Colors Canyon, and Life Cycle Garden) and English/Bahasa Melayu remain visual coming-soon destinations. No QA evidence claims a lesson, activity, progress state, or reward for those destinations.
+
 final result: blocked
 
 The local desktop/mobile hero experience passes the refreshed final-fix checks below. The overall production acceptance gate remains blocked: no live Vercel/Render/Supabase deployment, real household Auth/RLS run, Docker execution, or physical-device validation was performed. Those checks are not represented as passes.

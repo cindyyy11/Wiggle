@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useId, useState, type CSSProperties } from "react";
 import type { CameraMode, Landmark, LandmarkId } from "./world";
 import { LANDMARKS } from "./world";
 import styles from "./explorationHud.module.css";
@@ -18,12 +18,17 @@ type ExplorationHudProps = {
   onMissionStart?: () => void;
   instructionsId: string;
   missionVisible: boolean;
+  onWorldsRequest?: () => void;
+  worldsDisabled?: boolean;
+  worldsDisabledMessage?: string;
 };
 
-export function ExplorationHud({ mode, mapVisible, selectedLandmark, landmark, help, onHelpChange, onModeChange, onToggleMap, onSelectLandmark, onMissionStart, instructionsId, missionVisible }: ExplorationHudProps) {
+export function ExplorationHud({ mode, mapVisible, selectedLandmark, landmark, help, onHelpChange, onModeChange, onToggleMap, onSelectLandmark, onMissionStart, instructionsId, missionVisible, onWorldsRequest, worldsDisabled = false, worldsDisabledMessage = "Worlds are unavailable right now." }: ExplorationHudProps) {
   const [navigatorOpen, setNavigatorOpen] = useState(false);
+  const worldsMessageId = useId();
   const showNavigator = mapVisible || navigatorOpen;
   const canStartMission = selectedLandmark === "fraction-forest" && !!onMissionStart;
+  const shellNavigationDisabled = Boolean(onWorldsRequest && worldsDisabled);
 
   useEffect(() => {
     if (!navigatorOpen) return;
@@ -41,6 +46,10 @@ export function ExplorationHud({ mode, mapVisible, selectedLandmark, landmark, h
       <a className={styles.brand} href="/" aria-label="Wiggle home"><img src="/brand/wiggle-mark.png" alt="" /></a>
       <div className={styles.location} aria-label="Current world"><span>WIGGLE SPACE</span><strong>Numeria</strong></div>
       <div className={styles.actions}>
+        {onWorldsRequest ? <div className={styles.worldsControl}>
+          <button type="button" className={styles.worldsButton} onClick={onWorldsRequest} disabled={worldsDisabled} aria-describedby={shellNavigationDisabled ? worldsMessageId : undefined}>Back to Worlds</button>
+          {shellNavigationDisabled ? <p id={worldsMessageId} className={styles.worldsMessage} role="status">{worldsDisabledMessage}</p> : null}
+        </div> : null}
         <div className={styles.viewSwitch} role="group" aria-label="View controls">
           <button type="button" className={mode === "globe" ? styles.selected : ""} aria-label="Globe view" aria-pressed={mode === "globe"} onClick={() => onModeChange("globe")}>Globe</button>
           <button type="button" className={mode === "follow" ? styles.selected : ""} aria-label="Follow explorer" aria-pressed={mode === "follow"} onClick={() => onModeChange("follow")}>Follow</button>
@@ -48,7 +57,9 @@ export function ExplorationHud({ mode, mapVisible, selectedLandmark, landmark, h
         <button type="button" className={styles.tool} onClick={() => setNavigatorOpen(value => !value)} aria-expanded={showNavigator} aria-controls="numeria-places">Places</button>
         <button type="button" className={styles.tool} onClick={onToggleMap} aria-label={mapVisible ? "Try 3D view" : "Use 2D map"}>{mapVisible ? "3D" : "2D"}</button>
         <button type="button" className={styles.tool} onClick={() => onHelpChange(!help)} aria-label="How to explore" aria-expanded={help}>Help</button>
-        <a className={styles.parent} href="/parent" aria-label="Parent mission control">Parent</a>
+        {shellNavigationDisabled
+          ? <button type="button" className={styles.parent} disabled aria-label="Parent mission control" aria-describedby={worldsMessageId}>Parent</button>
+          : <a className={styles.parent} href="/parent" aria-label="Parent mission control">Parent</a>}
       </div>
     </header>
 

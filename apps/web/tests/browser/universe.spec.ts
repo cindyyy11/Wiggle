@@ -1,5 +1,5 @@
 import { expect, test, type Locator } from "@playwright/test";
-import { launchWiggle } from "./helpers";
+import { launchNumeria } from "./helpers";
 
 async function expectReadableHud(surface: Locator, textSelector: string) {
   await expect(surface).toBeVisible();
@@ -29,7 +29,7 @@ async function expectReadableHud(surface: Locator, textSelector: string) {
 
 test("follow and mission HUD text keeps contrast above bright terrain", async ({ page }, info) => {
   await page.goto("/");
-  await launchWiggle(page);
+  await launchNumeria(page);
   await expect(page.locator("canvas")).toBeVisible({ timeout: 20_000 });
   await page.getByRole("button", { name: "Follow explorer", exact: true }).click();
   const title = page.getByRole("heading", { name: "Numeria", exact: true }).locator("..");
@@ -52,7 +52,7 @@ test("original world renders, camera controls work, and context loss preserves d
   const errors: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
   await page.goto("/");
-  await launchWiggle(page);
+  await launchNumeria(page);
   const universe = page.getByRole("region", { name: "Explore Numeria" });
   await expect(page.locator("canvas")).toBeVisible({ timeout: 20_000 });
   await expect(universe).toHaveAttribute("data-quality", /high|low/);
@@ -88,7 +88,7 @@ test("WebGL unavailable and reduced motion still expose the accessible map", asy
     } as typeof original;
   });
   await page.goto("/");
-  await launchWiggle(page);
+  await launchNumeria(page);
   await expect(page.getByRole("img", { name: /Numeria map/ })).toBeVisible();
   await page.getByRole("button", { name: "Visit Crystal Crater", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Crystal Crater", exact: true })).toBeVisible();
@@ -100,7 +100,7 @@ test("held cross-button input moves the rendered explorer and orbit/zoom change 
   // Decorative motion is disabled so image changes must come from the exercised controls.
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
-  await launchWiggle(page);
+  await launchNumeria(page);
   const canvas = page.locator("canvas");
   await expect(canvas).toBeVisible({ timeout: 20_000 });
   await page.getByRole("button", { name: "Follow explorer", exact: true }).click();
