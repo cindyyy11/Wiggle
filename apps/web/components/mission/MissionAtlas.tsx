@@ -332,23 +332,6 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
     selectSlice: (index: number, input?: CompletionInput) => changeSlice(index, false, input), grabSlice: (index: number, input?: CompletionInput) => changeSlice(index, true, input),
     summonLexi: () => openLexi(),
   };
-  if (splashState !== "complete") {
-    const splashClassName = splashState === "leaving"
-      ? styles.splash + " " + styles.splashLeaving
-      : styles.splash;
-
-    return <section className={splashClassName} aria-label="Welcome to Wiggle">
-      <img className={styles.splashBrand} src="/brand/wiggle-full.jpeg" alt="Wiggle. Wonder. Wow!" />
-      <button
-        className={styles.splashStart}
-        type="button"
-        onClick={startSplash}
-        disabled={splashState === "leaving"}
-      >
-        Let's Wiggle
-      </button>
-    </section>;
-  }
   const pizzaVisible = activityVisible && !support;
   const pizzaSlices = PIZZA_SLICE_IDS.map((id, index) => ({ id, state: slices.includes(index) ? "placed" as const : heldSlice === index ? "held" as const : "available" as const, focused: focusedSlice === index }));
   const splashVisible = splashState !== "complete";
@@ -357,5 +340,5 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
     {!phase && busy ? <p className={styles.starting} role="status">Your mission is coming into view…</p> : null}
     {!phase && feedback ? <p className={styles.starting} role="alert">{feedback}</p> : null}
     {phase ? <FractionMission phase={phase} mode={mode} selectedSlices={slices} report={report} answer={answer} feedback={feedback} busy={busy} correctness={correctness} realityCompleted={realityCompleted} onAnswer={value => { interact(); setAnswer(value); setFeedback(""); }} onStuck={() => { interact(); setCameraEnabled(false); emit({ kind: "stuck_requested", mode }); setFeedback(""); setPhase("stuck"); supportReady.current = false; void operation(signal => adapt("visual_gesture", signal, true)); }} onSimulate={simulate} onSelect={select} onCheck={check} onClose={close} onBack={() => setPhase(mode === "standard" ? "standard" : "activity")} commands={commands} cameraEnabled={cameraEnabled} onCameraEnable={() => setCameraEnabled(true)} onCameraDisable={() => { setCameraEnabled(false); setGesturePhase(null); setHeld(null); }} tracking={handTracking} support={support} supportText={supportText} onLexiRequest={requestLexi} onSupportClose={closeSupport} onSupportComplete={completeSupport} /> : null}
-  </UniverseCanvas></div>{splashVisible ? <div className={`${styles.splash} ${splashState === "leaving" ? styles.splashLeaving : ""}`}><img className={styles.splashBrand} src="/brand/wiggle-mark.png" alt="Wiggle" /><button ref={splashStartButton} type="button" className={styles.splashStart} onClick={startSplash} disabled={splashState === "leaving"}>Let's Wiggle</button></div> : null}</>;
+  </UniverseCanvas></div>{splashVisible ? <section className={`${styles.splash} ${splashState === "leaving" ? styles.splashLeaving : ""}`} aria-label="Welcome to Wiggle"><img className={styles.splashBrand} src="/brand/wiggle-full.jpeg" alt="Wiggle. Wonder. Wow!" /><button ref={splashStartButton} type="button" className={styles.splashStart} onClick={startSplash} disabled={splashState === "leaving"}>Let's Wiggle</button></section> : null}</>;
 }

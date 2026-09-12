@@ -8,6 +8,8 @@ const webgl = vi.hoisted(() => ({ supported: true, probeCalls: 0 }));
 const sceneState = vi.hoisted(() => ({ throwOnRender: false, useActualScene: false }));
 const rendererState = vi.hoisted(() => ({ canvasFallback: false, canvasRenders: 0, fallbackRenders: 0, domElement: null as HTMLCanvasElement | null }));
 
+vi.mock("./ScienceDiorama", () => ({ ScienceDiorama: () => null }));
+
 vi.mock("next/dynamic", async () => {
   const { default: ActualSciencePlanetScene } = await vi.importActual<typeof import("./SciencePlanetScene")>("./SciencePlanetScene");
   return { default: () => function Scene(props: { onZoneSelect: (zone: "ph-lab") => void; onContextLost: () => void }) {
