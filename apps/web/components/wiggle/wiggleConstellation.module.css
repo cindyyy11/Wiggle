@@ -1,0 +1,45 @@
+.sky {
+  background: radial-gradient(120% 100% at 50% 0%, #173e5e 0%, #285c85 55%, #0f2e47 100%);
+  border-radius: 24px;
+  padding: 20px 12px 24px;
+  color: #fff7e7;
+}
+.title { margin: 0 0 4px; font-size: 13px; letter-spacing: 1.6px; text-transform: uppercase; opacity: .8; text-align: center; }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(84px, 1fr));
+  gap: 10px 6px;
+  margin-top: 14px;
+}
+.star {
+  background: transparent;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 4px;
+  border-radius: 14px;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.star:hover, .star:focus-visible { background: #ffffff14; }
+.star:focus-visible { outline: 2px solid #f4c95d; outline-offset: 2px; }
+.mark { width: 34px; height: 34px; }
+.locked .mark { opacity: .35; filter: grayscale(1); }
+.unlocked .mark { animation: twinkle 3.2s ease-in-out infinite; }
+.label { font-size: 11px; text-align: center; line-height: 1.25; opacity: .95; }
+.locked .label { opacity: .55; }
+.detail {
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: #ffffff14;
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.detail strong { display: block; margin-bottom: 3px; font-size: 14px; }
+
+@keyframes twinkle { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .75; transform: scale(1.12); } }
+@media (prefers-reduced-motion: reduce) { .unlocked .mark { animation: none; } }
