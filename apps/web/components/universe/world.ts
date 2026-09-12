@@ -1,7 +1,7 @@
 import type { MutableRefObject } from "react";
 import type { Gesture } from "../../features/gestures/gestureClassifier";
 import type { GesturePhase } from "../../features/gestures/gestureStateMachine";
-import type { PointerNdc } from "../../features/gestures/handMath";
+import type { HandTrackingLatest } from "../../features/gestures/useHandTracking";
 import type { GestureInteractionAction, InteractiveTarget } from "./gestureInteraction";
 
 export type CameraMode = "globe" | "follow" | "mission";
@@ -56,15 +56,15 @@ export function createExplorerInput(): ExplorerInput {
 
 export type PizzaSliceState = "available" | "held" | "placed";
 export type PizzaSlicePresentation = { id: string; state: PizzaSliceState; focused?: boolean };
-export type PizzaPlatePresentation = { id?: string; accepting?: boolean; focused?: boolean };
+export type PizzaPlatePresentation = { accepting?: boolean; focused?: boolean };
 
 /** Declarative hand input. Camera ownership remains with the activity that opts in. */
 export type HandInteractionPresentation = {
   enabled: boolean;
-  pointer: PointerNdc | null;
+  /** Frame-owned Task 1 input; the R3F layer reads latest.current during every frame. */
+  latest: MutableRefObject<HandTrackingLatest>;
   gesture: Gesture | null;
   phase: GesturePhase | null;
-  isTracking: boolean;
   status?: "off" | "starting" | "ready" | "unavailable";
 };
 

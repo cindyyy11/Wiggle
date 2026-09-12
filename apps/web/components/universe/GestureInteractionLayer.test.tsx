@@ -1,7 +1,7 @@
-import { Group, Mesh, Vector3 } from "three";
+import { Group, Mesh, Vector2, Vector3 } from "three";
 import { describe, expect, it } from "vitest";
 import { GestureInteractionController } from "./gestureInteraction";
-import { interactiveTargetFromObject } from "./GestureInteractionLayer";
+import { interactiveTargetFromObject, latestHandFrame } from "./GestureInteractionLayer";
 
 describe("GestureInteractionLayer scene boundary", () => {
   it("reads stable ids and roles only from tagged hit meshes", () => {
@@ -11,6 +11,13 @@ describe("GestureInteractionLayer scene boundary", () => {
     expect(interactiveTargetFromObject(hitMesh)).toBeNull();
     hitMesh.userData = { interactive: true, objectId: "pizza-slice-1", role: "pizza-slice", dragObject: parent };
     expect(interactiveTargetFromObject(hitMesh)).toMatchObject({ id: "pizza-slice-1", role: "pizza-slice", object: parent });
+  });
+
+  it("reads current tracking data from Task 1's mutable frame instead of a render-time pointer prop", () => {
+    const latest = { current: { pointer: { x: -.2, y: .4 }, handedness: "left", confidence: .9, isTracking: true } };
+    expect(latestHandFrame(latest)).toMatchObject({ pointer: new Vector2(-.2, .4), isTracking: true });
+    latest.current.pointer = { x: .6, y: -.1 }; latest.current.isTracking = false;
+    expect(latestHandFrame(latest)).toMatchObject({ pointer: new Vector2(.6, -.1), isTracking: false });
   });
 
   it.each(["pinch", "fist"] as const)("emits a %s grab, move, and successful plate drop", gesture => {

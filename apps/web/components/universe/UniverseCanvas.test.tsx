@@ -103,7 +103,7 @@ describe("Numeria quality and accessible controls", () => {
   });
 
   it("shows an optional child-facing hand cursor without moving fallback controls into the canvas", async () => {
-    render(<UniverseCanvas pizza={{ visible: true, selectedSlices: [], hand: { enabled: true, pointer: { x: .2, y: -.4 }, gesture: "point", phase: null, isTracking: true, status: "ready" } }} />);
+    render(<UniverseCanvas pizza={{ visible: true, selectedSlices: [], hand: { enabled: true, latest: { current: { pointer: { x: .2, y: -.4 }, handedness: "right", confidence: .9, isTracking: true } }, gesture: "point", phase: null, status: "ready" } }} />);
     expect((await screen.findByTestId("hand-cursor")).getAttribute("aria-hidden")).toBe("true");
     expect(screen.getByText("Hand ready")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Slice 1" })).toBeTruthy();
