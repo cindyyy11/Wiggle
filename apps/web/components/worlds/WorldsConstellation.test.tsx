@@ -37,8 +37,8 @@ it("keeps DOM world controls available when graphics fall back", () => {
 });
 
 it("uses a smaller decoration budget at low quality", () => {
-  expect(worldDecorationCounts("high")).toEqual({ stars: 40, debris: 40 });
-  expect(worldDecorationCounts("low")).toEqual({ stars: 18, debris: 18 });
+  expect(worldDecorationCounts("high")).toEqual({ stars: 96, debris: 24 });
+  expect(worldDecorationCounts("low")).toEqual({ stars: 36, debris: 8 });
 });
 
 it("observes reduced-motion preference and passes it to the decorative scene", async () => {
