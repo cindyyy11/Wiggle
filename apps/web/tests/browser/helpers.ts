@@ -11,6 +11,18 @@ export async function enterScience(page: Page): Promise<void> {
   await expect(page.getByRole("region", { name: "Science Planet" })).toBeVisible();
 }
 
+export async function acceptScienceInvitation(page: Page, keyboard = false): Promise<void> {
+  const invitation = page.getByRole("button", { name: /Let’s explore/ });
+  await expect(invitation).toBeVisible({ timeout: 25000 });
+  if (keyboard) await page.keyboard.press("b");
+  else await invitation.click();
+}
+
+export async function enterMagnetLab(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "Explore Magnet Lands", exact: true }).click();
+  await acceptScienceInvitation(page);
+}
+
 export async function denyCamera(page: Page): Promise<void> {
   await page.addInitScript(() => {
     let calls = 0;

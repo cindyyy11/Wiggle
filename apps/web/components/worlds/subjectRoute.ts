@@ -68,7 +68,7 @@ export function parseSubjectRoute(input: URLSearchParams): SubjectRoute {
   if (world === "math") return { world: "math", child };
   if (world === "science") {
     const requestedZone = input.get("zone") as ScienceZoneId;
-    const zone = SCIENCE_ZONE_IDS.includes(requestedZone)
+    const zone = SCIENCE_ZONE_IDS.includes(requestedZone) && requestedZone !== "ph-lab" && requestedZone !== "sink-float"
       ? requestedZone
       : DEFAULT_SCIENCE_ZONE;
     return { world: "science", zone, child };

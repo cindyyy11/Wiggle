@@ -1,6 +1,6 @@
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
 import { SCIENCE_ZONES } from "../../components/science/scienceWorld";
-import { denyCamera, enterNumeria, enterScience, keyboardActivate, launchWiggle } from "./helpers";
+import { acceptScienceInvitation, denyCamera, enterMagnetLab, enterNumeria, enterScience, keyboardActivate, launchWiggle } from "./helpers";
 
 const SUBJECT_PORTALS = ["Show Numeria", "Show Science Planet", "Show English", "Show Bahasa Melayu"] as const;
 
@@ -63,7 +63,7 @@ test("splash, Worlds, Science, and Magnet Lab stay on a native-control path", as
   await expect(sciencePortal).toBeVisible();
   await expect(sciencePortal).toBeEnabled();
   await enterScience(page);
-  await page.getByRole("button", { name: "Start Magnet Lab", exact: true }).click();
+  await enterMagnetLab(page);
   await expect(page.getByRole("region", { name: "Magnet Lab mission" })).toBeVisible();
 
   await expectCameraHelpAndExit(page);
@@ -121,10 +121,10 @@ test("locked subject worlds retain focus and do not open a fake lesson", async (
 });
 
 test("a direct Science route restores its zone and retains its child through every topic selection", async ({ page }) => {
-  await page.goto("/?child=child-123&world=science&zone=ph-lab");
+  await page.goto("/?child=child-123&world=science&zone=colors");
   await page.getByRole("button", { name: "Let's Wiggle", exact: true }).click();
   await expect(page.getByRole("region", { name: "Science Planet" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Visit pH Lab", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: "Visit Colors Canyon", exact: true })).toHaveAttribute("aria-pressed", "true");
 
   for (const zone of SCIENCE_ZONES) {
     await page.getByRole("button", { name: `Visit ${zone.name}`, exact: true }).click();
@@ -140,7 +140,7 @@ test("Science fits desktop and mobile widths while keeping the selected topic vi
   await launchWiggle(page);
   await enterScience(page);
 
-  const selectedTopic = page.getByRole("region", { name: "Magnet Lab details" });
+  const selectedTopic = page.getByRole("region", { name: "Magnet Lands details" });
   await expect(selectedTopic).toBeVisible();
   if (testInfo.project.name === "mobile") await expect(selectedTopic).toBeInViewport();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -154,7 +154,7 @@ test("reduced motion keeps the subject orbit interactive through Magnet Lab", as
   await expectOrbitAfterSplash(page);
   await enterScience(page);
   await expect(page.getByRole("region", { name: "Science Planet" })).toHaveAttribute("data-reduced-motion", "true");
-  await page.getByRole("button", { name: "Start Magnet Lab", exact: true }).click();
+  await enterMagnetLab(page);
 
   await expectCameraHelpAndExit(page);
   await expect(page.getByText("Magnet Lab discovery complete.", { exact: true })).toHaveCount(0);
@@ -177,8 +177,8 @@ test("forced WebGL fallback keeps the subject orbit and all destinations usable"
     await expect(page.getByRole("button", { name, exact: true })).toBeVisible();
   }
   await enterScience(page);
-  await expect(page.getByRole("img", { name: "Science Planet map" })).toBeVisible();
-  await page.getByRole("button", { name: "Start Magnet Lab", exact: true }).click();
+  await expect(page.getByText("3D view unavailable. Your Science checkpoints are still ready below.")).toBeVisible();
+  await enterMagnetLab(page);
 
   await expectCameraHelpAndExit(page);
   await page.getByRole("button", { name: "Back to Worlds", exact: true }).click();
@@ -190,7 +190,8 @@ test("keyboard navigation reaches splash, Science, and Magnet Lab without pointe
   await keyboardActivate(page, "Let's Wiggle");
   await keyboardActivate(page, "Show Science Planet");
   await keyboardActivate(page, "Explore Science Planet");
-  await keyboardActivate(page, "Start Magnet Lab");
+  await keyboardActivate(page, "Explore Magnet Lands");
+  await acceptScienceInvitation(page, true);
 
   await expect(page.getByRole("region", { name: "Magnet Lab mission" })).toBeVisible();
 });
@@ -214,6 +215,7 @@ test("keyboard navigation reaches splash, Numeria, and Science from the orbit", 
   await keyboardActivate(page, "Let's Wiggle");
   await keyboardActivate(page, "Show Science Planet");
   await keyboardActivate(page, "Explore Science Planet");
-  await keyboardActivate(page, "Start Magnet Lab");
+  await keyboardActivate(page, "Explore Magnet Lands");
+  await acceptScienceInvitation(page, true);
   await expect(page.getByRole("region", { name: "Magnet Lab mission" })).toBeVisible();
 });

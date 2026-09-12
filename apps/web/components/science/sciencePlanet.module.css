@@ -1,3 +1,72 @@
+.spaceWorld { background: radial-gradient(ellipse at 55% 40%, #7577c5 0%, #394b89 48%, #21365f 100%); }
+.adventure { position: absolute; inset: 0; pointer-events: none; }
+.adventureHeader { position: absolute; top: 18px; left: 24px; right: 24px; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; background: #24385ee8; padding: 10px 14px; border-radius: 22px; }
+.adventureHeader h1 { margin: 4px 0; font-size: 26px; }
+.adventureHeader small { font-size: 10px; letter-spacing: .12em; color: #fff0b1; }
+.adventureHeader button, .adventureTray button { border-radius: 18px; padding: 8px 14px; min-height: 44px; font-size: 13px; }
+.cameraStatus { flex-basis: 100%; margin: 0; font-size: 12px; max-width: 520px; line-height: 1.4; }
+.adventureTray { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); width: min(620px, 55vw); padding: 14px; border-radius: 24px; background: #24385eef; pointer-events: auto; text-align: center; }
+.adventureFeedback { margin: 0 0 6px; font-size: 14px; line-height: 1.4; }
+.adventureProgress { margin: 0 0 8px; color: #c7e9f5; font-size: 11px; }
+.campObjects { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.spaceHud .campObjects button { background: #f8f2dc; color: #23415b; border: 2px solid transparent; font-size: 11px; padding: 7px 10px; }
+.spaceHud .campObjects button[aria-pressed=true] { border-color: #f8c66a; background: #bfedee; }
+.spaceHud .campObjects button:disabled { opacity: .5; cursor: default; }
+.sortTrays { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+.spaceHud .sortTrays button { min-height: 64px; background: #9de1c1; color: #23415b; font-size: 16px; font-weight: 800; border: 2px dashed #fcf8e3; }
+.spaceHud .sortTrays button:last-child { background: #f6ca98; }
+.sortTrays small { display: block; font-size: 10px; font-weight: normal; margin-top: 3px; }
+.spaceHud .checkpointNext { margin-top: 10px; background: #ffe18a; color: #23415b; font-weight: 800; }
+.searchControls > button { margin-top: 8px; }
+.magnetClue { position: absolute; top: 38%; left: 50%; transform: translateX(-50%); margin: 0; padding: 14px 22px; border-radius: 24px 24px 24px 4px; color: #24445d; background: #fff0b9; font-weight: 800; text-align: center; }
+.handVideo { position: absolute; right: 20px; top: 250px; width: 184px; aspect-ratio: 4/3; object-fit: contain; background: #152b49; transform: scaleX(-1); border-radius: 16px; border: 2px solid #e8f8ed; }
+.handFeedback { position: absolute; top: 398px; right: 20px; width: 184px; padding: 8px; border-radius: 12px; background: #183453ed; color: #f2ffec; font-size: 12px; text-align: center; line-height: 1.4; }
+.resetView { position: absolute; right: 28px; top: 194px; border-radius: 24px; padding: 10px 18px; min-height: 44px; font-size: 13px; }
+.spaceHud .sortTrays button[data-hand-over="true"] { outline: 4px solid #fff294; outline-offset: 3px; background: #ecffd0; }
+.handCursor { position: fixed; top: 0; left: 0; margin: -15px; width: 30px; height: 30px; border: 2px solid white; background: #f8bc66; border-radius: 50%; display: grid; place-items: center; color: #24445d; z-index: 20; pointer-events: none; opacity: 0; }
+.spaceWorld :global(.camp-checkpoint-marker) { border: 0; border-radius: 20px; background: #fff0b9; color: #25445c; padding: 7px 12px; white-space: nowrap; font: 700 12px "Trebuchet MS", sans-serif; cursor: pointer; min-height: 36px; }
+.spaceWorld :global(.camp-checkpoint-marker:disabled) { opacity: .6; cursor: default; }
+@media (max-width: 680px) {
+  .adventureHeader { top: 10px; left: 12px; right: 12px; gap: 8px; }
+  .adventureHeader h1 { font-size: 20px; }
+  .adventureHeader > button { font-size: 11px; padding: 6px 10px; }
+  .cameraStatus { font-size: 10px; max-width: 70%; }
+  .adventureTray { bottom: 110px; width: calc(100% - 24px); padding: 10px; max-height: 32svh; overflow-y: auto; }
+  .adventureFeedback { font-size: 12px; }
+  .spaceHud .campObjects button { padding: 5px 7px; font-size: 10px; }
+  .handVideo { width: 112px; top: 232px; right: 12px; }
+  .handFeedback { width: 112px; top: 323px; right: 12px; padding: 6px; font-size: 10px; }
+  .resetView { top: 180px; right: 14px; }
+  .magnetClue { top: 35%; width: max-content; max-width: 90%; font-size: 13px; }
+}
+.spaceHud { position: absolute; inset: 0; z-index: 3; pointer-events: none; color: #fffaf2; font-family: "Trebuchet MS", sans-serif; }
+.spaceHud button { pointer-events: auto; }
+.spaceHud .hud { position: static; max-width: none; }
+.spaceHud .hudTopline { position: absolute; top: 24px; left: 28px; right: 28px; flex-direction: row; align-items: center; }
+.spaceHud .eyebrow { color: #fff4c4; font-size: 14px; }
+.spaceHud .topicControls { position: absolute; top: 82px; left: 28px; right: 28px; justify-content: center; margin: 0; gap: 8px; }
+.spaceHud .topicButton { border: 1px solid #ffffff55; background: #26396be8; color: white; border-radius: 24px; font-size: 13px; padding: 10px 14px; }
+.spaceHud .topicButton[aria-pressed="true"] { background: #b9f6ff; color: #203450; box-shadow: none; transform: none; }
+.spaceHud .zoneCard { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); width: min(400px, 42vw); margin: 0; padding: 12px 16px; text-align: center; border: 0; background: #253665e8; border-radius: 22px; box-shadow: none; }
+.spaceHud .zoneCard h1 { font: 800 26px/1.1 "Trebuchet MS", sans-serif; letter-spacing: -.02em; }
+.spaceHud .zoneCard p { margin: 6px 0; font-size: 13px; }
+.spaceHud .zoneKicker { color: #9eefff; }
+.spaceHud .startButton { background: #ffe17d; border: 0; box-shadow: none; border-radius: 24px; padding: 10px 22px; }
+.spaceHud .comingSoon { border: 0; padding: 6px; background: none; color: #d9dbff; }
+.spaceHud .backButton, .cameraButton { background: #fff8ee; color: #203450; border: 0; border-radius: 24px; min-height: 44px; padding: 10px 18px; font: 700 14px "Trebuchet MS", sans-serif; cursor: pointer; }
+.cameraButton { position: absolute; right: 28px; top: 142px; }
+.walkHint { position: absolute; top: 150px; left: 28px; max-width: 230px; font-size: 12px; line-height: 1.5; }
+.spaceHud button:focus-visible { outline: 3px solid #ffdf76; outline-offset: 4px; }
+@media (max-width: 680px) {
+  .spaceHud .hudTopline { top: 14px; left: 14px; right: 14px; }
+  .spaceHud .topicControls { top: 72px; left: 12px; right: 12px; flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; pointer-events: auto; padding-bottom: 6px; }
+  .spaceHud .topicButton { white-space: nowrap; flex-shrink: 0; width: auto; }
+  .cameraButton { top: 128px; right: 14px; }
+  .walkHint { display: none; }
+  .spaceHud .zoneCard { bottom: 174px; width: min(300px, 80vw); padding: 10px; }
+  .spaceHud .zoneCard h1 { font-size: 22px; }
+  .spaceHud .zoneCard > p:not(.zoneKicker):not(.comingSoon):not(.completionStatus) { display: none; }
+}
 .planet {
   position: relative;
   box-sizing: border-box;

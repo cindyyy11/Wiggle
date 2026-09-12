@@ -7,7 +7,7 @@ import { initialMagnetPlay, magnetPlayReducer } from "./magnetHandPlay";
 import { MAGNET_OBJECTS } from "./scienceWorld";
 import styles from "./magnetLab.module.css";
 
-export type MagnetLabMissionProps = { onExit(): void; onComplete(): void };
+export type MagnetLabMissionProps = { onExit(): void; onComplete(): void; manageFocus?: boolean };
 
 const copy = {
   explore: "Move your open hand to guide the magnet!",
@@ -16,7 +16,7 @@ const copy = {
 };
 const titles = { explore: "What does a magnet pull?", sort: "Find each object's home", hidden: "A campsite mystery!" };
 
-export function MagnetLabMission({ onExit, onComplete }: MagnetLabMissionProps) {
+export function MagnetLabMission({ onExit, onComplete, manageFocus = true }: MagnetLabMissionProps) {
   const tracking = useHandTracking({ enabled: true });
   const [state, dispatch] = useReducer(magnetPlayReducer, initialMagnetPlay);
   const [handStatus, setHandStatus] = useState("Show your hand to the camera.");
@@ -27,6 +27,7 @@ export function MagnetLabMission({ onExit, onComplete }: MagnetLabMissionProps) 
   exit.current = onExit;
 
   useEffect(() => {
+    if (!manageFocus) return;
     const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     section.current?.querySelector<HTMLButtonElement>("button")?.focus();
     const keydown = (event: KeyboardEvent) => {
@@ -51,7 +52,7 @@ export function MagnetLabMission({ onExit, onComplete }: MagnetLabMissionProps) 
       // The parent remounts the planet's start control in the same commit.
       queueMicrotask(restore);
     };
-  }, []);
+  }, [manageFocus]);
 
   useEffect(() => {
     if (!window.matchMedia) return;

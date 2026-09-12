@@ -9,15 +9,15 @@ export type ScienceHudProps = {
   onZoneSelect: (zone: ScienceZoneId) => void;
   onBackToWorlds: () => void;
   onStartMagnetLab: () => void;
+  onExplore?: () => void;
   completionMessage?: string;
-  focusLabEntry?: boolean;
 };
 
 function selectedScienceZone(selectedZone: ScienceZoneId): ScienceZone {
   return SCIENCE_ZONES.find((zone) => zone.id === selectedZone) ?? SCIENCE_ZONES[0];
 }
 
-export function ScienceHud({ selectedZone, onZoneSelect, onBackToWorlds, onStartMagnetLab, completionMessage, focusLabEntry }: ScienceHudProps) {
+export function ScienceHud({ selectedZone, onZoneSelect, onBackToWorlds, onStartMagnetLab, onExplore, completionMessage }: ScienceHudProps) {
   const zone = selectedScienceZone(selectedZone);
   const canStart = zone.id === "magnet-lab";
 
@@ -40,11 +40,11 @@ export function ScienceHud({ selectedZone, onZoneSelect, onBackToWorlds, onStart
       </button>)}
     </div>
     <section className={styles.zoneCard} aria-label={`${zone.name} details`}>
-      <p className={styles.zoneKicker}>{canStart ? "Ready to explore" : "Coming soon"}</p>
+      {!onExplore ? <p className={styles.zoneKicker}>{canStart ? 'Ready to explore' : 'Coming soon'}</p> : null}
       <h1>{zone.name}</h1>
       <p>{zone.subtitle}</p>
-      {canStart
-        ? <button className={styles.startButton} type="button" autoFocus={focusLabEntry} onClick={onStartMagnetLab}>Start Magnet Lab</button>
+      {onExplore ? <button className={styles.startButton} type="button" onClick={onExplore}>Explore {zone.name}</button> : canStart
+        ? <button className={styles.startButton} type="button" onClick={onStartMagnetLab}>Explore Magnet Lands</button>
         : <p className={styles.comingSoon} role="status">Coming soon — you can visit another discovery spot while this one is being prepared.</p>}
       {completionMessage ? <p className={styles.completionStatus} role="status" aria-live="polite">{completionMessage}</p> : null}
     </section>

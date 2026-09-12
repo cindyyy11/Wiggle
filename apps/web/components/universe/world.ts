@@ -40,6 +40,10 @@ export function resolveQuality(preference: QualityPreference, webgl: boolean, me
 
 // Pointer, touch, keyboard and external destinations feed one frame-owned controller.
 export type ExplorerInput = {
+  paused?: boolean;
+  teleport?: Destination | null;
+  cameraPose?: CameraPose;
+  restoreCamera?: CameraPose | null;
   keys: Set<string>;
   horizontal: number;
   vertical: number;
@@ -50,6 +54,7 @@ export type ExplorerInput = {
   zoom: number;
 };
 export type InputRef = MutableRefObject<ExplorerInput>;
+export type CameraPose = { position: [number, number, number]; target: [number, number, number]; up: [number, number, number] };
 export function createExplorerInput(): ExplorerInput {
   return { keys: new Set(), horizontal: 0, vertical: 0, hop: false, running: false, destination: null, position: surfacePoint(INITIAL_DESTINATION, RADIUS + .05), zoom: 0 };
 }
@@ -83,6 +88,10 @@ export type PizzaPresentation = {
 };
 export type SceneInteractionTargets = MutableRefObject<InteractiveTarget[]>;
 export type UniverseSceneProps = {
+  activityView?: import("./activityCamera").ActivityView;
+  resetViewKey?: number;
+  theme?: "math" | "science";
+  sceneContent?: import("react").ReactNode;
   mode: CameraMode;
   quality: "high" | "low";
   reducedMotion: boolean;

@@ -1,0 +1,76 @@
+.worldFrame { position: relative; min-height: 100svh; font-family: "Trebuchet MS", Arial, sans-serif; }
+.worldFrame:focus { outline: none; }
+.magnetOverlay { position: fixed; inset: 0; z-index: 20; overflow-y: auto; padding: 16px; background: #172d52e8; }
+.worldFrame * { box-sizing: border-box; }
+.worldFrame :global(.science-land-sign) { min-height: 44px; padding: 8px 14px; border: 0; border-radius: 12px; background: #fff6df; color: #203b58; font: 700 14px "Trebuchet MS", sans-serif; white-space: nowrap; }
+.worldFrame button { cursor: pointer; font-family: inherit; }
+.worldFrame button:focus-visible { outline: 3px solid #edab3f; outline-offset: 4px; }
+.worldFrame button:disabled { opacity: .5; cursor: default; }
+.invitation { position: absolute; z-index: 8; bottom: 28px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; width: min(540px, calc(100% - 32px)); padding: 22px; border-radius: 28px 28px 28px 6px; background: #fff6df; color: #203b58; box-shadow: 0 12px 40px #0a203c40; pointer-events: auto; }
+.invitation h2 { margin: 0 0 7px; font-size: 20px; }
+.invitation p { margin: 0 0 16px; line-height: 1.5; font-size: 15px; }
+.inviteActions { display: flex; gap: 12px; flex-wrap: wrap; }
+.inviteActions button { min-height: 44px; border: 0; border-radius: 16px; padding: 10px 16px; background: #245a70; color: #fff; font-size: 14px; font-weight: 700; }
+.inviteActions button:last-child { background: transparent; color: #31536a; }
+.inviteActions button:hover { filter: brightness(1.1); }
+.inviteActions kbd { margin-left: 10px; padding: 3px 7px; border: 1px solid #badfe6; border-radius: 5px; font: inherit; }
+.guideFace { position: relative; flex: 0 0 66px; width: 66px; height: 72px; margin-top: 8px; border-radius: 24px 24px 32px 32px; background: #ef8294; box-shadow: inset -8px -7px 0 #cb587328; }
+.guideFace[data-guide="animals"] { background: #67c9e0; border-radius: 50% 50% 40% 50%; }
+.guideFace[data-guide="colors"] { background: #b7a0e9; border-radius: 12px 30px 16px 30px; }
+.guideFace[data-guide="life-cycle"] { background: #83cea2; border-radius: 8px 38px 8px 38px; }
+.guideFace i { position: absolute; top: 25px; left: 14px; width: 14px; height: 19px; border-radius: 50%; background: #fff; }
+.guideFace i:last-child { left: 38px; }
+.guideFace i::after { content: ''; position: absolute; width: 6px; height: 9px; right: 2px; top: 5px; background: #173e5e; border-radius: 50%; }
+.guideFace::after { content: ''; position: absolute; left: 26px; top: 48px; width: 15px; height: 7px; border-radius: 50%; box-shadow: inset 0 -3px 0 #284756; }
+.magnetSession::after { content: ''; position: absolute; inset: 8px; border: 3px solid #d0eff5; border-radius: 28px; pointer-events: none; z-index: 2; box-shadow: inset 0 0 35px #15345438; }
+.sessionBackdrop { position: absolute; inset: 0; z-index: 12; background: #172d526b; display: grid; place-items: center; padding: 24px; }
+.starter { width: min(960px, 100%); max-height: calc(100svh - 48px); overflow: auto; scrollbar-color: #8cbaaf #e4eee6; background: #fff8e9; color: #203c55; border-radius: 28px; padding: 28px; box-shadow: 0 24px 70px #10294355; }
+.starter ::selection { background: #c2e8df; color: #173e5e; }
+.sessionHeader { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; }
+.sessionHeader h1 { margin: 0; font-size: clamp(24px, 3vw, 34px); line-height: 1.15; }
+.sessionHeader p { margin: 6px 0 0; font-size: 15px; }
+.starter button { min-height: 44px; border: 0; border-radius: 14px; padding: 10px 16px; font-size: 14px; font-weight: 700; background: #d8eae3; color: #203c55; }
+.starter button:hover:not(:disabled) { background: #c5e4dd; }
+.sessionHeader button { background: transparent; text-decoration: underline; text-underline-offset: 4px; flex-shrink: 0; }
+.sessionInstructions { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin: 20px 0 10px; padding-top: 16px; border-top: 1px solid #bdd5cc; }
+.sessionInstructions p { margin: 0; max-width: 55ch; font-size: 14px; line-height: 1.5; }
+.objectShelf { position: relative; container-type: inline-size; height: 180px; background: var(--land-color); border-radius: 20px; overflow: hidden; }
+.modelShelf { position: absolute; inset: 0; pointer-events: none; }
+.objectButtons { display: grid; grid-template-columns: repeat(var(--items), 1fr); position: absolute; inset: 0; }
+.starter .objectButtons button { background: transparent; border: 2px solid transparent; border-radius: 16px; padding: 10px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+.objectButtons button > span:last-child { padding: 7px 10px; border-radius: 10px; background: #fffaf0ec; color: #213f55; }
+.starter .objectButtons button:hover, .starter .objectButtons button[aria-pressed="true"], .starter [data-hand-over="true"] { border-color: #264e65; background: #fff8df30; }
+.colorSymbol { display: block; width: 18px; height: 18px; background: #1e405a; margin-bottom: 8px; }
+.colorSymbol[data-symbol="red"] { border-radius: 50%; }
+.colorSymbol[data-symbol="yellow"] { clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.colorSymbol[data-symbol="purple"] { transform: rotate(45deg); }
+.feedback { min-height: 44px; margin: 16px 0; font-size: 16px; line-height: 1.5; }
+.targets { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.targets button { min-height: 76px; border: 2px dashed #75958e; background: #e8f0e6; }
+.targets small { display: block; margin-top: 7px; font-size: 12px; font-weight: normal; }
+.starter .primary { display: block; margin: 16px auto 0; background: #245a70; color: #fff; }
+.starter .primary:hover:not(:disabled) { background: #173e55; }
+.cameraArea { display: flex; gap: 18px; align-items: center; margin-top: 18px; padding-top: 16px; border-top: 1px solid #bdd5cc; }
+.cameraArea[hidden] { display: none; }
+.cameraArea video { width: 150px; aspect-ratio: 4/3; object-fit: contain; border-radius: 12px; background: #1e3b54; transform: scaleX(-1); }
+.cameraArea p, .cameraArea output { font-size: 12px; line-height: 1.5; }
+.cameraArea output { display: block; font-weight: 700; }
+.starterCursor { position: fixed; top: 0; left: 0; margin: -14px; width: 28px; height: 28px; border: 3px solid #fff; border-radius: 50%; background: #245a70; pointer-events: none; z-index: 30; }
+@media (max-width: 680px) {
+  .invitation { bottom: 120px; padding: 16px; gap: 12px; }
+  .guideFace { flex-basis: 54px; transform: scale(.85); transform-origin: top left; }
+  .invitation h2 { font-size: 17px; }
+  .invitation p { font-size: 13px; margin-bottom: 10px; }
+  .sessionBackdrop { padding: 10px; }
+  .starter { max-height: calc(100svh - 20px); padding: 18px; border-radius: 22px; }
+  .sessionHeader { gap: 10px; flex-direction: column; }
+  .sessionHeader button { padding: 8px 0; }
+  .sessionInstructions { margin-top: 10px; gap: 10px; align-items: flex-start; flex-direction: column; }
+  .objectShelf { height: 270px; }
+  .starter .objectButtons button { font-size: 12px; padding: 6px; }
+  .targets { grid-template-columns: repeat(2, 1fr); }
+  .feedback { font-size: 14px; margin: 12px 0; }
+  .cameraArea { align-items: flex-start; gap: 10px; }
+  .cameraArea video { width: 110px; }
+}
+@container (max-width: 539px) { .objectButtons { grid-template-columns: repeat(2, 1fr); } }

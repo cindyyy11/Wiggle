@@ -96,8 +96,8 @@ it("opens a direct Science route after the splash and preserves child context wh
 
   enterWorlds();
   expect(screen.getByRole("region", { name: "Science Planet" })).toBeTruthy();
-  fireEvent.click(screen.getByRole("button", { name: "Visit Sink & Float Bay" }));
-  expect(window.location.search).toBe("?child=owned&world=science&zone=sink-float");
+  fireEvent.click(screen.getByRole("button", { name: "Visit Animal Types" }));
+  expect(window.location.search).toBe("?child=owned&world=science&zone=animals");
   expect(screen.getByRole("button", { name: "Back to Worlds" })).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Back to Worlds" }));
   expect(window.location.search).toBe("?child=owned");
