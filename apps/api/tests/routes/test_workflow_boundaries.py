@@ -92,6 +92,27 @@ def test_lexi_tools_and_parent_check_in(unlock_parent: Callable[[TestClient], No
     )
 
 
+def test_lexi_redirects_a_crisis_message_instead_of_chatting_normally() -> None:
+    class RefusingToRedirectProvider(LocalAIProvider):
+        """A stand-in for an AI provider that would otherwise happily keep chatting."""
+
+        def chat_with_lexi(self, context: ProviderContext) -> LexiContent:
+            return LexiContent(text="Let's keep playing the pizza game!", suggested_tool=None)
+
+    client = TestClient(create_app(provider=RefusingToRedirectProvider()))
+    session = start(client)
+    reply = client.post(
+        "/lexi/chat",
+        json={"sessionId": session, "message": "I'm really sad and I want to hurt myself"},
+    )
+    assert reply.status_code == 200
+    body = reply.json()
+    assert "trusted adult" in body["content"]["text"].lower()
+    assert body["executedTool"] is None
+    # The safety redirect must win even though the provider never saw the crisis check.
+    assert "pizza" not in body["content"]["text"].lower()
+
+
 def test_ai_suggestions_do_not_execute_tools() -> None:
     class SuggestionProvider(LocalAIProvider):
         def chat_with_lexi(self, context: ProviderContext) -> LexiContent:

@@ -71,6 +71,27 @@ export interface LexiResponse {
 }
 export interface CheckInRequest { childId: string; difficulty: number; note?: string }
 export interface CheckInResponse { checkInId: string; message: string }
+/** Counts for the current day only, derived from learning_events — never a diagnostic score. */
+export interface TodaySummary {
+  missionsCompleted: number;
+  independentMissions: number;
+  helpRequests: number;
+  resetBreaks: number;
+  learningMinutes: number;
+  offlineMinutes: number;
+}
+
+/** A week-over-week comparison, phrased for a parent. Absent until 7+ days of history exist. */
+export interface WeeklySummary {
+  childName: string;
+  masteryDeltaBySubject: Readonly<Record<string, number>>;
+  independentCompletionDelta: number;
+  mostEffectiveStrategy: string | null;
+  biggestImprovement: string | null;
+  wiggleNoticed: string;
+  parentSuggestion: string;
+}
+
 export interface ParentInsightsResponse {
   childId: string;
   completedMissions: number;
@@ -79,4 +100,6 @@ export interface ParentInsightsResponse {
   missions?: readonly { title: string; objective: string }[];
   masteryHistory?: readonly { label: string; value: number }[];
   independenceHistory?: readonly { label: string; value: number }[];
+  today?: TodaySummary;
+  weeklySummary?: WeeklySummary | null;
 }

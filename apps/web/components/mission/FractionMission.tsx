@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import type { LearningMode, SimulationReport, StrategyName } from "@wiggle/contracts";
+import type { LearningMode, SimulationReport, StrategyName, TwinVisualState } from "@wiggle/contracts";
 import { CompletionMoment } from "./CompletionMoment";
 import { LessonMorph } from "./LessonMorph";
 import { PizzaActivity } from "./PizzaActivity";
@@ -10,6 +10,7 @@ import { LexiBeacon } from "../lexi/LexiBeacon";
 import { LexiPanel, type LexiAction } from "../lexi/LexiPanel";
 import { ResetStation } from "./ResetStation";
 import { RealityMission } from "./RealityMission";
+import { WiggleTwinAvatar } from "../wiggle/WiggleTwinAvatar";
 import type { MissionInputCommands } from "../../features/gestures/commands";
 import type { HandTrackingState } from "../../features/gestures/useHandTracking";
 import styles from "./mission.module.css";
@@ -23,7 +24,7 @@ export interface FractionMissionProps {
   commands: MissionInputCommands; cameraEnabled: boolean; onCameraEnable(): void; onCameraDisable(): void;
   tracking: HandTrackingState;
   support: "lexi" | "reset" | "reality" | null; supportText: string;
-  realityCompleted: boolean;
+  realityCompleted: boolean; twinState: TwinVisualState; newStar: string | null; greeting: string;
   onLexiRequest(action: LexiAction): void; onSupportClose(): void; onSupportComplete(): void;
 }
 
@@ -32,10 +33,12 @@ export function FractionMission(props: FractionMissionProps) {
   useEffect(() => { if (!props.support) panel.current?.focus({ preventScroll: true }); }, [props.phase, props.mode, props.support]);
   return <section ref={panel} tabIndex={-1} className={styles.panel} aria-label="Fraction mission" aria-busy={props.busy} data-mission-phase={props.phase}>
     {props.phase !== "complete" ? <button className={styles.close} onClick={props.onClose} aria-label="Leave mission">×</button> : null}
-    {props.support === "lexi" ? <LexiPanel text={props.supportText} busy={props.busy} onRequest={props.onLexiRequest} onClose={props.onSupportClose} /> : props.support === "reset" ? <ResetStation onComplete={props.onSupportComplete} onCancel={props.onSupportClose} /> : props.support === "reality" ? <RealityMission prompt={props.supportText} onComplete={props.onSupportComplete} onCancel={props.onSupportClose} /> : <fieldset disabled={props.busy}>
+    {props.support !== "lexi" && props.phase !== "complete" ? <WiggleTwinAvatar state={props.twinState} size={64} className={styles.companion} /> : null}
+    {props.greeting && props.support !== "lexi" && props.phase !== "complete" ? <p className={styles.greeting} role="status">Lexi: &ldquo;{props.greeting}&rdquo;</p> : null}
+    {props.support === "lexi" ? <LexiPanel text={props.supportText} busy={props.busy} twinState={props.twinState} onRequest={props.onLexiRequest} onClose={props.onSupportClose} /> : props.support === "reset" ? <ResetStation onComplete={props.onSupportComplete} onCancel={props.onSupportClose} /> : props.support === "reality" ? <RealityMission prompt={props.supportText} onComplete={props.onSupportComplete} onCancel={props.onSupportClose} /> : <fieldset disabled={props.busy}>
       {props.phase === "stuck" ? <StuckMode onExplore={props.onSimulate} onCheck={props.onCheck} selectedSlices={props.selectedSlices} /> : null}
       {props.phase === "simulation" ? <SimulationHologram report={props.report} onSelect={props.onSelect} /> : null}
-      {props.phase === "complete" ? <CompletionMoment correctness={props.correctness} onReturn={props.onClose} onReality={() => props.onLexiRequest({ tool: "create_reality_mission" })} realityCompleted={props.realityCompleted} /> : null}
+      {props.phase === "complete" ? <CompletionMoment correctness={props.correctness} onReturn={props.onClose} onReality={() => props.onLexiRequest({ tool: "create_reality_mission" })} realityCompleted={props.realityCompleted} twinState={props.twinState} newStar={props.newStar} /> : null}
       {props.phase === "standard" || props.phase === "activity" ? <>
         <span className={styles.kicker}>FRACTION FOREST · 01</span>
         {props.phase === "activity" ? <><LessonMorph mode={props.mode} /><PizzaActivity selectedSlices={props.selectedSlices} mode={props.mode} onCheck={props.onCheck} /></> : <><h2>Make three quarters</h2><p>Three quarters means how many of four equal pieces?</p><div className={styles.answers} role="group" aria-label="Choose an answer">{[1, 2, 3].map(answer => <button key={answer} aria-pressed={props.answer === answer} onClick={() => props.onAnswer(answer)}>{answer} of 4</button>)}</div><button className={styles.primary} onClick={props.onCheck}>Check my answer <span aria-hidden="true">↗</span></button></>}
