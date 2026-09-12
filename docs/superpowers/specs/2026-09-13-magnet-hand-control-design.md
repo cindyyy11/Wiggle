@@ -9,7 +9,7 @@ Turn Magnet Lands into a camera-first hand-gesture activity that matches the sup
 - Magnet Lands only. The Science planet, other subject lands, and their optional camera flows do not change.
 - Remove the in-session `Use hand gestures` toggle from Magnet Lands.
 - Start local camera tracking when a child enters Magnet Lands. Browser camera permission remains the device owner's explicit choice.
-- If permission is denied, unavailable, or the device has no usable camera, replace the lesson controls with a clear child-facing screen: `Ask an adult to turn on the camera`, an explanation that the activity needs a camera, and one `Try again` action.
+- If permission is denied, unavailable, or the device has no usable camera, replace the lesson controls with a clear child-facing screen: `Ask an adult to turn on the camera`, an explanation that the activity needs a camera, and one `Try again` action. A permission denial is distinguishable from general device/model unavailability internally, but both present this same child-facing state.
 - Keep camera frames and inference local to the device; do not add services, remote uploads, or dependencies.
 
 ## Learning Flow
@@ -55,16 +55,16 @@ Checkpoint 3 reduces the overlay again so walking and environmental searching st
 
 ## Architecture
 
-- `useHandTracking` will publish a smoothed pointer for every confident detected hand, even when a named gesture cannot be classified.
-- `MagnetAdventureScene` owns the moving-magnet plane mapping, attraction radius, visual reactions, and the existing 3D target interaction.
-- `magnetGesture` retains pinch / open-palm semantics for checkpoint 2 and pointing / pinch investigation in checkpoint 3.
-- `SciencePlanetCanvas` starts tracking automatically only in the active Magnet session, stops it when the session closes, and passes its failure state to the panel.
-- `MagnetAdventurePanel` becomes the camera-first mission shell and adult-assistance state. It no longer exposes a gesture opt-in control.
+- `useHandTracking` will publish a smoothed pointer for every confident detected hand, even when a named gesture cannot be classified. It will distinguish `denied` from `unavailable`, expose a retry method, and clear stale pointers when confidence or coordinates are invalid.
+- A new, pure `magnetHandPlay` module owns bounded hand-to-table mapping, attraction-radius decisions, and checkpoint progress. It has no React or Three.js dependency.
+- A new `MagnetHandLabScene` is a compact React Three Fiber workbench. It renders the moving 3D horseshoe magnet, object reactions, and visual guide effects from `magnetHandPlay` state.
+- The existing `MagnetLabMission` becomes the camera-first mission shell: it starts `useHandTracking` as soon as the mission opens, renders the adult-assistance/retry screen when needed, and hosts the 3D lab, mission card, camera card, guide, and progress.
+- `SciencePlanet` remains the owner of opening and closing the mission. Closing the mission unmounts it, which stops every camera track and releases the local model.
 
 ## Validation
 
 - Unit test pointer updates when a hand is confidently seen but unclassified.
 - Unit test bounded magnet mapping and magnetic/non-magnetic attraction decisions.
-- Keep reducer and gesture-controller tests for correct progress, loss grace, and no accidental release.
-- Browser tests cover automatic permission request state, denied-camera adult screen and retry, checkpoint completion with mocked hand frames, focus trap, reduced motion, desktop, and mobile.
+- Unit test checkpoint progress, loss grace, and no accidental release.
+- Browser tests cover automatic permission request state, denied-camera adult screen and retry, checkpoint completion with mocked hand frames, focus return, reduced motion, desktop, and mobile.
 - Visually inspect the 3D bench, camera card, magnet movement, and narrow mobile layout.
