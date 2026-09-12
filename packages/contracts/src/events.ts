@@ -22,6 +22,7 @@ export const eventTypes = [
 ] as const;
 
 export type EventType = (typeof eventTypes)[number];
+export type CompletionInput = "buttons" | "gesture";
 export type LearningMode =
   | "standard"
   | "visual"
@@ -42,6 +43,8 @@ export interface MissionCompletedPayload {
   objective: string;
   correctness: number;
   mode: LearningMode;
+  intendedMode?: LearningMode;
+  inputMethod?: CompletionInput;
   strategy?: "chunking" | "movement_break" | "visual_hint" | "voice_hint" | "choice";
 }
 
@@ -158,6 +161,12 @@ export function validateLearningEvent(event: unknown): LearningEvent {
     assertProbability(payload.correctness, "payload.correctness");
     if (!learningModes.includes(payload.mode as LearningMode)) {
       throw new TypeError("payload.mode must be a supported learning mode");
+    }
+    if (payload.intendedMode !== undefined && !learningModes.includes(payload.intendedMode)) {
+      throw new TypeError("payload.intendedMode must be a supported learning mode");
+    }
+    if (payload.inputMethod !== undefined && !["buttons", "gesture"].includes(payload.inputMethod)) {
+      throw new TypeError("payload.inputMethod must identify buttons or recognized gesture input");
     }
     if (
       payload.strategy !== undefined &&

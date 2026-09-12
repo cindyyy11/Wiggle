@@ -93,7 +93,7 @@ it("completes the child hero loop through the accessible local world", async () 
   await waitFor(() => {
     const events = new EventQueue().entries().map(entry => entry.event);
     expect(events.map(event => event.type)).toEqual(expect.arrayContaining(["task_started", "first_interaction", "stuck_requested", "mission_completed"]));
-    expect(events.find(event => event.type === "mission_completed")?.payload).toMatchObject({ correctness: .92, mode: "visual_gesture", objective: "identify-three-quarters" });
+    expect(events.find(event => event.type === "mission_completed")?.payload).toMatchObject({ correctness: .92, mode: "visual", intendedMode: "visual_gesture", inputMethod: "buttons", objective: "identify-three-quarters" });
   });
 });
 

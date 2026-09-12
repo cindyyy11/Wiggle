@@ -1,4 +1,4 @@
-import type { LearningEvent, LearningMode } from "./events.js";
+import type { CompletionInput, LearningEvent, LearningMode } from "./events.js";
 import type { StrategyName } from "./simulation.js";
 import type { LearnerTwin, TwinUpdate } from "./twin.js";
 
@@ -40,7 +40,7 @@ export interface SelectAdaptationResponse {
   predictedSuccess: number;
   activity: ActivityContent;
 }
-export interface CompleteSessionRequest extends SimulateRequest { correctness: number }
+export interface CompleteSessionRequest extends SimulateRequest { correctness: number; inputMethod?: CompletionInput }
 export interface CompleteSessionResponse {
   sessionId: string;
   interventionId: string;

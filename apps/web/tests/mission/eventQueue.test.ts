@@ -12,7 +12,7 @@ it("keeps the wire envelope minimal when passed the entire session DTO", () => {
   expect(Object.keys(event).sort()).toEqual(["childId", "id", "occurredAt", "payload", "sessionId", "type"]);
 });
 
-it("retries a failed completion with the same key after reload, after ordinary events", async () => {
+it.each([undefined, "gesture"] as const)("retries a failed %s completion with unchanged input after reload", async inputMethod => {
   let now = 1000;
   const queue = new EventQueue(undefined, () => now);
   const client = new ApiClient();
@@ -20,7 +20,7 @@ it("retries a failed completion with the same key after reload, after ordinary e
   const complete = vi.spyOn(client, "complete").mockRejectedValueOnce(new Error("offline")).mockResolvedValue({} as never);
   const session = demoSession("session");
   emitLearningEvent(queue, session, { kind: "task_started" }, "api");
-  emitLearningEvent(queue, session, { kind: "mission_completed", correctness: .92, objective: session.objective, mode: "visual_gesture" }, "api", "completion-key");
+  emitLearningEvent(queue, session, { kind: "mission_completed", correctness: .92, objective: session.objective, mode: "visual_gesture", inputMethod }, "api", "completion-key");
   const signal = new AbortController().signal;
   await expect(queue.flush(client, signal, "session")).rejects.toThrow("offline");
   expect(events).toHaveBeenCalledTimes(1);
@@ -28,7 +28,7 @@ it("retries a failed completion with the same key after reload, after ordinary e
   now += 1000;
   const reloaded = new EventQueue(undefined, () => now);
   await reloaded.flush(client, signal, "session");
-  expect(complete).toHaveBeenNthCalledWith(2, { sessionId: "session", correctness: .92 }, "completion-key", signal);
+  expect(complete).toHaveBeenNthCalledWith(2, { sessionId: "session", correctness: .92, inputMethod: inputMethod ?? "buttons" }, "completion-key", signal);
   expect(reloaded.entries()).toHaveLength(0);
   expect(events.mock.calls.flatMap(([body]) => body.events).some(event => event.type === "mission_completed")).toBe(false);
 });
@@ -57,7 +57,7 @@ it.each([404, 503])("isolates an older session rejected with %i from a fresh com
   emitLearningEvent(queue, demoSession("fresh"), { kind: "task_started" }, "api");
   emitLearningEvent(queue, demoSession("fresh"), { kind: "mission_completed", correctness: .92, objective: "identify-three-quarters", mode: "visual_gesture" }, "api");
   await queue.flush(client, new AbortController().signal);
-  expect(complete).toHaveBeenCalledWith({ sessionId: "fresh", correctness: .92 }, expect.any(String), expect.any(AbortSignal));
+  expect(complete).toHaveBeenCalledWith({ sessionId: "fresh", correctness: .92, inputMethod: "buttons" }, expect.any(String), expect.any(AbortSignal));
   expect(queue.entries()).toHaveLength(1);
   expect(queue.entries()[0].quarantined).toBe(status === 404 ? 404 : undefined);
   expect(new EventQueue().entries()[0].event.sessionId).toBe("old");

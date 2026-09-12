@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { LearningEventPayload, LearningMode, SimulationReport, StartSessionResponse, StrategyName } from "@wiggle/contracts";
+import type { CompletionInput, LearningEventPayload, LearningMode, SimulationReport, StartSessionResponse, StrategyName } from "@wiggle/contracts";
 import { UniverseCanvas } from "../universe/UniverseCanvas";
 import { MISSION_DESTINATION, type CameraMode, type Destination, type LandmarkId, type QualityPreference } from "../universe/world";
 import { EventQueue } from "../../features/events/eventQueue";
@@ -31,6 +31,7 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
   const [destination, setDestination] = useState<Destination | null>(null);
   const [landmark, setLandmark] = useState<LandmarkId>("fraction-forest");
   const [slices, setSlices] = useState<number[]>([]);
+  const sliceInputs = useRef(new Map<number, CompletionInput>());
   const [answer, setAnswer] = useState<number | null>(null);
   const [report, setReport] = useState<SimulationReport>(demoSimulation);
   const [busy, setBusy] = useState(false);
@@ -39,6 +40,8 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
   const [cameraEnabled, setCameraEnabled] = useState(false);
   const [support, setSupport] = useState<"lexi" | "reset" | "reality" | null>(null);
   const [supportText, setSupportText] = useState("");
+  const realityStarted = useRef(false);
+  const [realityCompleted, setRealityCompleted] = useState(false);
   const supportStarted = useRef(0);
   const lexiKey = useRef<{ action: string; key: string } | null>(null);
 
@@ -86,6 +89,7 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
       if (signal.aborted) return;
       startKey.current = null;
       run.current = { session, transport, startedAt: Date.now(), interacted: false, finished: false };
+      sliceInputs.current.clear(); realityStarted.current = false; setRealityCompleted(false);
       setSlices([]); setAnswer(null); setMode("standard"); setReport(demoSimulation); selectionKey.current = null; supportReady.current = false;
       setLandmark("fraction-forest"); setDestination(MISSION_DESTINATION); setCamera("mission"); setPhase("standard");
       if (transport === "local") emit({ kind: "session_started" });
@@ -105,7 +109,7 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
     if (signal.aborted) return;
     selectionKey.current = null;
     setMode(nextMode);
-    if (!simplified) { setSlices([]); setAnswer(null); }
+    if (!simplified) { sliceInputs.current.clear(); setSlices([]); setAnswer(null); }
     setPhase(simplified ? "stuck" : nextMode === "standard" ? "standard" : "activity");
     if (simplified) supportReady.current = true;
     setCamera("mission"); setDestination(MISSION_DESTINATION);
@@ -128,7 +132,9 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
   const finish = (resultMode: LearningMode) => {
     if (!run.current || run.current.finished) return;
     run.current.finished = true;
-    emit({ kind: "mission_completed", objective: run.current.session.objective, correctness, mode: resultMode, ...(resultMode === "chunk" ? { strategy: "chunking" as const } : resultMode === "visual" || resultMode === "visual_gesture" ? { strategy: "visual_hint" as const } : {}) });
+    const inputMethod = [...sliceInputs.current.values()].includes("gesture") ? "gesture" : "buttons";
+    const observedMode = (resultMode === "gesture" || resultMode === "visual_gesture") && inputMethod === "buttons" ? "visual" : resultMode;
+    emit({ kind: "mission_completed", objective: run.current.session.objective, correctness, mode: observedMode, intendedMode: resultMode, inputMethod, ...(resultMode === "chunk" ? { strategy: "chunking" as const } : resultMode === "visual" || resultMode === "visual_gesture" ? { strategy: "visual_hint" as const } : {}) });
     setPhase("complete"); setFeedback(""); setCompleted(count => count + 1);
     if (queue.current) { const delivery = controller.current ?? new AbortController(); controller.current = delivery; void queue.current.flush(client, delivery.signal, run.current.session.sessionId).catch(() => {}).finally(() => wakeQueue.current?.()); }
   };
@@ -177,9 +183,13 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
       if (local) emit({ kind: "reset_started", mode });
       supportStarted.current = Date.now(); setSupport("reset");
     } else if (action.tool === "create_reality_mission") {
-      emit({ kind: "reality_mission_started", mode: "movement" });
+      if (!realityStarted.current) {
+        emit({ kind: "reality_mission_started", mode: "movement" });
+        realityStarted.current = true;
+        supportStarted.current = Date.now();
+      }
       setSupportText(response?.realityMission || REALITY_PROMPT);
-      supportStarted.current = Date.now(); setSupport("reality");
+      setSupport("reality");
     } else if (action.tool === "switch_learning_mode") {
       if (!local && response?.mode !== "chunk") throw new Error("Mode not acknowledged");
       setCameraEnabled(false); setMode("chunk"); setPhase("activity"); setSupport(null);
@@ -193,22 +203,27 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
   const completeSupport = () => {
     if (support !== "reset" && support !== "reality") return;
     emit({ kind: support === "reset" ? "reset_completed" : "reality_mission_completed", mode: support === "reset" ? mode : "movement", responseTimeMs: Math.min(86400000, Math.max(0, Date.now() - supportStarted.current)) });
+    if (support === "reality") { realityStarted.current = false; if (run.current?.finished) setRealityCompleted(true); }
     closeSupport();
   };
   const activityVisible = phase === "activity" || phase === "stuck";
-  const changeSlice = (index: number, grab = false) => {
+  const changeSlice = (index: number, grab = false, input: CompletionInput = "buttons") => {
     if (!activityVisible || support || (pending.current && phase !== "stuck") || !Number.isInteger(index) || index < 0 || index > 3) return;
     interact(); setFeedback("");
-    setSlices(current => current.includes(index) ? grab ? current : current.filter(slice => slice !== index) : [...current, index]);
+    if (sliceInputs.current.has(index)) {
+      if (grab) return;
+      sliceInputs.current.delete(index);
+    } else sliceInputs.current.set(index, input);
+    setSlices([...sliceInputs.current.keys()]);
   };
   const commands = {
-    selectSlice: (index: number) => changeSlice(index), grabSlice: (index: number) => changeSlice(index, true),
+    selectSlice: (index: number, input?: CompletionInput) => changeSlice(index, false, input), grabSlice: (index: number, input?: CompletionInput) => changeSlice(index, true, input),
     summonLexi: () => { if (pending.current || !run.current || run.current.finished) return; interact(); setCameraEnabled(false); setSupportText(""); setSupport("lexi"); },
   };
   return <UniverseCanvas quality={quality} className={`${styles.atlas} ${phase ? styles.active : ""} ${phase === "stuck" ? styles.simplified : ""}`} mode={camera} onModeChange={setCamera} destination={destination} onDestinationChange={setDestination} selectedLandmark={landmark} onLandmarkSelect={setLandmark} onMissionStart={start} pizza={{ visible: activityVisible && !support, selectedSlices: slices, onSliceSelect: commands.selectSlice }}>
     <div className={styles.atlasHud} aria-label="Mission Atlas progress"><span>MISSION ATLAS</span><strong>{completed} discoveries</strong><small>✳ {completed * WIGGLE_REWARD} Wiggle Energy</small></div>
     {!phase && busy ? <p className={styles.starting} role="status">Your mission is coming into view…</p> : null}
     {!phase && feedback ? <p className={styles.starting} role="alert">{feedback}</p> : null}
-    {phase ? <FractionMission phase={phase} mode={mode} selectedSlices={slices} report={report} answer={answer} feedback={feedback} busy={busy} correctness={correctness} onAnswer={value => { interact(); setAnswer(value); setFeedback(""); }} onStuck={() => { interact(); setCameraEnabled(false); emit({ kind: "stuck_requested", mode }); setFeedback(""); setPhase("stuck"); supportReady.current = false; void operation(signal => adapt("visual_gesture", signal, true)); }} onSimulate={simulate} onSelect={select} onCheck={check} onClose={close} onBack={() => setPhase(mode === "standard" ? "standard" : "activity")} commands={commands} cameraEnabled={cameraEnabled} onCameraEnable={() => setCameraEnabled(true)} onCameraDisable={() => setCameraEnabled(false)} support={support} supportText={supportText} onLexiRequest={requestLexi} onSupportClose={closeSupport} onSupportComplete={completeSupport} /> : null}
+    {phase ? <FractionMission phase={phase} mode={mode} selectedSlices={slices} report={report} answer={answer} feedback={feedback} busy={busy} correctness={correctness} realityCompleted={realityCompleted} onAnswer={value => { interact(); setAnswer(value); setFeedback(""); }} onStuck={() => { interact(); setCameraEnabled(false); emit({ kind: "stuck_requested", mode }); setFeedback(""); setPhase("stuck"); supportReady.current = false; void operation(signal => adapt("visual_gesture", signal, true)); }} onSimulate={simulate} onSelect={select} onCheck={check} onClose={close} onBack={() => setPhase(mode === "standard" ? "standard" : "activity")} commands={commands} cameraEnabled={cameraEnabled} onCameraEnable={() => setCameraEnabled(true)} onCameraDisable={() => setCameraEnabled(false)} support={support} supportText={supportText} onLexiRequest={requestLexi} onSupportClose={closeSupport} onSupportComplete={completeSupport} /> : null}
   </UniverseCanvas>;
 }

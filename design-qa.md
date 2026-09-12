@@ -2,7 +2,25 @@
 
 final result: blocked
 
-The local desktop/mobile hero experience passed visual and interaction QA after the first review corrections below. The overall production acceptance gate remains blocked: no live Vercel/Render/Supabase deployment, real household Auth/RLS run, Docker execution, or physical-device validation was performed. Those checks are not represented as passes.
+The local desktop/mobile hero experience passes the refreshed final-fix checks below. The overall production acceptance gate remains blocked: no live Vercel/Render/Supabase deployment, real household Auth/RLS run, Docker execution, or physical-device validation was performed. Those checks are not represented as passes.
+
+## Final whole-branch review fixes
+
+The later whole-branch review identified C1, I1 and M1–M5. The final fix wave addresses all seven while retaining the external acceptance gates above:
+
+- C1: upgraded Next from 15.4.4 to 15.5.24, with matching React/React DOM 19.1.9 and a regenerated frozen lockfile. The [official August security release](https://nextjs.org/blog/august-2026-security-release) identifies 15.5.24 as the patched Maintenance LTS version. Installed-version regression and frozen offline installation both pass.
+- I1: completion now separates intended learning mode from bounded observed input. A recognized gesture must contribute a slice that remains selected; removed selections and unchanged grabs do not count. Button-only fallback credits visual effectiveness, and older evidence without an input source is treated conservatively. Component, queue, contract and API/domain regressions cover recognized/button input and replay.
+- M1: simulation, selection response and persisted predictions now share three-decimal half-up precision. Memory and a repository simulating Postgres scalar rounding produce matching selection/completion values.
+- M2: accepted abandonment closes the persisted session. Replay is idempotent, and later operations reconcile a failed status write before allowing more work. Tests reject new activity after abandonment and cover restart recovery.
+- M3: parent copy explicitly calls the interval a saved break preference and discloses that automatic reminders are unavailable.
+- M4: the runbook states that only stuck requests and mission completions currently update numerical learning state; timing and the other recorded context do not.
+- M5: the completion screen offers an optional Reality Mission. Cancel/reopen preserves one start, and completion records a validated support lifecycle without a second fraction reward or twin update. The return-to-universe action remains available.
+
+Fresh final-fix verification: `pnpm lint`, `pnpm typecheck`, `pnpm test` and `pnpm install --frozen-lockfile --offline --ignore-scripts` pass. Counts are 6 contract, 75 web and 108 API tests; the same 6 unavailable optional Supabase cases are explicitly skipped. The Next 15.5.24 production build passes with 118 kB first-load JS on `/`. The full `pnpm test:e2e` rerun passes all 36 Chrome cases across local/connected desktop/mobile projects in 2.1 minutes, with no skips. Both MediaPipe inference cases and the connected camera-denial/Reality Mission assertions pass. The build reports non-failing webpack cache-serialization and missing Next ESLint-plugin notices; the repository ESLint, TypeScript and API checks pass.
+
+The first recovery check found incomplete Python formatting and an unsupported Testing Library selector option. The post-build lint check also required ignoring Next's generated `next-env.d.ts`; source lint rules were unchanged and lint was rerun successfully. The first browser run had 30 passes and 6 failures: two MediaPipe downloads were denied by sandbox networking, and four new test checks attempted a GET route the web proxy does not expose. The checks now read the existing local test API, and the entire suite was rerun with static-download permission. No failing case was waived. Detailed per-finding coverage is recorded in the ignored `final-fix-report.md` beside the original review.
+
+Inspected the fresh connected completion and Reality Mission acknowledgement captures at 1440 × 900 and 390 × 844. The reward and return action remain legible; on mobile the optional offer uses the existing panel scroll to reach its button. Both viewport tests complete that action. The updated parent-copy assertions pass at both sizes. Refreshed evidence is in `browser-artifacts/` and `playwright-report/` under the existing ignored QA directory.
 
 ## Review correction — round 1
 
@@ -42,9 +60,9 @@ Original Wiggle geometry sources are documented in `assets/source/README.md`. Nu
 | P2 | Credential-free development launched an API but left Next disconnected from it. The dev launcher now uses the local API by default and reads optional environment files. | Shared production browser loop; launcher help smoke check. |
 | P2 | Default access logs could expose query data and lacked structured diagnostics. Supplied startup commands disable them; JSON middleware logs only method, route template, status, duration and request ID. Provider fallback logs only operation/error type. | API log-redaction tests. |
 
-No unresolved P0/P1/P2 defect was observed in the tested local hero flow after R1/R2 were corrected. Two initial camera tests failed because sandbox networking denied MediaPipe's static downloads; both passed with network permission. Two initial newly written hero tests used an unavailable selector; the selector was corrected and the entire suite rerun. No failing test was waived.
+The initial local QA after R1/R2 did not detect the dependency and attribution defects found by the later whole-branch review; those corrections are recorded in the final-fix section above. Two initial camera tests failed because sandbox networking denied MediaPipe's static downloads; both passed with network permission. Two initial newly written hero tests used an unavailable selector; the selector was corrected and the entire suite rerun. No failing test was waived.
 
-## Verification record
+## Original Task 10 verification record
 
 | Gate | Result |
 | --- | --- |
@@ -67,3 +85,5 @@ Evidence is under `.superpowers/sdd/2026-09-11-wiggle-hybrid-universe/`: loaded 
 Wiggle currently uses persistent destination navigation/progress instead of the reference's modal journal, a directional pad instead of an analog joystick, and no ambient soundtrack toggle. Procedural geometry is deliberately less detailed than the reference. These differences do not prevent the fraction journey, but full interaction parity with every reference feature is not claimed. The scene was checked on emulated mobile dimensions, not a representative physical mid-range device or a sustained frame-rate benchmark.
 
 Queued evidence survives reload; the active puzzle selection does not resume after reload. Memory state resets on API restart. Parent break reminders are stored preferences, not a running scheduler. See the [demo runbook](docs/operations/demo-runbook.md) and [deployment smoke gate](docs/operations/deployment.md) before presenting or releasing.
+
+No child learning-constellation screen is reachable; its API tool returns a fixed label. Browser-local evidence is not synchronized into household history. Lighthouse, mutation/branch-coverage commands and sustained frame-rate measurement remain unperformed. The full product specification and production readiness are not claimed by the local tests.

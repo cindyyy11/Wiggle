@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { keyboardActivate, startMission } from "./helpers";
+import { completeVisualMission, keyboardActivate, startMission } from "./helpers";
 
 test("connected pointer loop persists the intervention and gives the parent an insight", async ({ page }, info) => {
   const errors: string[] = [];
@@ -41,5 +41,34 @@ test("keyboard-only navigation completes the connected mission in reduced motion
   await keyboardActivate(page, "Check my pizza");
   await saved;
   await keyboardActivate(page, "Back to my universe");
+  await expect(page.getByRole("button", { name: "Start fractions mission", exact: true })).toBeFocused();
+});
+
+test("the optional post-completion Reality Mission preserves the saved fraction result", async ({ page }, info) => {
+  const { session, outcome } = await completeVisualMission(page);
+  const accepted: { id: string; type: string }[] = [];
+  page.on("response", response => {
+    if (!response.url().endsWith("/events") || !response.ok()) return;
+    const events = response.request().postDataJSON().events as { id: string; type: string; sessionId: string }[];
+    accepted.push(...events.filter(event => event.sessionId === session.sessionId && event.type.startsWith("reality_mission_")));
+  });
+  await expect(page.getByText(/This little mission is optional/)).toBeVisible();
+  await page.getByRole("button", { name: "Try a Reality Mission", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "A little mission around you" })).toBeVisible();
+  await page.getByRole("button", { name: "Back without finishing", exact: true }).click();
+  await page.getByRole("button", { name: "Try a Reality Mission", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "A little mission around you" })).toBeVisible();
+  const saved = page.waitForResponse(response => response.url().endsWith("/events") && response.ok() &&
+    response.request().postDataJSON().events.some((event: { type: string }) => event.type === "reality_mission_completed"));
+  await page.getByRole("button", { name: "I found my three quarters", exact: true }).click();
+  await saved;
+  await expect(page.getByText("You found three quarters around you, too.")).toBeVisible();
+  await expect(page.getByText("+20 Wiggle Energy", { exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Try a Reality Mission", exact: true })).toHaveCount(0);
+  expect(accepted.map(event => event.type)).toEqual(["reality_mission_started", "reality_mission_completed"]);
+  const after = await (await page.request.get(`http://127.0.0.1:8101/twin/${session.childId}`)).json();
+  expect(after.twin).toEqual(outcome.update.twin);
+  await page.screenshot({ path: info.outputPath("connected-reality-completed.png") });
+  await page.getByRole("button", { name: "Back to my universe", exact: true }).click();
   await expect(page.getByRole("button", { name: "Start fractions mission", exact: true })).toBeFocused();
 });

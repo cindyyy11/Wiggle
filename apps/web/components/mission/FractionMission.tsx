@@ -21,6 +21,7 @@ export interface FractionMissionProps {
   onSelect: (strategy: StrategyName) => void; onCheck: () => void; onClose: () => void; onBack: () => void;
   commands: MissionInputCommands; cameraEnabled: boolean; onCameraEnable(): void; onCameraDisable(): void;
   support: "lexi" | "reset" | "reality" | null; supportText: string;
+  realityCompleted: boolean;
   onLexiRequest(action: LexiAction): void; onSupportClose(): void; onSupportComplete(): void;
 }
 
@@ -32,7 +33,7 @@ export function FractionMission(props: FractionMissionProps) {
     {props.support === "lexi" ? <LexiPanel text={props.supportText} busy={props.busy} onRequest={props.onLexiRequest} onClose={props.onSupportClose} /> : props.support === "reset" ? <ResetStation onComplete={props.onSupportComplete} onCancel={props.onSupportClose} /> : props.support === "reality" ? <RealityMission prompt={props.supportText} onComplete={props.onSupportComplete} onCancel={props.onSupportClose} /> : <fieldset disabled={props.busy}>
       {props.phase === "stuck" ? <StuckMode onExplore={props.onSimulate} onCheck={props.onCheck} selectedSlices={props.selectedSlices} /> : null}
       {props.phase === "simulation" ? <SimulationHologram report={props.report} onSelect={props.onSelect} /> : null}
-      {props.phase === "complete" ? <CompletionMoment correctness={props.correctness} onReturn={props.onClose} /> : null}
+      {props.phase === "complete" ? <CompletionMoment correctness={props.correctness} onReturn={props.onClose} onReality={() => props.onLexiRequest({ tool: "create_reality_mission" })} realityCompleted={props.realityCompleted} /> : null}
       {props.phase === "standard" || props.phase === "activity" ? <>
         <span className={styles.kicker}>FRACTION FOREST · 01</span>
         {props.phase === "activity" ? <><LessonMorph mode={props.mode} /><PizzaActivity selectedSlices={props.selectedSlices} mode={props.mode} onCheck={props.onCheck} /></> : <><h2>Make three quarters</h2><p>Three quarters means how many of four equal pieces?</p><div className={styles.answers} role="group" aria-label="Choose an answer">{[1, 2, 3].map(answer => <button key={answer} aria-pressed={props.answer === answer} onClick={() => props.onAnswer(answer)}>{answer} of 4</button>)}</div><button className={styles.primary} onClick={props.onCheck}>Check my answer <span aria-hidden="true">↗</span></button></>}

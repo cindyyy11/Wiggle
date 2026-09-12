@@ -80,7 +80,7 @@ export class EventQueue {
         const first = batch[0].event;
         let acknowledged: readonly string[];
         if (first.type === "mission_completed") {
-          await client.complete({ sessionId, correctness: first.payload.correctness }, first.id, signal);
+          await client.complete({ sessionId, correctness: first.payload.correctness, inputMethod: first.payload.inputMethod ?? "buttons" }, first.id, signal);
           acknowledged = [first.id];
         } else {
           acknowledged = (await client.events({ events: batch.map(entry => entry.event) }, signal)).acceptedEventIds;

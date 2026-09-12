@@ -14,6 +14,8 @@ class LexiService:
 
     def chat(self, request: LexiRequest, key: str | None) -> LexiResponse:
         session = self.sessions.session(request.session_id)
+        if session["status"] == "abandoned":
+            raise WorkflowError("session_closed", "Cannot use tools in an abandoned session")
         active = self.sessions.active_intervention(session)
         mode, _ = mode_for_strategy(str(active["selected_strategy"]))
         context = ProviderContext(message=request.message, mode=mode)
