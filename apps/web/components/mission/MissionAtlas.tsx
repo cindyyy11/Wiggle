@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { CompletionInput, LearningEventPayload, LearningMode, SimulationReport, StartSessionResponse, StrategyName } from "@wiggle/contracts";
+import type { CompletionInput, ConstellationStarId, LearningEventPayload, LearningMode, SimulationReport, StartSessionResponse, StrategyName, TwinVisualState } from "@wiggle/contracts";
+import { newlyUnlockedStars } from "@wiggle/contracts";
 import { UniverseCanvas } from "../universe/UniverseCanvas";
 import { MISSION_DESTINATION, type CameraMode, type Destination, type LandmarkId, type QualityPreference } from "../universe/world";
 import { EventQueue } from "../../features/events/eventQueue";
@@ -15,6 +16,8 @@ import { useHandTracking } from "../../features/gestures/useHandTracking";
 import type { GesturePhase } from "../../features/gestures/gestureStateMachine";
 import type { GestureInteractionAction } from "../universe/gestureInteraction";
 import { PIZZA_SLICE_IDS } from "../universe/Landmarks";
+import { useWiggleSound } from "../../features/audio/useWiggleSound";
+import { seenConstellationStars, saveSeenConstellationStars } from "../wiggle/constellationMemory";
 import styles from "./mission.module.css";
 
 interface Run { session: StartSessionResponse; transport: "local" | "api"; startedAt: number; interacted: boolean; finished: boolean }
@@ -97,8 +100,18 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
   const [supportText, setSupportText] = useState("");
   const realityStarted = useRef(false);
   const [realityCompleted, setRealityCompleted] = useState(false);
+  const [newStar, setNewStar] = useState<string | null>(null);
+  const sound = useWiggleSound();
   const supportStarted = useRef(0);
   const lexiKey = useRef<{ action: string; key: string } | null>(null);
+  // A live, wellbeing-first read of the Twin's mood during this mission (Part 3 of the
+  // spec). It never needs a numeric twin fetch mid-mission: a reset break or being
+  // stuck are already explicit signals, and celebration follows a completed mission.
+  const missionTwinState: TwinVisualState =
+    support === "reset" ? "needs_reset"
+    : phase === "stuck" ? "stuck"
+    : phase === "complete" ? (correctness >= 0.85 ? "mastered" : "progressing")
+    : "ready";
   const handTracking = useHandTracking({
     enabled: cameraEnabled,
     onGestureStart: phase => setGesturePhase(phase),
@@ -157,6 +170,8 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
       sliceInputs.current.clear(); realityStarted.current = false; lastGesturePlacement.current = null; heldSliceRef.current = null; setHeldSlice(null); setFocusedSlice(null); setGesturePhase(null); setRealityCompleted(false);
       setSlices([]); setAnswer(null); setMode("standard"); setReport(demoSimulation); selectionKey.current = null; supportReady.current = false;
       setLandmark("fraction-forest"); setDestination(MISSION_DESTINATION); setCamera("mission"); setPhase("standard");
+      setNewStar(null);
+      sound.play("missionStart");
       if (transport === "local") emit({ kind: "session_started" });
       emit({ kind: "task_started", mode: "standard" });
     });
@@ -205,13 +220,32 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
     emit({ kind: "mission_completed", objective: run.current.session.objective, correctness, mode: observedMode, intendedMode: resultMode, inputMethod, ...(resultMode === "chunk" ? { strategy: "chunking" as const } : resultMode === "visual" || resultMode === "visual_gesture" ? { strategy: "visual_hint" as const } : {}) });
     heldSliceRef.current = null; setHeldSlice(null); setFocusedSlice(null); setGesturePhase(null); setCameraEnabled(false);
     setPhase("complete"); setFeedback(""); setCompleted(count => count + 1);
+    sound.play(correctness >= 0.85 ? "celebrate" : "correct");
     if (queue.current) { const delivery = controller.current ?? new AbortController(); controller.current = delivery; void queue.current.flush(client, delivery.signal, run.current.session.sessionId).catch(() => {}).finally(() => wakeQueue.current?.()); }
+    void checkForNewStars();
+  };
+  /**
+   * Best-effort celebratory nuance only: re-reads the authoritative Twin after a
+   * completion to see whether a new constellation star crossed its threshold. Never
+   * blocks the completion screen and never itself decides mastery — getConstellationStars
+   * (packages/contracts) is the single source of truth, run here against the real twin.
+   */
+  const checkForNewStars = async () => {
+    try {
+      const { twin } = await client.twin(childId, new AbortController().signal);
+      const seen = seenConstellationStars(childId);
+      const fresh = newlyUnlockedStars(twin, seen);
+      if (fresh.length === 0) return;
+      sound.play("constellationUnlock");
+      setNewStar(fresh[0].title);
+      saveSeenConstellationStars(childId, [...seen, ...fresh.map(star => star.id as ConstellationStarId)]);
+    } catch { /* The completion moment still celebrates without a fresh star. */ }
   };
   const check = () => {
     if (pending.current || !run.current || run.current.finished) return;
     interact(); emit({ kind: "answer_submitted", mode });
     if ((phase === "standard" ? answer : slices.length) !== 3) {
-      emit({ kind: "retry_recorded", mode }); setFeedback("Almost. We need three equal pieces out of four."); return;
+      emit({ kind: "retry_recorded", mode }); setFeedback("Almost. We need three equal pieces out of four."); sound.play("tryAgain"); return;
     }
     if (phase === "stuck" && !supportReady.current) {
       void operation(async signal => { await adapt("visual_gesture", signal, true); if (!signal.aborted) finish("visual_gesture"); });
@@ -240,7 +274,10 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
         await queue.current.flush(client, signal, run.current.session.sessionId);
         response = await client.lexi({ sessionId: run.current.session.sessionId, ...action }, lexiKey.current.key, signal);
       }
-      catch (error) { if (signal.aborted || !["request_hint", "create_reality_mission"].includes(action.tool ?? "")) throw error; }
+      catch (error) {
+        const readOnly = action.tool == null ? Boolean(action.message) : ["request_hint", "create_reality_mission"].includes(action.tool);
+        if (signal.aborted || !readOnly) throw error;
+      }
     }
     if (signal.aborted) return;
     // Only explicit child-selected tools drive behavior; generated suggestedTool is never executed.
@@ -266,6 +303,10 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
     } else if (action.tool === "record_self_report") {
       if (local) emit({ kind: "difficulty_self_reported", mode, difficulty: action.difficulty });
       setSupportText(response?.content.text || "Thanks for telling me. We can take one small step.");
+    } else if (!action.tool && action.message) {
+      // A free-text voice or typed message: Lexi may only chat back, never execute a tool
+      // itself, and casual conversation is not recorded as a help-request signal.
+      setSupportText(response?.content.text || "I'm here. Let's figure this out together.");
     }
     lexiKey.current = null;
   }); };
@@ -335,10 +376,10 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
   const pizzaVisible = activityVisible && !support;
   const pizzaSlices = PIZZA_SLICE_IDS.map((id, index) => ({ id, state: slices.includes(index) ? "placed" as const : heldSlice === index ? "held" as const : "available" as const, focused: focusedSlice === index }));
   const splashVisible = splashState !== "complete";
-  return <><div inert={splashVisible} aria-hidden={splashVisible}><UniverseCanvas quality={quality} className={`${styles.atlas} ${phase ? styles.active : ""} ${phase === "stuck" ? styles.simplified : ""}`} mode={camera} onModeChange={setCamera} destination={destination} onDestinationChange={setDestination} selectedLandmark={landmark} onLandmarkSelect={setLandmark} onMissionStart={start} onWorldsRequest={onWorldsRequest} worldsDisabled={missionOverlayOpen} worldsDisabledMessage="Finish or leave your Maths mission before changing worlds." pizza={{ visible: pizzaVisible, selectedSlices: slices, slices: pizzaSlices, plate: { accepting: heldSlice !== null, focused: false }, hand: cameraEnabled ? { enabled: true, latest: handTracking.latest, gesture: handTracking.gesture, phase: gesturePhase, status: handTracking.status } : undefined, onGestureAction: handleGestureAction, onSliceSelect: commands.selectSlice }}>
+  return <><div inert={splashVisible} aria-hidden={splashVisible}><UniverseCanvas quality={quality} className={`${styles.atlas} ${phase ? styles.active : ""} ${phase === "stuck" ? styles.simplified : ""}`} mode={camera} onModeChange={setCamera} destination={destination} onDestinationChange={setDestination} selectedLandmark={landmark} onLandmarkSelect={setLandmark} onMissionStart={start} onWorldsRequest={onWorldsRequest} worldsDisabled={missionOverlayOpen} worldsDisabledMessage="Finish or leave your Maths mission before changing worlds." childId={childId} pizza={{ visible: pizzaVisible, selectedSlices: slices, slices: pizzaSlices, plate: { accepting: heldSlice !== null, focused: false }, hand: cameraEnabled ? { enabled: true, latest: handTracking.latest, gesture: handTracking.gesture, phase: gesturePhase, status: handTracking.status } : undefined, onGestureAction: handleGestureAction, onSliceSelect: commands.selectSlice }}>
     <div className={styles.atlasHud} aria-label="Mission Atlas progress"><span>MISSION ATLAS</span><strong>{completed} discoveries</strong><small>✳ {completed * WIGGLE_REWARD} Wiggle Energy</small></div>
     {!phase && busy ? <p className={styles.starting} role="status">Your mission is coming into view…</p> : null}
     {!phase && feedback ? <p className={styles.starting} role="alert">{feedback}</p> : null}
-    {phase ? <FractionMission phase={phase} mode={mode} selectedSlices={slices} report={report} answer={answer} feedback={feedback} busy={busy} correctness={correctness} realityCompleted={realityCompleted} onAnswer={value => { interact(); setAnswer(value); setFeedback(""); }} onStuck={() => { interact(); setCameraEnabled(false); emit({ kind: "stuck_requested", mode }); setFeedback(""); setPhase("stuck"); supportReady.current = false; void operation(signal => adapt("visual_gesture", signal, true)); }} onSimulate={simulate} onSelect={select} onCheck={check} onClose={close} onBack={() => setPhase(mode === "standard" ? "standard" : "activity")} commands={commands} cameraEnabled={cameraEnabled} onCameraEnable={() => setCameraEnabled(true)} onCameraDisable={() => { setCameraEnabled(false); setGesturePhase(null); setHeld(null); }} tracking={handTracking} support={support} supportText={supportText} onLexiRequest={requestLexi} onSupportClose={closeSupport} onSupportComplete={completeSupport} /> : null}
+    {phase ? <FractionMission phase={phase} mode={mode} selectedSlices={slices} report={report} answer={answer} feedback={feedback} busy={busy} correctness={correctness} realityCompleted={realityCompleted} onAnswer={value => { interact(); setAnswer(value); setFeedback(""); }} onStuck={() => { interact(); setCameraEnabled(false); emit({ kind: "stuck_requested", mode }); setFeedback(""); setPhase("stuck"); supportReady.current = false; void operation(signal => adapt("visual_gesture", signal, true)); }} onSimulate={simulate} onSelect={select} onCheck={check} onClose={close} onBack={() => setPhase(mode === "standard" ? "standard" : "activity")} commands={commands} cameraEnabled={cameraEnabled} onCameraEnable={() => setCameraEnabled(true)} onCameraDisable={() => { setCameraEnabled(false); setGesturePhase(null); setHeld(null); }} tracking={handTracking} support={support} supportText={supportText} twinState={missionTwinState} newStar={newStar} onLexiRequest={requestLexi} onSupportClose={closeSupport} onSupportComplete={completeSupport} /> : null}
   </UniverseCanvas></div>{splashVisible ? <section className={`${styles.splash} ${splashState === "leaving" ? styles.splashLeaving : ""}`} aria-label="Welcome to Wiggle"><img className={styles.splashBrand} src="/brand/wiggle-full.jpeg" alt="Wiggle. Wonder. Wow!" /><button ref={splashStartButton} type="button" className={styles.splashStart} onClick={startSplash} disabled={splashState === "leaving"}>Let's Wiggle</button></section> : null}</>;
 }
