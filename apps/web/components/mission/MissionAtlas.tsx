@@ -61,10 +61,15 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
   const [splashState, setSplashState] = useState<SplashState>(showSplash ? "ready" : "complete");
   const splashStarting = useRef(false);
   const splashTimeout = useRef<number | null>(null);
+  const splashStartButton = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => () => {
     if (splashTimeout.current !== null) window.clearTimeout(splashTimeout.current);
   }, []);
+
+  useEffect(() => {
+    if (splashState === "ready") splashStartButton.current?.focus();
+  }, [splashState]);
 
   const startSplash = () => {
     if (splashStarting.current) return;
@@ -329,11 +334,11 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
   };
   const pizzaVisible = activityVisible && !support;
   const pizzaSlices = PIZZA_SLICE_IDS.map((id, index) => ({ id, state: slices.includes(index) ? "placed" as const : heldSlice === index ? "held" as const : "available" as const, focused: focusedSlice === index }));
-  return <UniverseCanvas quality={quality} className={`${styles.atlas} ${phase ? styles.active : ""} ${phase === "stuck" ? styles.simplified : ""}`} mode={camera} onModeChange={setCamera} destination={destination} onDestinationChange={setDestination} selectedLandmark={landmark} onLandmarkSelect={setLandmark} onMissionStart={start} onWorldsRequest={onWorldsRequest} worldsDisabled={missionOverlayOpen} worldsDisabledMessage="Finish or leave your Maths mission before changing worlds." pizza={{ visible: pizzaVisible, selectedSlices: slices, slices: pizzaSlices, plate: { accepting: heldSlice !== null, focused: false }, hand: cameraEnabled ? { enabled: true, latest: handTracking.latest, gesture: handTracking.gesture, phase: gesturePhase, status: handTracking.status } : undefined, onGestureAction: handleGestureAction, onSliceSelect: commands.selectSlice }}>
+  const splashVisible = splashState !== "complete";
+  return <><div inert={splashVisible} aria-hidden={splashVisible}><UniverseCanvas quality={quality} className={`${styles.atlas} ${phase ? styles.active : ""} ${phase === "stuck" ? styles.simplified : ""}`} mode={camera} onModeChange={setCamera} destination={destination} onDestinationChange={setDestination} selectedLandmark={landmark} onLandmarkSelect={setLandmark} onMissionStart={start} onWorldsRequest={onWorldsRequest} worldsDisabled={missionOverlayOpen} worldsDisabledMessage="Finish or leave your Maths mission before changing worlds." pizza={{ visible: pizzaVisible, selectedSlices: slices, slices: pizzaSlices, plate: { accepting: heldSlice !== null, focused: false }, hand: cameraEnabled ? { enabled: true, latest: handTracking.latest, gesture: handTracking.gesture, phase: gesturePhase, status: handTracking.status } : undefined, onGestureAction: handleGestureAction, onSliceSelect: commands.selectSlice }}>
     <div className={styles.atlasHud} aria-label="Mission Atlas progress"><span>MISSION ATLAS</span><strong>{completed} discoveries</strong><small>✳ {completed * WIGGLE_REWARD} Wiggle Energy</small></div>
     {!phase && busy ? <p className={styles.starting} role="status">Your mission is coming into view…</p> : null}
     {!phase && feedback ? <p className={styles.starting} role="alert">{feedback}</p> : null}
     {phase ? <FractionMission phase={phase} mode={mode} selectedSlices={slices} report={report} answer={answer} feedback={feedback} busy={busy} correctness={correctness} realityCompleted={realityCompleted} onAnswer={value => { interact(); setAnswer(value); setFeedback(""); }} onStuck={() => { interact(); setCameraEnabled(false); emit({ kind: "stuck_requested", mode }); setFeedback(""); setPhase("stuck"); supportReady.current = false; void operation(signal => adapt("visual_gesture", signal, true)); }} onSimulate={simulate} onSelect={select} onCheck={check} onClose={close} onBack={() => setPhase(mode === "standard" ? "standard" : "activity")} commands={commands} cameraEnabled={cameraEnabled} onCameraEnable={() => setCameraEnabled(true)} onCameraDisable={() => { setCameraEnabled(false); setGesturePhase(null); setHeld(null); }} tracking={handTracking} support={support} supportText={supportText} onLexiRequest={requestLexi} onSupportClose={closeSupport} onSupportComplete={completeSupport} /> : null}
-    {splashState !== "complete" ? <div className={`${styles.splash} ${splashState === "leaving" ? styles.splashLeaving : ""}`}><img className={styles.splashBrand} src="/brand/wiggle-mark.png" alt="Wiggle" /><button type="button" className={styles.splashStart} onClick={startSplash} disabled={splashState === "leaving"}>Let's Wiggle</button></div> : null}
-  </UniverseCanvas>;
+  </UniverseCanvas></div>{splashVisible ? <div className={`${styles.splash} ${splashState === "leaving" ? styles.splashLeaving : ""}`}><img className={styles.splashBrand} src="/brand/wiggle-mark.png" alt="Wiggle" /><button ref={splashStartButton} type="button" className={styles.splashStart} onClick={startSplash} disabled={splashState === "leaving"}>Let's Wiggle</button></div> : null}</>;
 }
