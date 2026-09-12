@@ -4,7 +4,7 @@ This repository is configured for Vercel (web), Render (API), and Supabase (Auth
 
 ## Local production check
 
-Use Node 24.21+, npm 11.6+, Python 3.12+, and Chrome. From the repository root:
+Use Node 24.x, npm 11.6+, Python 3.12+, and Chrome. From the repository root:
 
 ```sh
 npm ci
