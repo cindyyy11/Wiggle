@@ -60,6 +60,14 @@ beforeEach(() => {
 
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
+it("uses a named Science region below the page-level main landmark with Canvas enabled", async () => {
+  render(<main><SciencePlanetCanvas selectedZone="magnet-lab" onZoneSelect={vi.fn()} onBackToWorlds={vi.fn()} onStartMagnetLab={vi.fn()} /></main>);
+
+  await screen.findByTestId("science-model-ph-lab");
+  expect(screen.getAllByRole("main")).toHaveLength(1);
+  expect(screen.getByRole("region", { name: "Science Planet" }).tagName).toBe("SECTION");
+});
+
 it("uses the same selected-zone callback in the 3D scene and fallback", async () => {
   const onZoneSelect = vi.fn();
   render(<SciencePlanetCanvas selectedZone="magnet-lab" onZoneSelect={onZoneSelect} onBackToWorlds={vi.fn()} onStartMagnetLab={vi.fn()} />);

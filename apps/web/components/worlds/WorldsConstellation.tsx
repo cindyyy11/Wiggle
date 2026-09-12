@@ -29,8 +29,18 @@ class GraphicsBoundary extends Component<{ children: ReactNode; onFailure: () =>
   render() { return this.state.failed ? null : this.props.children; }
 }
 
-export function WorldsConstellation({ selectedWorld, quality: preference = "auto", reducedMotion = false, onSelect }: WorldsConstellationProps) {
+export function WorldsConstellation({ selectedWorld, quality: preference = "auto", reducedMotion: reducedMotionOverride, onSelect }: WorldsConstellationProps) {
   const [quality, setQuality] = useState<SceneQuality>("fallback");
+  const [systemReducedMotion, setSystemReducedMotion] = useState(false);
+  const reducedMotion = reducedMotionOverride ?? systemReducedMotion;
+
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setSystemReducedMotion(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
 
   useEffect(() => {
     if (preference === "fallback") { setQuality("fallback"); return; }
@@ -46,7 +56,7 @@ export function WorldsConstellation({ selectedWorld, quality: preference = "auto
   }, [preference]);
 
   const displayQuality = quality === "high" ? "high" : "low";
-  return <section className={styles.constellation} aria-hidden="true" data-quality={quality}>
+  return <section className={styles.constellation} aria-hidden="true" data-quality={quality} data-reduced-motion={String(reducedMotion)}>
     {quality === "fallback" ? null : <GraphicsBoundary onFailure={() => setQuality("fallback")}><Scene
       selectedWorld={selectedWorld}
       reducedMotion={reducedMotion}

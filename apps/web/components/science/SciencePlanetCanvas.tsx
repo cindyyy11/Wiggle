@@ -103,7 +103,7 @@ export function SciencePlanetCanvas({
   }
 
   const displayQuality = quality === "high" ? "high" : "low";
-  return <main
+  return <section
     className={styles.planet}
     aria-label="Science Planet"
     data-quality={displayQuality}
@@ -131,5 +131,5 @@ export function SciencePlanetCanvas({
     />
     <p className={styles.canvasHint}>A soft, touchable-looking world is here to explore. Topic buttons stay ready whenever you need them.</p>
     <p className={styles.graphicsAnnouncement} role="status" aria-live="polite">{announcement}</p>
-  </main>;
+  </section>;
 }

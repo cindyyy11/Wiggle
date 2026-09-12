@@ -7,7 +7,7 @@ export async function launchWiggle(page: Page): Promise<void> {
 
 export async function enterScience(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Explore Science Planet", exact: true }).click();
-  await expect(page.getByRole("main", { name: "Science Planet" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Science Planet" })).toBeVisible();
 }
 
 export async function enterNumeria(page: Page): Promise<void> {

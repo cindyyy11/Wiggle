@@ -78,7 +78,7 @@ it("opens a direct Science route after the splash and preserves child context wh
   render(<SubjectWorlds initialRoute={{ world: "science", zone: "magnet-lab", child: "owned" }} />);
 
   enterWorlds();
-  expect(screen.getByRole("main", { name: "Science Planet" })).toBeTruthy();
+  expect(screen.getByRole("region", { name: "Science Planet" })).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Visit Sink & Float Bay" }));
   expect(window.location.search).toBe("?child=owned&world=science&zone=sink-float");
   expect(screen.getByRole("button", { name: "Back to Worlds" })).toBeTruthy();

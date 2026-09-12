@@ -25,7 +25,7 @@ test("splash, Worlds, Science, and Magnet Lab stay on a native-control path", as
 
   await completeMagnetLab(page);
 
-  await expect(page.getByRole("main", { name: "Science Planet" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Science Planet" })).toBeVisible();
   await expect(page.getByText("Magnet Lab discovery complete.", { exact: true })).toBeVisible();
   await expect(page.getByText(/\b(?:token|reward|claim)\b/i)).toHaveCount(0);
 });
@@ -36,6 +36,23 @@ test("Worlds enters Numeria before the existing fractions mission", async ({ pag
   await enterNumeria(page);
 
   await expect(page.getByRole("button", { name: "Start fractions mission", exact: true })).toBeVisible();
+});
+
+test("Parent navigation waits for a safe Maths close", async ({ page }) => {
+  await page.goto("/");
+  await launchWiggle(page);
+  await enterNumeria(page);
+  await page.getByRole("button", { name: "Start fractions mission", exact: true }).click();
+  await expect(page.getByRole("region", { name: "Fraction mission" })).toBeVisible();
+
+  await expect(page.getByRole("button", { name: "Parent mission control", exact: true })).toBeDisabled();
+  await expect(page.getByRole("link", { name: "Parent mission control", exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Leave mission", exact: true }).click();
+
+  const parent = page.getByRole("link", { name: "Parent mission control", exact: true });
+  await expect(parent).toHaveAttribute("href", "/parent");
+  await parent.click();
+  await expect(page.getByRole("heading", { name: "Parent mission control", exact: true })).toBeVisible();
 });
 
 test("locked subject worlds retain focus and do not open a fake lesson", async ({ page }) => {
@@ -52,7 +69,7 @@ test("locked subject worlds retain focus and do not open a fake lesson", async (
     await expect(locked).toBeFocused();
     await expect(page.getByRole("status").filter({ hasText: status })).toBeVisible();
     await expect(page.getByRole("region", { name: "Choose a subject world" })).toBeVisible();
-    await expect(page.getByRole("main", { name: "Science Planet" })).toHaveCount(0);
+    await expect(page.getByRole("region", { name: "Science Planet" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Start Magnet Lab", exact: true })).toHaveCount(0);
   }
 });
@@ -60,7 +77,7 @@ test("locked subject worlds retain focus and do not open a fake lesson", async (
 test("a direct Science route restores its zone and retains its child through every topic selection", async ({ page }) => {
   await page.goto("/?child=child-123&world=science&zone=ph-lab");
   await page.getByRole("button", { name: "Let's Wiggle", exact: true }).click();
-  await expect(page.getByRole("main", { name: "Science Planet" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Science Planet" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Visit pH Lab", exact: true })).toHaveAttribute("aria-pressed", "true");
 
   for (const zone of SCIENCE_ZONES) {
@@ -88,7 +105,7 @@ test("reduced motion remains interactive through Magnet Lab", async ({ page }) =
   await page.goto("/");
   await launchWiggle(page);
   await enterScience(page);
-  await expect(page.getByRole("main", { name: "Science Planet" })).toHaveAttribute("data-reduced-motion", "true");
+  await expect(page.getByRole("region", { name: "Science Planet" })).toHaveAttribute("data-reduced-motion", "true");
   await page.getByRole("button", { name: "Start Magnet Lab", exact: true }).click();
 
   await completeMagnetLab(page);

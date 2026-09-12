@@ -6,6 +6,18 @@ import { SCIENCE_ZONES } from "./scienceWorld";
 
 afterEach(cleanup);
 
+it("uses a named Science region below the page-level main landmark", () => {
+  render(<main><ScienceFallback
+    selectedZone="magnet-lab"
+    onZoneSelect={vi.fn()}
+    onBackToWorlds={vi.fn()}
+    onStartMagnetLab={vi.fn()}
+  /></main>);
+
+  expect(screen.getAllByRole("main")).toHaveLength(1);
+  expect(screen.getByRole("region", { name: "Science Planet" }).tagName).toBe("SECTION");
+});
+
 it("keeps all six topic and map actions available in the fallback", () => {
   const onZoneSelect = vi.fn();
   const onStartMagnetLab = vi.fn();
