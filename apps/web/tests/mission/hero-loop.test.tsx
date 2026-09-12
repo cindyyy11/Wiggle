@@ -128,6 +128,27 @@ it("preserves the live Parent route for direct MissionAtlas use", async () => {
   expect(screen.getByRole("link", { name: "Parent mission control" }).getAttribute("href")).toBe("/parent");
 });
 
+it("preserves the live Parent route during a 3D direct mission", async () => {
+  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({ getExtension: () => null } as never);
+  render(<MissionAtlas quality="low" showSplash={false} />);
+
+  fireEvent.click(screen.getByRole("button", { name: "Start fractions mission" }));
+  await screen.findByRole("region", { name: "Fraction mission" });
+  expect(screen.getByRole("link", { name: "Parent mission control" }).getAttribute("href")).toBe("/parent");
+});
+
+it("keeps the shell Parent control disabled and explained during a 3D Maths mission", async () => {
+  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({ getExtension: () => null } as never);
+  render(<MissionAtlas quality="low" showSplash={false} onWorldsRequest={vi.fn()} />);
+
+  fireEvent.click(screen.getByRole("button", { name: "Start fractions mission" }));
+  await screen.findByRole("region", { name: "Fraction mission" });
+  const parent = screen.getByRole("button", { name: "Parent mission control" }) as HTMLButtonElement;
+  expect(parent.disabled).toBe(true);
+  expect(parent.getAttribute("aria-describedby")).toBeTruthy();
+  expect(screen.getByText("Finish or leave your Maths mission before changing worlds.")).toBeTruthy();
+});
+
 it("completes the child hero loop through the accessible local world", async () => {
   render(<MissionAtlas quality="fallback" />);
   await enterAtlas();
