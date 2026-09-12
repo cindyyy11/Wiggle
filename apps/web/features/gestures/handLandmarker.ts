@@ -14,7 +14,7 @@ export async function loadHandLandmarker(): Promise<LocalHandTracker> {
     detect(video, time) {
       const result = tracker.detectForVideo(video, time);
       const landmarks = result.landmarks[0]; const hand = result.handedness[0]?.[0];
-      return landmarks && hand ? { landmarks, handedness: hand.categoryName, confidence: hand.score } : null;
+      return landmarks && hand ? { landmarks, pointer: landmarks[8], handedness: hand.categoryName, confidence: hand.score } : null;
     },
     close: () => tracker.close(),
   };
