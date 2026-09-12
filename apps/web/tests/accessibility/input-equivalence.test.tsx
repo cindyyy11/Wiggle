@@ -44,7 +44,7 @@ it("never requests camera for ordinary or automatic stuck support and denial nev
   fireEvent.click(screen.getByRole("button", { name: "See my learning paths" }));
   await screen.findByText("43%");
   fireEvent.click(screen.getByRole("button", { name: "Try Gesture + Visual" }));
-  await screen.findByText(/Camera unavailable/);
+  await screen.findByText(/Camera access denied/);
   expect(camera).toHaveBeenCalledOnce();
   for (const index of [1, 2, 3]) fireEvent.click(screen.getByRole("button", { name: `Slice ${index}` }));
   fireEvent.click(screen.getByRole("button", { name: "Check my pizza" }));

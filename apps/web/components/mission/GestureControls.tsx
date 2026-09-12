@@ -8,7 +8,7 @@ export function GestureControls({ enabled, onEnable, onDisable, commands, tracki
   const [target, setTarget] = useState(0);
   const { video, status } = tracking;
   return <div className={styles.gestures} aria-label="Gesture controls">
-    <p role="status">{status === "starting" ? "Opening camera… You can still use the slice buttons." : status === "ready" ? "Camera on · Point at a slice, pinch or make a fist to move it to the plate. Frames stay on this device." : status === "unavailable" ? "Camera unavailable. Keep playing with the slice buttons." : "Camera off. Every action works with buttons."}</p>
+    <p role="status">{status === "starting" ? "Opening camera… You can still use the slice buttons." : status === "ready" ? "Camera on · Point at a slice, pinch or make a fist to move it to the plate. Frames stay on this device." : status === "denied" ? "Camera access denied. Keep playing with the slice buttons." : status === "unavailable" ? "Camera unavailable. Keep playing with the slice buttons." : "Camera off. Every action works with buttons."}</p>
     <video ref={video} muted playsInline aria-label="Local camera preview" className={styles.preview} hidden={!preview || status !== "ready"} />
     {enabled ? <button onClick={onDisable}>Turn camera off</button> : <button onClick={onEnable}>Use camera gestures</button>}
     {status === "ready" ? <><button aria-pressed={preview} onClick={() => setPreview(value => !value)}>{preview ? "Hide" : "Show"} camera preview</button><p>Point to see which slice is ready. Pinch or make a fist to pick it up, then release over the plate. Open your palm at Lexi for help.</p></> : null}

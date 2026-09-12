@@ -65,7 +65,7 @@ export type HandInteractionPresentation = {
   latest: MutableRefObject<HandTrackingLatest>;
   gesture: Gesture | null;
   phase: GesturePhase | null;
-  status?: "off" | "starting" | "ready" | "unavailable";
+  status?: "off" | "starting" | "ready" | "denied" | "unavailable";
 };
 
 /**
