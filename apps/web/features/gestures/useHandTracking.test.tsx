@@ -85,6 +85,12 @@ it("reports permission denial and retries camera startup", async () => {
   expect(camera).toHaveBeenCalledTimes(2);
 });
 
+it("reports a SecurityError as denied", async () => {
+  camera.mockRejectedValueOnce(new DOMException("Blocked by policy", "SecurityError"));
+  render(<Harness enabled />);
+  await screen.findByText("denied");
+});
+
 it("reports other camera failures as unavailable", async () => {
   camera.mockRejectedValueOnce(new Error("No camera"));
   render(<Harness enabled />);
@@ -103,4 +109,20 @@ it("does not publish low-confidence or malformed pointers", async () => {
   act(() => animationFrame?.(200));
   expect(current.latest.current.pointer).toBeNull();
   expect(current.latest.current.isTracking).toBe(false);
+});
+
+it("releases local resources and clears the latest frame on pagehide", async () => {
+  tracker.detect.mockReturnValue(unclassifiedFrame);
+  let current!: ReturnType<typeof useHandTracking>;
+  const view = render(<Harness enabled onTracking={tracking => { current = tracking; }} />);
+  await screen.findByText("ready");
+  act(() => animationFrame?.(100));
+  const video = view.container.querySelector("video")!;
+  expect(video.srcObject).toBe(stream);
+  expect(current.latest.current.pointer).not.toBeNull();
+  act(() => window.dispatchEvent(new Event("pagehide")));
+  expect(stop).toHaveBeenCalledOnce();
+  expect(tracker.close).toHaveBeenCalledOnce();
+  expect(video.srcObject).toBeNull();
+  expect(current.latest.current).toEqual({ pointer: null, gesture: null, handedness: null, confidence: 0, isTracking: false });
 });
