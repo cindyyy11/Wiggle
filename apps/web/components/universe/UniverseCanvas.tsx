@@ -40,10 +40,9 @@ export interface UniverseCanvasProps {
   pizza?: PizzaPresentation;
   children?: ReactNode;
   className?: string;
-  childId?: string;
 }
 
-export function UniverseCanvas({ explorerInput, controlsDisabled = false, resetViewKey, activityView, theme = "math", sceneContent, hud, onSceneAvailability, mode: controlledMode, onModeChange, quality: preference = "auto", reducedMotion: reducedMotionOverride, destination, onDestinationChange, selectedLandmark: controlledLandmark, onLandmarkSelect, onMissionStart, onWorldsRequest, worldsDisabled = false, worldsDisabledMessage = "Worlds are unavailable right now.", pizza, children, className = "", childId }: UniverseCanvasProps) {
+export function UniverseCanvas({ explorerInput, controlsDisabled = false, resetViewKey, activityView, theme = "math", sceneContent, hud, onSceneAvailability, mode: controlledMode, onModeChange, quality: preference = "auto", reducedMotion: reducedMotionOverride, destination, onDestinationChange, selectedLandmark: controlledLandmark, onLandmarkSelect, onMissionStart, onWorldsRequest, worldsDisabled = false, worldsDisabledMessage = "Worlds are unavailable right now.", pizza, children, className = "" }: UniverseCanvasProps) {
   const [localMode, setLocalMode] = useState<CameraMode>("follow");
   const [localLandmark, setLocalLandmark] = useState<LandmarkId>("fraction-forest");
   const [quality, setQuality] = useState<SceneQuality>("fallback");
@@ -128,7 +127,7 @@ export function UniverseCanvas({ explorerInput, controlsDisabled = false, resetV
       {handDebug ? <output className={styles.handDebug} aria-label="Hand tracking debug">gesture: {hand.gesture ?? "none"} · pointer: {handFrame?.pointer ? `${handFrame.pointer.x.toFixed(2)}, ${handFrame.pointer.y.toFixed(2)}` : "none"} · tracking: {String(handFrame?.isTracking ?? false)}</output> : null}
     </div> : null}
     {mapVisible && pizza?.visible ? <div className={styles.mapPizza} role="img" aria-label={`Pizza with ${pizza.selectedSlices.length} of four equal slices selected`}><div>{[0, 1, 2, 3].map(index => <span key={index} data-selected={pizza.selectedSlices.includes(index)} />)}</div></div> : null}
-    {hud ?? <ExplorationHud mode={mode} mapVisible={mapVisible} selectedLandmark={selectedLandmark} landmark={landmark} help={help} onHelpChange={setHelp} onModeChange={changeMode} onToggleMap={() => { setUserMap(!mapVisible); if (mapVisible) { setFailed(false); setQuality("low"); } }} onSelectLandmark={selectLandmark} onMissionStart={onMissionStart ? startMission : undefined} instructionsId={instructionsId} missionVisible={mode === "mission" || !!pizza?.visible} onWorldsRequest={onWorldsRequest} worldsDisabled={worldsDisabled} worldsDisabledMessage={worldsDisabledMessage} childId={childId} />}
+    {hud ?? <ExplorationHud mode={mode} mapVisible={mapVisible} selectedLandmark={selectedLandmark} landmark={landmark} help={help} onHelpChange={setHelp} onModeChange={changeMode} onToggleMap={() => { setUserMap(!mapVisible); if (mapVisible) { setFailed(false); setQuality("low"); } }} onSelectLandmark={selectLandmark} onMissionStart={onMissionStart ? startMission : undefined} instructionsId={instructionsId} missionVisible={mode === "mission" || !!pizza?.visible} onWorldsRequest={onWorldsRequest} worldsDisabled={worldsDisabled} worldsDisabledMessage={worldsDisabledMessage} />}
     {!mapVisible && !controlsDisabled ? <div className={styles.explorerControls}>
       <div className={styles.movementPad} tabIndex={0} role="group" aria-label="Move explorer. Arrow keys or WASD to walk, Shift to run, Space to hop." onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) input.current.keys.clear(); }} onKeyDown={event => {
         const key = event.key.toLowerCase();
