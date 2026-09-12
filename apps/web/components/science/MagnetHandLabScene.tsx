@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { Component, useEffect, useMemo, useRef, type ReactNode } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { CanvasTexture, Group, MeshStandardMaterial, Vector3 } from "three";
 import type React from "react";
@@ -96,14 +96,19 @@ function handStatus(checkpoint: MagnetPlayState["checkpoint"], isTracking: boole
   return "Point at the toolbox in the campsite to investigate it.";
 }
 
-function CanvasFallback({ onHandStatus }: Pick<MagnetHandLabSceneProps, "onHandStatus">) {
-  const reported = useRef(false);
-  useEffect(() => {
-    if (reported.current) return;
-    reported.current = true;
-    onHandStatus("The lab view needs a graphics-capable device.");
-  }, [onHandStatus]);
-  return null;
+class LabGraphicsBoundary extends Component<{ children: ReactNode; onFailure: () => void }, { failed: boolean }> {
+  state = { failed: false };
+  private reported = false;
+
+  static getDerivedStateFromError() { return { failed: true }; }
+
+  componentDidCatch() {
+    if (this.reported) return;
+    this.reported = true;
+    this.props.onFailure();
+  }
+
+  render() { return this.state.failed ? null : this.props.children; }
 }
 
 function HandStatusReporter({ latest, checkpoint, onHandStatus }: Pick<MagnetHandLabSceneProps, "latest" | "onHandStatus"> & { checkpoint: MagnetPlayState["checkpoint"] }) {
@@ -345,22 +350,23 @@ function LabInteraction({ props }: { props: MagnetHandLabSceneProps }) {
 }
 
 export function MagnetHandLabScene(props: MagnetHandLabSceneProps): React.JSX.Element {
-  return <Canvas
-    aria-label="Magnet Lab workbench"
-    aria-hidden="true"
-    style={{ display: "block", width: "100%", minHeight: 320, background: "#211a33" }}
-    camera={{ position: [0, 0, 5.3], fov: 42, near: .1, far: 20 }}
-    dpr={props.reducedMotion ? 1 : [1, 1.5]}
-    gl={{ antialias: !props.reducedMotion, alpha: false, powerPreference: "low-power", failIfMajorPerformanceCaveat: true }}
-    fallback={<CanvasFallback onHandStatus={props.onHandStatus} />}
-  >
-    <color attach="background" args={["#211a33"]} />
-    <ambientLight intensity={1.45} color="#f7e7c5" />
-    <hemisphereLight args={["#fff0d4", "#3e4664", 1.1]} />
-    <directionalLight position={[-3, 4, 5]} intensity={2.35} color="#ffd991" />
-    <pointLight position={[1.4, 1.1, 2]} intensity={7} distance={5} color="#f39b83" />
-    <Starfield />
-    <LabInteraction props={props} />
-    <HandStatusReporter latest={props.latest} checkpoint={props.state.checkpoint} onHandStatus={props.onHandStatus} />
-  </Canvas>;
+  return <LabGraphicsBoundary onFailure={() => props.onHandStatus("The lab view needs a graphics-capable device.")}>
+    <Canvas
+      aria-label="Magnet Lab workbench"
+      aria-hidden="true"
+      style={{ display: "block", width: "100%", minHeight: 320, background: "#211a33" }}
+      camera={{ position: [0, 0, 5.3], fov: 42, near: .1, far: 20 }}
+      dpr={props.reducedMotion ? 1 : [1, 1.5]}
+      gl={{ antialias: !props.reducedMotion, alpha: false, powerPreference: "low-power", failIfMajorPerformanceCaveat: true }}
+    >
+      <color attach="background" args={["#211a33"]} />
+      <ambientLight intensity={1.45} color="#f7e7c5" />
+      <hemisphereLight args={["#fff0d4", "#3e4664", 1.1]} />
+      <directionalLight position={[-3, 4, 5]} intensity={2.35} color="#ffd991" />
+      <pointLight position={[1.4, 1.1, 2]} intensity={7} distance={5} color="#f39b83" />
+      <Starfield />
+      <LabInteraction props={props} />
+      <HandStatusReporter latest={props.latest} checkpoint={props.state.checkpoint} onHandStatus={props.onHandStatus} />
+    </Canvas>
+  </LabGraphicsBoundary>;
 }
