@@ -11,6 +11,7 @@ export type ScienceFallbackProps = {
   onZoneSelect: (zone: ScienceZoneId) => void;
   onBackToWorlds: () => void;
   onStartMagnetLab: () => void;
+  completionMessage?: string;
 };
 
 export function ScienceFallback(props: ScienceFallbackProps) {
