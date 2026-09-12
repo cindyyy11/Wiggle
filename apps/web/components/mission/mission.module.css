@@ -27,3 +27,8 @@
 @media(prefers-reduced-motion:reduce){.splash{transition:none}.splash:not(.splashLeaving) .splashBrand{animation:none}}
 .companion{display:block;margin:-6px auto 6px}
 .completion .newStar{color:#fbdb8d;font-size:13px;margin:0 0 14px}
+.breathText{text-align:center;font-size:15px;font-weight:700;color:#d5edc1;margin:-8px 0 14px}
+.ambient{border:0;padding:0;margin:0 0 16px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.ambient legend{width:100%;text-align:center;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;color:#9eb6c9;margin-bottom:6px;padding:0}
+.ambient button{min-height:36px;padding:0 12px;font-size:11px;border-radius:999px;border:1px solid #8eb8ac66;background:transparent;color:#d5edc1}
+.ambient button[aria-pressed=true]{background:#335449;border-color:#9ed8b6}
