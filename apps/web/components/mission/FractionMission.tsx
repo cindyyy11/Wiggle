@@ -11,6 +11,7 @@ import { LexiPanel, type LexiAction } from "../lexi/LexiPanel";
 import { ResetStation } from "./ResetStation";
 import { RealityMission } from "./RealityMission";
 import type { MissionInputCommands } from "../../features/gestures/commands";
+import type { HandTrackingState } from "../../features/gestures/useHandTracking";
 import styles from "./mission.module.css";
 
 export type MissionPhase = "standard" | "stuck" | "simulation" | "activity" | "complete";
@@ -20,6 +21,7 @@ export interface FractionMissionProps {
   onAnswer: (answer: number) => void; onStuck: () => void; onSimulate: () => void;
   onSelect: (strategy: StrategyName) => void; onCheck: () => void; onClose: () => void; onBack: () => void;
   commands: MissionInputCommands; cameraEnabled: boolean; onCameraEnable(): void; onCameraDisable(): void;
+  tracking: HandTrackingState;
   support: "lexi" | "reset" | "reality" | null; supportText: string;
   realityCompleted: boolean;
   onLexiRequest(action: LexiAction): void; onSupportClose(): void; onSupportComplete(): void;
@@ -40,7 +42,7 @@ export function FractionMission(props: FractionMissionProps) {
         <div className={styles.modes} role="group" aria-label="Learning mode">{([{ label: "Standard", strategy: "standard", mode: "standard" }, { label: "Visual", strategy: "visual", mode: "visual" }, { label: "Gesture", strategy: "gesture", mode: "gesture" }, { label: "Tiny steps", strategy: "chunked", mode: "chunk" }] as const).map(item => <button key={item.strategy} aria-pressed={props.mode === item.mode} onClick={() => props.onSelect(item.strategy)}>{item.label}</button>)}</div>
         <button className={styles.quiet} onClick={props.onStuck}>I'm stuck</button>
       </> : null}
-      {props.phase === "activity" && (props.mode === "gesture" || props.mode === "visual_gesture") ? <GestureControls enabled={props.cameraEnabled} onEnable={props.onCameraEnable} onDisable={props.onCameraDisable} commands={props.commands} /> : null}
+      {props.phase === "activity" && (props.mode === "gesture" || props.mode === "visual_gesture") ? <GestureControls enabled={props.cameraEnabled} onEnable={props.onCameraEnable} onDisable={props.onCameraDisable} commands={props.commands} tracking={props.tracking} /> : null}
       {props.phase !== "complete" ? <LexiBeacon onSummon={props.commands.summonLexi} /> : null}
     </fieldset>}
     <p className={styles.feedback} role="status">{props.busy ? "A little moment…" : props.feedback}</p>

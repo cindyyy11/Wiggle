@@ -62,6 +62,28 @@ describe("Wiggle contracts", () => {
     })).toThrow("difficulty");
     expect(() => validateLearningEvent({ ...event, payload: null })).toThrow("payload.kind");
   });
+  it("accepts semantic gesture telemetry without accepting sensor data", () => {
+    const focused = {
+      id: "gesture-1", childId: "child-1", sessionId: "session-1",
+      occurredAt: "2026-09-12T00:00:00Z", type: "gesture_slice_focused",
+      payload: { kind: "gesture_slice_focused", gesture: "point", objectId: "pizza-slice-2" },
+    } as const;
+    expect(validateLearningEvent(focused)).toEqual(focused);
+    expect(validateLearningEvent({
+      ...focused,
+      id: "gesture-2",
+      type: "gesture_task_completed",
+      payload: { kind: "gesture_task_completed", gesture: "pinch", objectId: "pizza-slice-3", success: true },
+    })).toMatchObject({ type: "gesture_task_completed" });
+    expect(() => validateLearningEvent({
+      ...focused,
+      payload: { ...focused.payload, objectId: "pizza-slice-99" },
+    })).toThrow("objectId");
+    expect(() => validateLearningEvent({
+      ...focused,
+      payload: { ...focused.payload, landmarks: [[0, 0, 0]] },
+    })).toThrow("not allowed");
+  });
   it("accepts bounded learner-twin values", () => {
     expect(assertLearnerTwin(twin)).toEqual(twin);
     expect(() => assertLearnerTwin({ ...twin, fatigueEstimate: 1.1 })).toThrow("fatigueEstimate");

@@ -11,6 +11,10 @@ import { DEMO_CHILD_ID, DEMO_CORRECTNESS, DEMO_MISSION_ID, WIGGLE_REWARD, demoSe
 import { FractionMission, type MissionPhase } from "./FractionMission";
 import type { LexiAction } from "../lexi/LexiPanel";
 import { REALITY_PROMPT } from "./RealityMission";
+import { useHandTracking } from "../../features/gestures/useHandTracking";
+import type { GesturePhase } from "../../features/gestures/gestureStateMachine";
+import type { GestureInteractionAction } from "../universe/gestureInteraction";
+import { PIZZA_SLICE_IDS } from "../universe/Landmarks";
 import styles from "./mission.module.css";
 
 interface Run { session: StartSessionResponse; transport: "local" | "api"; startedAt: number; interacted: boolean; finished: boolean }
@@ -38,12 +42,22 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
   const [feedback, setFeedback] = useState("");
   const [completed, setCompleted] = useState(0);
   const [cameraEnabled, setCameraEnabled] = useState(false);
+  const [gesturePhase, setGesturePhase] = useState<GesturePhase | null>(null);
+  const [focusedSlice, setFocusedSlice] = useState<number | null>(null);
+  const [heldSlice, setHeldSlice] = useState<number | null>(null);
+  const heldSliceRef = useRef<number | null>(null);
+  const lastGesturePlacement = useRef<{ gesture: "pinch" | "fist"; objectId: (typeof PIZZA_SLICE_IDS)[number] } | null>(null);
   const [support, setSupport] = useState<"lexi" | "reset" | "reality" | null>(null);
   const [supportText, setSupportText] = useState("");
   const realityStarted = useRef(false);
   const [realityCompleted, setRealityCompleted] = useState(false);
   const supportStarted = useRef(0);
   const lexiKey = useRef<{ action: string; key: string } | null>(null);
+  const handTracking = useHandTracking({
+    enabled: cameraEnabled,
+    onGestureStart: phase => setGesturePhase(phase),
+    onGestureEnd: phase => setGesturePhase(phase),
+  });
 
   useEffect(() => {
     queue.current = new EventQueue();
@@ -89,7 +103,7 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
       if (signal.aborted) return;
       startKey.current = null;
       run.current = { session, transport, startedAt: Date.now(), interacted: false, finished: false };
-      sliceInputs.current.clear(); realityStarted.current = false; setRealityCompleted(false);
+      sliceInputs.current.clear(); realityStarted.current = false; lastGesturePlacement.current = null; heldSliceRef.current = null; setHeldSlice(null); setFocusedSlice(null); setGesturePhase(null); setRealityCompleted(false);
       setSlices([]); setAnswer(null); setMode("standard"); setReport(demoSimulation); selectionKey.current = null; supportReady.current = false;
       setLandmark("fraction-forest"); setDestination(MISSION_DESTINATION); setCamera("mission"); setPhase("standard");
       if (transport === "local") emit({ kind: "session_started" });
@@ -134,7 +148,11 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
     run.current.finished = true;
     const inputMethod = [...sliceInputs.current.values()].includes("gesture") ? "gesture" : "buttons";
     const observedMode = (resultMode === "gesture" || resultMode === "visual_gesture") && inputMethod === "buttons" ? "visual" : resultMode;
+    if (inputMethod === "gesture" && lastGesturePlacement.current) {
+      emit({ kind: "gesture_task_completed", ...lastGesturePlacement.current, success: true });
+    }
     emit({ kind: "mission_completed", objective: run.current.session.objective, correctness, mode: observedMode, intendedMode: resultMode, inputMethod, ...(resultMode === "chunk" ? { strategy: "chunking" as const } : resultMode === "visual" || resultMode === "visual_gesture" ? { strategy: "visual_hint" as const } : {}) });
+    heldSliceRef.current = null; setHeldSlice(null); setFocusedSlice(null); setGesturePhase(null); setCameraEnabled(false);
     setPhase("complete"); setFeedback(""); setCompleted(count => count + 1);
     if (queue.current) { const delivery = controller.current ?? new AbortController(); controller.current = delivery; void queue.current.flush(client, delivery.signal, run.current.session.sessionId).catch(() => {}).finally(() => wakeQueue.current?.()); }
   };
@@ -152,7 +170,7 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
     controller.current?.abort(); controller.current = null; pending.current = false; setBusy(false);
     if (phase !== "complete") emit({ kind: "mission_abandoned", mode });
     run.current = null; setPhase(null); setSlices([]); setCamera("globe"); setDestination(null); setFeedback("");
-    setCameraEnabled(false); setSupport(null); lexiKey.current = null;
+    heldSliceRef.current = null; lastGesturePlacement.current = null; setHeldSlice(null); setFocusedSlice(null); setGesturePhase(null); setCameraEnabled(false); setSupport(null); lexiKey.current = null;
     requestAnimationFrame(() => document.querySelector<HTMLButtonElement>('[aria-label="Selected destination"] button')?.focus());
   };
   const closeSupport = () => {
@@ -216,14 +234,59 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
     } else sliceInputs.current.set(index, input);
     setSlices([...sliceInputs.current.keys()]);
   };
-  const commands = {
-    selectSlice: (index: number, input?: CompletionInput) => changeSlice(index, false, input), grabSlice: (index: number, input?: CompletionInput) => changeSlice(index, true, input),
-    summonLexi: () => { if (pending.current || !run.current || run.current.finished) return; interact(); setCameraEnabled(false); setSupportText(""); setSupport("lexi"); },
+  const setHeld = (index: number | null) => { heldSliceRef.current = index; setHeldSlice(index); };
+  const focusSlice = (index: number, input: CompletionInput = "buttons") => {
+    if (!activityVisible || support || !Number.isInteger(index) || index < 0 || index > 3) return;
+    setFocusedSlice(index);
+    if (input === "gesture") emit({ kind: "gesture_slice_focused", gesture: "point", objectId: PIZZA_SLICE_IDS[index] });
   };
-  return <UniverseCanvas quality={quality} className={`${styles.atlas} ${phase ? styles.active : ""} ${phase === "stuck" ? styles.simplified : ""}`} mode={camera} onModeChange={setCamera} destination={destination} onDestinationChange={setDestination} selectedLandmark={landmark} onLandmarkSelect={setLandmark} onMissionStart={start} pizza={{ visible: activityVisible && !support, selectedSlices: slices, onSliceSelect: commands.selectSlice }}>
+  const placeSlice = (index: number, input: CompletionInput = "buttons", gesture?: "pinch" | "fist") => {
+    if (!activityVisible || support || !Number.isInteger(index) || index < 0 || index > 3) return;
+    interact(); setFeedback("");
+    const next = new Map(sliceInputs.current);
+    next.set(index, input);
+    sliceInputs.current = next;
+    setSlices([...next.keys()]);
+    setHeld(null); setFocusedSlice(index);
+    if (input === "gesture" && gesture) {
+      const objectId = PIZZA_SLICE_IDS[index];
+      lastGesturePlacement.current = { gesture, objectId };
+      emit({ kind: "gesture_slice_placed", gesture, objectId, success: true });
+      if (next.size === 3) finish(mode);
+    }
+  };
+  const returnSlice = (index: number, input: CompletionInput = "buttons", gesture?: "pinch" | "fist") => {
+    if (!activityVisible || support || !Number.isInteger(index) || index < 0 || index > 3) return;
+    if (heldSliceRef.current !== index && input === "gesture") return;
+    setHeld(null); setFocusedSlice(index);
+    if (input === "gesture" && gesture) emit({ kind: "gesture_slice_returned", gesture, objectId: PIZZA_SLICE_IDS[index], success: false });
+  };
+  const openLexi = (input: CompletionInput = "buttons") => {
+    if (input === "gesture") emit({ kind: "gesture_lexi_opened", gesture: "open_palm", objectId: "lexi-beacon" });
+    if (pending.current || !run.current || run.current.finished) return;
+    interact(); setCameraEnabled(false); setGesturePhase(null); setSupportText(""); setSupport("lexi");
+  };
+  const handleGestureAction = (action: GestureInteractionAction) => {
+    const index = action.targetId ? PIZZA_SLICE_IDS.indexOf(action.targetId as (typeof PIZZA_SLICE_IDS)[number]) : -1;
+    if (action.type === "focus" && index >= 0) focusSlice(index, "gesture");
+    else if (action.type === "grab" && index >= 0 && (action.gesture === "pinch" || action.gesture === "fist")) { setHeld(index); setFocusedSlice(index); }
+    else if (action.type === "drop" && index >= 0 && (action.gesture === "pinch" || action.gesture === "fist")) {
+      if (action.success) placeSlice(index, "gesture", action.gesture);
+      else returnSlice(index, "gesture", action.gesture);
+    } else if (action.type === "lost-hand" && index >= 0 && (action.gesture === "pinch" || action.gesture === "fist")) returnSlice(index, "gesture", action.gesture);
+    else if (action.type === "open-lexi") openLexi("gesture");
+  };
+  const commands = {
+    focusSlice, placeSlice, returnSlice, openLexi,
+    selectSlice: (index: number, input?: CompletionInput) => changeSlice(index, false, input), grabSlice: (index: number, input?: CompletionInput) => changeSlice(index, true, input),
+    summonLexi: () => openLexi(),
+  };
+  const pizzaVisible = activityVisible && !support;
+  const pizzaSlices = PIZZA_SLICE_IDS.map((id, index) => ({ id, state: slices.includes(index) ? "placed" as const : heldSlice === index ? "held" as const : "available" as const, focused: focusedSlice === index }));
+  return <UniverseCanvas quality={quality} className={`${styles.atlas} ${phase ? styles.active : ""} ${phase === "stuck" ? styles.simplified : ""}`} mode={camera} onModeChange={setCamera} destination={destination} onDestinationChange={setDestination} selectedLandmark={landmark} onLandmarkSelect={setLandmark} onMissionStart={start} pizza={{ visible: pizzaVisible, selectedSlices: slices, slices: pizzaSlices, plate: { accepting: heldSlice !== null, focused: false }, hand: cameraEnabled ? { enabled: true, latest: handTracking.latest, gesture: handTracking.gesture, phase: gesturePhase, status: handTracking.status } : undefined, onGestureAction: handleGestureAction, onSliceSelect: commands.selectSlice }}>
     <div className={styles.atlasHud} aria-label="Mission Atlas progress"><span>MISSION ATLAS</span><strong>{completed} discoveries</strong><small>✳ {completed * WIGGLE_REWARD} Wiggle Energy</small></div>
     {!phase && busy ? <p className={styles.starting} role="status">Your mission is coming into view…</p> : null}
     {!phase && feedback ? <p className={styles.starting} role="alert">{feedback}</p> : null}
-    {phase ? <FractionMission phase={phase} mode={mode} selectedSlices={slices} report={report} answer={answer} feedback={feedback} busy={busy} correctness={correctness} realityCompleted={realityCompleted} onAnswer={value => { interact(); setAnswer(value); setFeedback(""); }} onStuck={() => { interact(); setCameraEnabled(false); emit({ kind: "stuck_requested", mode }); setFeedback(""); setPhase("stuck"); supportReady.current = false; void operation(signal => adapt("visual_gesture", signal, true)); }} onSimulate={simulate} onSelect={select} onCheck={check} onClose={close} onBack={() => setPhase(mode === "standard" ? "standard" : "activity")} commands={commands} cameraEnabled={cameraEnabled} onCameraEnable={() => setCameraEnabled(true)} onCameraDisable={() => setCameraEnabled(false)} support={support} supportText={supportText} onLexiRequest={requestLexi} onSupportClose={closeSupport} onSupportComplete={completeSupport} /> : null}
+    {phase ? <FractionMission phase={phase} mode={mode} selectedSlices={slices} report={report} answer={answer} feedback={feedback} busy={busy} correctness={correctness} realityCompleted={realityCompleted} onAnswer={value => { interact(); setAnswer(value); setFeedback(""); }} onStuck={() => { interact(); setCameraEnabled(false); emit({ kind: "stuck_requested", mode }); setFeedback(""); setPhase("stuck"); supportReady.current = false; void operation(signal => adapt("visual_gesture", signal, true)); }} onSimulate={simulate} onSelect={select} onCheck={check} onClose={close} onBack={() => setPhase(mode === "standard" ? "standard" : "activity")} commands={commands} cameraEnabled={cameraEnabled} onCameraEnable={() => setCameraEnabled(true)} onCameraDisable={() => { setCameraEnabled(false); setGesturePhase(null); setHeld(null); }} tracking={handTracking} support={support} supportText={supportText} onLexiRequest={requestLexi} onSupportClose={closeSupport} onSupportComplete={completeSupport} /> : null}
   </UniverseCanvas>;
 }

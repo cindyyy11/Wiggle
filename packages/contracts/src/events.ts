@@ -10,6 +10,11 @@ export const eventTypes = [
   "hint_requested",
   "task_skipped",
   "mission_completed",
+  "gesture_slice_focused",
+  "gesture_slice_placed",
+  "gesture_slice_returned",
+  "gesture_lexi_opened",
+  "gesture_task_completed",
   "mission_abandoned",
   "stuck_requested",
   "reset_started",
@@ -23,6 +28,16 @@ export const eventTypes = [
 
 export type EventType = (typeof eventTypes)[number];
 export type CompletionInput = "buttons" | "gesture";
+export const gestureObjectIds = [
+  "pizza-slice-1",
+  "pizza-slice-2",
+  "pizza-slice-3",
+  "pizza-slice-4",
+  "pizza-plate",
+  "lexi-beacon",
+] as const;
+export type GestureObjectId = (typeof gestureObjectIds)[number];
+export type GestureName = "point" | "pinch" | "fist" | "open_palm";
 export type LearningMode =
   | "standard"
   | "visual"
@@ -48,7 +63,47 @@ export interface MissionCompletedPayload {
   strategy?: "chunking" | "movement_break" | "visual_hint" | "voice_hint" | "choice";
 }
 
-export type GenericEventType = Exclude<EventType, "stuck_requested" | "mission_completed">;
+export interface GestureSliceFocusedPayload {
+  kind: "gesture_slice_focused";
+  gesture: "point";
+  objectId: Extract<GestureObjectId, `pizza-slice-${number}`>;
+}
+
+export interface GestureSlicePlacedPayload {
+  kind: "gesture_slice_placed";
+  gesture: Extract<GestureName, "pinch" | "fist">;
+  objectId: Extract<GestureObjectId, `pizza-slice-${number}`>;
+  success: boolean;
+}
+
+export interface GestureSliceReturnedPayload {
+  kind: "gesture_slice_returned";
+  gesture: Extract<GestureName, "pinch" | "fist">;
+  objectId: Extract<GestureObjectId, `pizza-slice-${number}`>;
+  success: false;
+}
+
+export interface GestureLexiOpenedPayload {
+  kind: "gesture_lexi_opened";
+  gesture: "open_palm";
+  objectId: "lexi-beacon";
+}
+
+export interface GestureTaskCompletedPayload {
+  kind: "gesture_task_completed";
+  gesture: Extract<GestureName, "pinch" | "fist">;
+  objectId: Extract<GestureObjectId, `pizza-slice-${number}`>;
+  success: true;
+}
+
+export type GestureEventPayload =
+  | GestureSliceFocusedPayload
+  | GestureSlicePlacedPayload
+  | GestureSliceReturnedPayload
+  | GestureLexiOpenedPayload
+  | GestureTaskCompletedPayload;
+
+export type GenericEventType = Exclude<EventType, "stuck_requested" | "mission_completed" | GestureEventPayload["kind"]>;
 
 export interface GenericEventPayload<Type extends GenericEventType> {
   kind: Type;
@@ -60,6 +115,7 @@ export interface GenericEventPayload<Type extends GenericEventType> {
 export type LearningEventPayload =
   | StuckRequestedPayload
   | MissionCompletedPayload
+  | GestureEventPayload
   | GenericEventPayload<GenericEventType>;
 
 export type LearningEvent =
@@ -124,6 +180,12 @@ function isLeapYear(year: number): boolean {
   return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
 }
 
+function assertPayloadKeys(payload: object, allowed: readonly string[]): void {
+  for (const key of Object.keys(payload)) {
+    if (!allowed.includes(key)) throw new TypeError(`payload.${key} is not allowed`);
+  }
+}
+
 /** Runtime validation for untrusted event JSON; returns the same immutable input reference. */
 export function validateLearningEvent(event: unknown): LearningEvent {
   if (event === null || typeof event !== "object") {
@@ -155,6 +217,7 @@ export function validateLearningEvent(event: unknown): LearningEvent {
     throw new TypeError("type must match payload.kind");
   }
   if (payload.kind === "mission_completed") {
+    assertPayloadKeys(payload, ["kind", "objective", "correctness", "mode", "intendedMode", "inputMethod", "strategy"]);
     if (typeof payload.objective !== "string" || !payload.objective) {
       throw new TypeError("payload.objective is required");
     }
@@ -182,6 +245,27 @@ export function validateLearningEvent(event: unknown): LearningEvent {
   ) {
     throw new TypeError("payload.mode must be a supported learning mode");
   }
+  const gesturePayload = payload as Partial<GestureEventPayload>;
+  if (gesturePayload.kind === "gesture_slice_focused") {
+    assertPayloadKeys(gesturePayload, ["kind", "gesture", "objectId"]);
+    if (gesturePayload.gesture !== "point" || !isSliceObjectId(gesturePayload.objectId)) throw new TypeError("gesture focus requires a known slice objectId");
+  }
+  if (gesturePayload.kind === "gesture_slice_placed") {
+    assertPayloadKeys(gesturePayload, ["kind", "gesture", "objectId", "success"]);
+    if (!isPlacementGesture(gesturePayload.gesture) || !isSliceObjectId(gesturePayload.objectId) || typeof gesturePayload.success !== "boolean") throw new TypeError("gesture placement requires a known slice objectId and boolean success");
+  }
+  if (gesturePayload.kind === "gesture_slice_returned") {
+    assertPayloadKeys(gesturePayload, ["kind", "gesture", "objectId", "success"]);
+    if (!isPlacementGesture(gesturePayload.gesture) || !isSliceObjectId(gesturePayload.objectId) || gesturePayload.success !== false) throw new TypeError("gesture return requires a known slice objectId and false success");
+  }
+  if (gesturePayload.kind === "gesture_lexi_opened") {
+    assertPayloadKeys(gesturePayload, ["kind", "gesture", "objectId"]);
+    if (gesturePayload.gesture !== "open_palm" || gesturePayload.objectId !== "lexi-beacon") throw new TypeError("gesture Lexi event requires the Lexi beacon");
+  }
+  if (gesturePayload.kind === "gesture_task_completed") {
+    assertPayloadKeys(gesturePayload, ["kind", "gesture", "objectId", "success"]);
+    if (!isPlacementGesture(gesturePayload.gesture) || !isSliceObjectId(gesturePayload.objectId) || gesturePayload.success !== true) throw new TypeError("gesture completion requires a known slice objectId and true success");
+  }
   if (payload.kind !== "stuck_requested" && payload.kind !== "mission_completed") {
     const generic = payload as Partial<GenericEventPayload<GenericEventType>>;
     if (generic.difficulty != null) assertProbability(generic.difficulty, "payload.difficulty");
@@ -189,9 +273,17 @@ export function validateLearningEvent(event: unknown): LearningEvent {
       !Number.isInteger(generic.responseTimeMs) || generic.responseTimeMs < 0 ||
       generic.responseTimeMs > 86400000
     )) throw new TypeError("payload.responseTimeMs must be bounded milliseconds");
-    if (payload.mode != null && !learningModes.includes(payload.mode)) {
+    if (generic.mode != null && !learningModes.includes(generic.mode)) {
       throw new TypeError("payload.mode must be a supported learning mode");
     }
   }
   return candidate as LearningEvent;
+}
+
+function isSliceObjectId(value: unknown): value is Extract<GestureObjectId, `pizza-slice-${number}`> {
+  return typeof value === "string" && value.startsWith("pizza-slice-") && gestureObjectIds.includes(value as GestureObjectId);
+}
+
+function isPlacementGesture(value: unknown): value is Extract<GestureName, "pinch" | "fist"> {
+  return value === "pinch" || value === "fist";
 }

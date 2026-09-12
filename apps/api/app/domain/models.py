@@ -34,6 +34,14 @@ class DomainModel(BaseModel):
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, frozen=True)
 
 
+class StrictPayloadModel(DomainModel):
+    """Reject non-semantic fields at the public telemetry boundary."""
+
+    model_config = ConfigDict(
+        alias_generator=to_camel, populate_by_name=True, frozen=True, extra="forbid"
+    )
+
+
 class EventType(StrEnum):
     SESSION_STARTED = "session_started"
     TASK_STARTED = "task_started"
@@ -44,6 +52,11 @@ class EventType(StrEnum):
     HINT_REQUESTED = "hint_requested"
     TASK_SKIPPED = "task_skipped"
     MISSION_COMPLETED = "mission_completed"
+    GESTURE_SLICE_FOCUSED = "gesture_slice_focused"
+    GESTURE_SLICE_PLACED = "gesture_slice_placed"
+    GESTURE_SLICE_RETURNED = "gesture_slice_returned"
+    GESTURE_LEXI_OPENED = "gesture_lexi_opened"
+    GESTURE_TASK_COMPLETED = "gesture_task_completed"
     MISSION_ABANDONED = "mission_abandoned"
     STUCK_REQUESTED = "stuck_requested"
     RESET_STARTED = "reset_started"
@@ -83,6 +96,53 @@ class MissionCompletedPayload(DomainModel):
     ) = None
 
 
+GestureObjectId = Literal[
+    "pizza-slice-1",
+    "pizza-slice-2",
+    "pizza-slice-3",
+    "pizza-slice-4",
+    "pizza-plate",
+    "lexi-beacon",
+]
+PizzaSliceObjectId = Literal[
+    "pizza-slice-1", "pizza-slice-2", "pizza-slice-3", "pizza-slice-4"
+]
+PlacementGesture = Literal["pinch", "fist"]
+
+
+class GestureSliceFocusedPayload(StrictPayloadModel):
+    kind: Literal["gesture_slice_focused"] = "gesture_slice_focused"
+    gesture: Literal["point"]
+    object_id: PizzaSliceObjectId
+
+
+class GestureSlicePlacedPayload(StrictPayloadModel):
+    kind: Literal["gesture_slice_placed"] = "gesture_slice_placed"
+    gesture: PlacementGesture
+    object_id: PizzaSliceObjectId
+    success: bool
+
+
+class GestureSliceReturnedPayload(StrictPayloadModel):
+    kind: Literal["gesture_slice_returned"] = "gesture_slice_returned"
+    gesture: PlacementGesture
+    object_id: PizzaSliceObjectId
+    success: Literal[False]
+
+
+class GestureLexiOpenedPayload(StrictPayloadModel):
+    kind: Literal["gesture_lexi_opened"] = "gesture_lexi_opened"
+    gesture: Literal["open_palm"]
+    object_id: Literal["lexi-beacon"]
+
+
+class GestureTaskCompletedPayload(StrictPayloadModel):
+    kind: Literal["gesture_task_completed"] = "gesture_task_completed"
+    gesture: PlacementGesture
+    object_id: PizzaSliceObjectId
+    success: Literal[True]
+
+
 class GenericEventPayload(DomainModel):
     """Payload for recorded events that do not directly mutate the twin in this phase."""
 
@@ -110,7 +170,14 @@ class GenericEventPayload(DomainModel):
 
 
 EventPayload = Annotated[
-    StuckRequestedPayload | MissionCompletedPayload | GenericEventPayload,
+    StuckRequestedPayload
+    | MissionCompletedPayload
+    | GestureSliceFocusedPayload
+    | GestureSlicePlacedPayload
+    | GestureSliceReturnedPayload
+    | GestureLexiOpenedPayload
+    | GestureTaskCompletedPayload
+    | GenericEventPayload,
     Field(discriminator="kind"),
 ]
 

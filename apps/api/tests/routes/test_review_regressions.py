@@ -82,6 +82,33 @@ def stuck(client: TestClient, session: str, occurred_at: datetime) -> None:
     assert response.status_code == 200, response.text
 
 
+def test_events_accept_semantic_gestures_and_reject_sensor_payloads() -> None:
+    repository = MemoryRepository(DEMO_PARENT_ID)
+    seed_demo(repository)
+    client = TestClient(create_app(repository=repository))
+    session = start(client, "gesture-start")
+    event = {
+        "id": str(uuid4()),
+        "childId": DEMO_CHILD_ID,
+        "sessionId": session,
+        "occurredAt": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+        "type": "gesture_slice_placed",
+        "payload": {
+            "kind": "gesture_slice_placed",
+            "gesture": "pinch",
+            "objectId": "pizza-slice-1",
+            "success": True,
+        },
+    }
+    assert client.post("/events", json={"events": [event]}).status_code == 200
+    invalid = {
+        **event,
+        "id": str(uuid4()),
+        "payload": {**event["payload"], "landmarks": [[0, 0, 0]]},
+    }
+    assert client.post("/events", json={"events": [invalid]}).status_code == 422
+
+
 def assert_ordered_audit(response: dict[str, object], repository: MemoryRepository) -> None:
     update = response["update"]
     friction_changes = [
