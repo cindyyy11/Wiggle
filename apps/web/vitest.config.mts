@@ -2,5 +2,5 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   esbuild: { jsx: "automatic" },
-  test: { exclude: ["**/node_modules/**", "**/.next/**", "tests/browser/**", "e2e/**"] },
+  test: { exclude: ["**/node_modules/**", "**/.next/**", "tests/browser/**", "e2e/**"], setupFiles: ["./vitest.setup.ts"] },
 });
