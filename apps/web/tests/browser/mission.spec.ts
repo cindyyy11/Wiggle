@@ -1,6 +1,32 @@
 import { expect, test } from "@playwright/test";
 import { launchWiggle } from "./helpers";
 
+test("the splash keeps the Wiggle logo moving while its button stays still", async ({ page }) => {
+  await page.goto("/");
+
+  const brand = page.getByRole("img", { name: "Wiggle. Wonder. Wow!" });
+  const launch = page.getByRole("button", { name: "Let's Wiggle", exact: true });
+  await expect(brand).toBeVisible();
+  await expect(launch).toBeVisible();
+
+  expect(await brand.evaluate(element => getComputedStyle(element).animationName)).not.toBe("none");
+  expect(await brand.evaluate(element => getComputedStyle(element).animationIterationCount)).toBe("infinite");
+  expect(await brand.evaluate(element => getComputedStyle(element).animationPlayState)).toBe("running");
+  expect(await launch.evaluate(element => getComputedStyle(element).animationName)).toBe("none");
+
+  await launch.click();
+  await expect.poll(() => brand.evaluate(element => getComputedStyle(element).animationName)).toBe("none");
+});
+
+test("the splash disables its decorative logo motion for reduced motion", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+
+  const brand = page.getByRole("img", { name: "Wiggle. Wonder. Wow!" });
+  await expect(brand).toBeVisible();
+  expect(await brand.evaluate(element => getComputedStyle(element).animationName)).toBe("none");
+});
+
 for (const fallback of [false, true]) {
   test(`fraction mission completes in ${fallback ? "reduced-motion map" : "3D"}`, async ({ page }, testInfo) => {
     const errors: string[] = [];
