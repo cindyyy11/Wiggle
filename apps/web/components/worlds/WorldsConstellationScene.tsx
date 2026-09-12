@@ -51,16 +51,6 @@ function OrbitCameraFloat({ reducedMotion }: { reducedMotion: boolean }) {
   return null;
 }
 
-function CanvasFallback({ onFailure }: { onFailure: () => void }) {
-  const reported = useRef(false);
-  useEffect(() => {
-    if (reported.current) return;
-    reported.current = true;
-    onFailure();
-  }, [onFailure]);
-  return null;
-}
-
 function Constellation(props: WorldsConstellationSceneProps) {
   return <>
     <ambientLight intensity={1.2} color="#e9f5e9" />
@@ -81,7 +71,6 @@ export default function WorldsConstellationScene(props: WorldsConstellationScene
     dpr={props.quality === "low" ? 1 : [1, 1.5]}
     camera={{ position: [0, .08, 9.4], fov: 46, near: .1, far: 30 }}
     gl={{ antialias: props.quality === "high", alpha: true, powerPreference: "low-power", failIfMajorPerformanceCaveat: true }}
-    fallback={<CanvasFallback onFailure={props.onContextLost} />}
   >
     <Constellation {...props} />
   </Canvas>;

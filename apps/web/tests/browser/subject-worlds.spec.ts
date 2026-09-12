@@ -8,7 +8,7 @@ async function expectInteractiveOrbit(page: Page) {
   const orbit = page.getByTestId("subject-orbit");
   await expect(orbit).toHaveAttribute("data-quality", /^(high|low)$/);
   await expect(orbit).toHaveAttribute("data-reduced-motion", /^(true|false)$/);
-  const canvas = page.locator("canvas.worlds-constellation-canvas");
+  const canvas = orbit.locator("canvas");
   await expect(canvas).toBeVisible();
   await expect(canvas).toHaveCSS("pointer-events", "auto");
   for (const name of SUBJECT_PORTALS) {
@@ -24,7 +24,7 @@ async function expectOrbitAfterSplash(page: Page) {
   // while React Three Fiber creates its renderer.
   await page.waitForTimeout(400);
   if (await orbit.getAttribute("data-quality") === "fallback") {
-    await expect(page.locator("canvas.worlds-constellation-canvas")).toHaveCount(0);
+    await expect(orbit.locator("canvas")).toHaveCount(0);
     for (const name of SUBJECT_PORTALS) {
       await expect(page.getByRole("button", { name, exact: true })).toBeVisible();
     }
@@ -175,7 +175,7 @@ test("forced WebGL fallback keeps the subject orbit and all destinations usable"
   await launchWiggle(page);
   const orbit = page.getByTestId("subject-orbit");
   await expect(orbit).toHaveAttribute("data-quality", "fallback");
-  await expect(page.locator("canvas.worlds-constellation-canvas")).toHaveCount(0);
+  await expect(orbit.locator("canvas")).toHaveCount(0);
   for (const name of SUBJECT_PORTALS) {
     await expect(page.getByRole("button", { name, exact: true })).toBeVisible();
   }
