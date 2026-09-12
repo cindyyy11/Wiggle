@@ -19,7 +19,13 @@ export type WorldsConstellationProps = {
   onSelect: (world: SubjectWorldId) => void;
 };
 
-export const worldDecorationCounts = orbitDecorationCounts;
+type LegacyWorldDecorationCounts = { stars: number; debris: number };
+
+/** Compatibility adapter for the current scene's legacy `{ stars, debris }` prop. */
+export function worldDecorationCounts(quality: "high" | "low"): LegacyWorldDecorationCounts {
+  const counts = orbitDecorationCounts(quality);
+  return { stars: counts.stars, debris: counts.orbitalRocks };
+}
 
 class GraphicsBoundary extends Component<{ children: ReactNode; onFailure: () => void }, { failed: boolean }> {
   state = { failed: false };
