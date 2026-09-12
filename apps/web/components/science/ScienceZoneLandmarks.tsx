@@ -82,7 +82,7 @@ function MagnetLab({ selected, onSelect, reducedMotion }: LandmarkSelectProps & 
   </SelectableZone>;
 }
 
-function SinkFloatBay({ selected, onSelect }: LandmarkSelectProps) {
+function _SinkFloatBay({ selected, onSelect }: LandmarkSelectProps) {
   return <SelectableZone zone="sink-float" selected={selected} onSelect={onSelect}>
     <mesh position={[0, -.06, 0]} scale={[1.05, .25, .72]} material={labTable}><cylinderGeometry args={[.55, .64, .32, 10]} /></mesh>
     <mesh position={[0, .12, 0]} scale={[1, .2, .65]} material={water}><cylinderGeometry args={[.51, .51, .08, 16]} /></mesh>
@@ -92,7 +92,7 @@ function SinkFloatBay({ selected, onSelect }: LandmarkSelectProps) {
   </SelectableZone>;
 }
 
-function PhLab({ selected, onSelect }: LandmarkSelectProps) {
+function _PhLab({ selected, onSelect }: LandmarkSelectProps) {
   return <SelectableZone zone="ph-lab" selected={selected} onSelect={onSelect}>
     <mesh position={[0, -.08, 0]} scale={[1.08, .16, .56]} material={labTable}><boxGeometry args={[1, 1, 1]} /></mesh>
     {[[-.25, .15, .05], [.05, .18, .1], [.3, .14, .04]].map((position, index) => <group key={index} position={position as [number, number, number]}>
@@ -145,8 +145,6 @@ export function ScienceZoneLandmarks({ selectedZone, onSelect, quality, reducedM
   const shared = { selectedZone, onSelect, reducedMotion };
   return <group>
     <group position={positions.get("magnet-lab")!} scale={quality === "high" ? .93 : .88}><MagnetLab {...shared} selected={selectedZone === "magnet-lab"} /></group>
-    <group position={positions.get("sink-float")!} scale={.9}><SinkFloatBay selected={selectedZone === "sink-float"} onSelect={onSelect} /></group>
-    <group position={positions.get("ph-lab")!} scale={.88}><PhLab selected={selectedZone === "ph-lab"} onSelect={onSelect} /></group>
     <group position={positions.get("animals")!} scale={.92}><AnimalArena selected={selectedZone === "animals"} onSelect={onSelect} /></group>
     <group position={positions.get("colors")!} scale={.9}><ColorsCanyon selected={selectedZone === "colors"} onSelect={onSelect} /></group>
     <group position={positions.get("life-cycle")!} scale={.9}><LifeCycleGarden selected={selectedZone === "life-cycle"} onSelect={onSelect} /></group>

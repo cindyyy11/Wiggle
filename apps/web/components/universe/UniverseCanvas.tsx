@@ -16,6 +16,14 @@ class GraphicsBoundary extends Component<{ children: ReactNode; onFailure: () =>
 }
 
 export interface UniverseCanvasProps {
+  explorerInput?: import('./world').InputRef;
+  controlsDisabled?: boolean;
+  activityView?: import("./activityCamera").ActivityView;
+  resetViewKey?: number;
+  theme?: "math" | "science";
+  sceneContent?: ReactNode;
+  hud?: ReactNode;
+  onSceneAvailability?: (available: boolean) => void;
   mode?: CameraMode;
   onModeChange?: (mode: CameraMode) => void;
   quality?: QualityPreference;
@@ -33,7 +41,7 @@ export interface UniverseCanvasProps {
   className?: string;
 }
 
-export function UniverseCanvas({ mode: controlledMode, onModeChange, quality: preference = "auto", reducedMotion: reducedMotionOverride, destination, onDestinationChange, selectedLandmark: controlledLandmark, onLandmarkSelect, onMissionStart, onWorldsRequest, worldsDisabled = false, worldsDisabledMessage = "Worlds are unavailable right now.", pizza, children, className = "" }: UniverseCanvasProps) {
+export function UniverseCanvas({ explorerInput, controlsDisabled = false, resetViewKey, activityView, theme = "math", sceneContent, hud, onSceneAvailability, mode: controlledMode, onModeChange, quality: preference = "auto", reducedMotion: reducedMotionOverride, destination, onDestinationChange, selectedLandmark: controlledLandmark, onLandmarkSelect, onMissionStart, onWorldsRequest, worldsDisabled = false, worldsDisabledMessage = "Worlds are unavailable right now.", pizza, children, className = "" }: UniverseCanvasProps) {
   const [localMode, setLocalMode] = useState<CameraMode>("follow");
   const [localLandmark, setLocalLandmark] = useState<LandmarkId>("fraction-forest");
   const [quality, setQuality] = useState<SceneQuality>("fallback");
@@ -42,8 +50,9 @@ export function UniverseCanvas({ mode: controlledMode, onModeChange, quality: pr
   const [systemReducedMotion, setSystemReducedMotion] = useState(false);
   const [help, setHelp] = useState(false);
   const [running, setRunning] = useState(false);
-  const [announcement, setAnnouncement] = useState("Welcome, explorer. Your next adventure is in Fraction Forest.");
-  const input = useRef(createExplorerInput());
+  const [announcement, setAnnouncement] = useState(theme === "science" ? "Welcome to Science Planet. Choose a discovery checkpoint or walk around." : "Welcome, explorer. Your next adventure is in Fraction Forest.");
+  const localInput = useRef(createExplorerInput());
+  const input = explorerInput ?? localInput;
   const activePointer = useRef<number | null>(null);
   const instructionsId = useId();
   const mode = controlledMode ?? localMode;
@@ -52,10 +61,12 @@ export function UniverseCanvas({ mode: controlledMode, onModeChange, quality: pr
   const reducedMotion = reducedMotionOverride ?? systemReducedMotion;
   const mapVisible = quality === "fallback" || userMap || failed;
   const hand = pizza?.hand;
+  useEffect(() => { onSceneAvailability?.(!mapVisible); }, [mapVisible, onSceneAvailability]);
   const handFrame = hand?.latest.current;
   const handDebug = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("handDebug") === "1";
 
   useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
     const change = () => setSystemReducedMotion(media.matches);
     change(); media.addEventListener("change", change);
@@ -102,10 +113,10 @@ export function UniverseCanvas({ mode: controlledMode, onModeChange, quality: pr
     activePointer.current = null; input.current.horizontal = 0; input.current.vertical = 0;
   };
 
-  return <section className={`${styles.universe} ${className}`} aria-label="Explore Numeria" data-camera-mode={mode} data-quality={mapVisible ? "fallback" : quality}>
+  return <section className={`${styles.universe} ${className}`} aria-label={theme === "science" ? "Science Planet" : "Explore Numeria"} data-camera-mode={mode} data-guided-camera={String(!!activityView && mode !== "globe")} data-quality={mapVisible ? "fallback" : quality} data-reduced-motion={String(reducedMotion)}>
     <div className={styles.stars} aria-hidden="true" />
     <div className={styles.scene}>
-      {mapVisible ? <NumeriaMap /> : <GraphicsBoundary onFailure={graphicsFailed}><Scene mode={mode} quality={quality === "high" ? "high" : "low"} reducedMotion={reducedMotion} input={input} selectedLandmark={selectedLandmark} onLandmarkSelect={selectLandmark} onDestinationChange={onDestinationChange} onContextLost={graphicsFailed} onQualityChange={lowerQuality} pizza={pizza} /></GraphicsBoundary>}
+      {mapVisible ? theme === "science" ? <p className={styles.loading} role="status">3D view unavailable. Your Science checkpoints are still ready below.</p> : <NumeriaMap /> : <GraphicsBoundary onFailure={graphicsFailed}><Scene resetViewKey={resetViewKey} activityView={activityView} theme={theme} sceneContent={sceneContent} mode={mode} quality={quality === "high" ? "high" : "low"} reducedMotion={reducedMotion} input={input} selectedLandmark={selectedLandmark} onLandmarkSelect={selectLandmark} onDestinationChange={onDestinationChange} onContextLost={graphicsFailed} onQualityChange={lowerQuality} pizza={pizza} /></GraphicsBoundary>}
     </div>
     {!mapVisible && hand?.enabled ? <div className={styles.handOverlay} aria-live="polite">
       {handFrame?.pointer && handFrame.isTracking ? <span className={styles.handCursor} data-testid="hand-cursor" style={{ "--hand-x": `${(handFrame.pointer.x + 1) * 50}%`, "--hand-y": `${(1 - handFrame.pointer.y) * 50}%` } as CSSProperties} aria-hidden="true">✦</span> : null}
@@ -113,8 +124,8 @@ export function UniverseCanvas({ mode: controlledMode, onModeChange, quality: pr
       {handDebug ? <output className={styles.handDebug} aria-label="Hand tracking debug">gesture: {hand.gesture ?? "none"} · pointer: {handFrame?.pointer ? `${handFrame.pointer.x.toFixed(2)}, ${handFrame.pointer.y.toFixed(2)}` : "none"} · tracking: {String(handFrame?.isTracking ?? false)}</output> : null}
     </div> : null}
     {mapVisible && pizza?.visible ? <div className={styles.mapPizza} role="img" aria-label={`Pizza with ${pizza.selectedSlices.length} of four equal slices selected`}><div>{[0, 1, 2, 3].map(index => <span key={index} data-selected={pizza.selectedSlices.includes(index)} />)}</div></div> : null}
-    <ExplorationHud mode={mode} mapVisible={mapVisible} selectedLandmark={selectedLandmark} landmark={landmark} help={help} onHelpChange={setHelp} onModeChange={changeMode} onToggleMap={() => { setUserMap(!mapVisible); if (mapVisible) { setFailed(false); setQuality("low"); } }} onSelectLandmark={selectLandmark} onMissionStart={onMissionStart ? startMission : undefined} instructionsId={instructionsId} missionVisible={mode === "mission" || !!pizza?.visible} onWorldsRequest={onWorldsRequest} worldsDisabled={worldsDisabled} worldsDisabledMessage={worldsDisabledMessage} />
-    {!mapVisible ? <div className={styles.explorerControls}>
+    {hud ?? <ExplorationHud mode={mode} mapVisible={mapVisible} selectedLandmark={selectedLandmark} landmark={landmark} help={help} onHelpChange={setHelp} onModeChange={changeMode} onToggleMap={() => { setUserMap(!mapVisible); if (mapVisible) { setFailed(false); setQuality("low"); } }} onSelectLandmark={selectLandmark} onMissionStart={onMissionStart ? startMission : undefined} instructionsId={instructionsId} missionVisible={mode === "mission" || !!pizza?.visible} onWorldsRequest={onWorldsRequest} worldsDisabled={worldsDisabled} worldsDisabledMessage={worldsDisabledMessage} />}
+    {!mapVisible && !controlsDisabled ? <div className={styles.explorerControls}>
       <div className={styles.movementPad} tabIndex={0} role="group" aria-label="Move explorer. Arrow keys or WASD to walk, Shift to run, Space to hop." onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) input.current.keys.clear(); }} onKeyDown={event => {
         const key = event.key.toLowerCase();
         if (["arrowup", "arrowdown", "arrowleft", "arrowright", "w", "a", "s", "d", " ", "shift"].includes(key)) { event.preventDefault(); input.current.keys.add(key); if (key === " ") input.current.hop = true; }
@@ -124,7 +135,7 @@ export function UniverseCanvas({ mode: controlledMode, onModeChange, quality: pr
       <button type="button" className={styles.run} aria-pressed={running} onClick={() => { input.current.running = !running; setRunning(!running); }}>Run</button>
       <button type="button" className={styles.hop} onClick={() => { input.current.hop = true; }}>Hop <span aria-hidden="true">↑</span></button>
       <div className={styles.zoom} role="group" aria-label="Zoom"><button type="button" aria-label="Zoom in" onClick={() => { input.current.zoom -= 1; }}>+</button><button type="button" aria-label="Zoom out" onClick={() => { input.current.zoom += 1; }}>−</button></div>
-    </div> : <p className={styles.mapNote}>A quieter view. The same little adventures.</p>}
+    </div> : mapVisible ? <p className={styles.mapNote}>A quieter view. The same little adventures.</p> : null}
     {pizza?.visible ? <div className={styles.sliceControls} role="group" aria-label="Pizza slices">{[0, 1, 2, 3].map(index => <button type="button" key={index} aria-pressed={pizza.selectedSlices.includes(index)} onClick={() => pizza.onSliceSelect?.(index)}>Slice {index + 1}</button>)}</div> : null}
     <div className={styles.live} role="status" aria-live="polite">{announcement}</div>
     {children}

@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Astronaut } from "./Astronaut";
+import { ExplorerContext } from "./ExplorerContext";
 import { CameraRig } from "./CameraRig";
 import { GestureInteractionLayer } from "./GestureInteractionLayer";
 import { Landmarks } from "./Landmarks";
@@ -40,14 +41,14 @@ export default function UniverseScene(props: UniverseSceneProps) {
     <hemisphereLight args={["#fff7e7", "#79adc3", 1.2]} />
     <directionalLight position={[-4, 8, 6]} intensity={2.35} color="#fff7e7" />
     <directionalLight position={[5, 2, -3]} intensity={1.15} color="#a9d9ee" />
-    <Numeria quality={quality} dimmed={mode === "mission"} onDestination={destination => { input.current.destination = destination; onDestinationChange?.(destination); }} />
-    <Landmarks selected={selectedLandmark} onSelect={onLandmarkSelect} reducedMotion={reducedMotion} mission={mode === "mission"} pizza={pizza} interactionTargets={interactionTargets} />
+    <Numeria theme={props.theme} quality={quality} dimmed={mode === "mission"} onDestination={destination => { if (!input.current.paused) { input.current.destination = destination; onDestinationChange?.(destination); } }} />
+    {props.theme === "science" ? <ExplorerContext.Provider value={input}>{props.sceneContent}</ExplorerContext.Provider> : <Landmarks selected={selectedLandmark} onSelect={onLandmarkSelect} reducedMotion={reducedMotion} mission={mode === "mission"} pizza={pizza} interactionTargets={interactionTargets} />}
     {pizza?.visible && pizza.hand ? <GestureInteractionLayer {...pizza.hand} targets={interactionTargets} onAction={pizza.onGestureAction} /> : null}
     <Astronaut input={input} reducedMotion={reducedMotion} />
     <WiggleSpaceDressings quality={quality} reducedMotion={reducedMotion} />
     <OrbitingWorlds reducedMotion={reducedMotion} lowQuality={quality === "low"} />
     <SpaceStars lowQuality={quality === "low"} />
-    <CameraRig mode={mode} input={input} reducedMotion={reducedMotion} />
+    <CameraRig mode={mode} input={input} reducedMotion={reducedMotion} activityView={props.activityView} resetViewKey={props.resetViewKey} theme={props.theme} />
     <RendererHealth onContextLost={onContextLost} onQualityChange={onQualityChange} quality={quality} />
   </Canvas>;
 }

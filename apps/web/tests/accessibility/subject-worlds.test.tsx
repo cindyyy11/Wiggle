@@ -26,8 +26,8 @@ it("keeps all subject-orbit actions available through native controls when WebGL
   fireEvent.click(screen.getByRole("button", { name: "Show Science Planet" }));
   fireEvent.click(screen.getByRole("button", { name: "Explore Science Planet" }));
 
-  fireEvent.click(screen.getByRole("button", { name: "Visit Magnet Lab" }));
-  fireEvent.click(screen.getByRole("button", { name: "Start Magnet Lab" }));
+  fireEvent.click(screen.getByRole("button", { name: "Visit Magnet Lands" }));
+  fireEvent.click(screen.getByRole("button", { name: /Let’s explore/ }));
   expect(screen.getByRole("region", { name: "Magnet Lab mission" })).toBeTruthy();
 });
 

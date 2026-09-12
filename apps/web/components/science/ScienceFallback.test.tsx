@@ -18,7 +18,7 @@ it("uses a named Science region below the page-level main landmark", () => {
   expect(screen.getByRole("region", { name: "Science Planet" }).tagName).toBe("SECTION");
 });
 
-it("keeps all six topic and map actions available in the fallback", () => {
+it("keeps all four topic and map actions available in the fallback", () => {
   const onZoneSelect = vi.fn();
   const onStartMagnetLab = vi.fn();
   render(
@@ -39,7 +39,7 @@ it("keeps all six topic and map actions available in the fallback", () => {
     ...SCIENCE_ZONES.map((zone) => zone.id),
     ...SCIENCE_ZONES.map((zone) => zone.id),
   ]);
-  expect(screen.getByRole("button", { name: "Start Magnet Lab" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Explore Magnet Lands" })).toBeTruthy();
 });
 
 it("shows a truthful future-zone card without a start action", () => {
@@ -51,7 +51,7 @@ it("shows a truthful future-zone card without a start action", () => {
   render(<ScienceFallback selectedZone="animals" {...callbacks} />);
 
   expect(screen.getByText("Coming soon")).toBeTruthy();
-  expect(screen.queryByRole("button", { name: "Start Magnet Lab" })).toBeNull();
+  expect(screen.queryByRole("button", { name: "Explore Magnet Lands" })).toBeNull();
 });
 
 it("shows local Magnet Lab completion feedback in the visible selected-zone card", () => {
