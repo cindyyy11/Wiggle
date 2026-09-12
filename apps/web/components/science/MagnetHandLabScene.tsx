@@ -14,7 +14,7 @@ import {
   type TablePoint,
 } from "./magnetHandPlay";
 import { MagnetHandGestureController, type MagnetGestureTarget } from "./magnetHandGesture";
-import { MAGNET_OBJECTS, type MagnetObject, type MagnetObjectId } from "./scienceWorld";
+import { MAGNET_HOME, MAGNET_OBJECTS, type MagnetObject, type MagnetObjectId } from "./scienceWorld";
 
 export type MagnetHandLabSceneProps = {
   latest: React.RefObject<HandTrackingLatest>;
@@ -370,13 +370,23 @@ function Campsite({ found, reducedMotion }: { found: boolean; reducedMotion: boo
   </group>;
 }
 
+function MagnetHomePad() {
+  return <group position={[tableX(MAGNET_HOME.x), tableY(MAGNET_HOME.y), .08]}>
+    <mesh scale={[.42, .28, .04]}>
+      <boxGeometry args={[1, 1, 1]} />
+      <meshStandardMaterial color="#5c4a56" roughness={1} flatShading />
+    </mesh>
+    <LabelTexture text="MAGNET" color="#f9e7ce" position={[0, -.22, .18]} width={.7} height={.2} fontSize={52} />
+  </group>;
+}
+
 function LabInteraction({ props }: { props: MagnetHandLabSceneProps }) {
   const magnet = useRef<Group>(null);
   const feedback = useRef<Group>(null);
   const objectGroups = useRef<ObjectGroupMap>({});
   const objectMaterials = useRef<ObjectMaterialMap>({});
-  const previousTarget = useRef<TablePoint>({ x: .5, y: .5 });
-  const magnetTarget = useRef(new Vector3());
+  const previousTarget = useRef<TablePoint>({ ...MAGNET_HOME });
+  const magnetTarget = useRef(new Vector3(tableX(MAGNET_HOME.x), tableY(MAGNET_HOME.y), .35));
   const objectTarget = useRef(new Vector3());
   const scaleTarget = useRef(new Vector3(1, 1, 1));
   const controller = useRef(new MagnetHandGestureController());
@@ -387,6 +397,7 @@ function LabInteraction({ props }: { props: MagnetHandLabSceneProps }) {
   const lastCue = useRef<"pull" | "stay" | null>(null);
   const bannerText = useRef("");
   const activePullId = useRef<MagnetObjectId | null>(null);
+  const magnetReady = useRef(false);
   const [pullId, setPullId] = useState<MagnetObjectId | null>(null);
   const [banner, setBanner] = useState<{ text: string; color: string } | null>(null);
   action.current = props.onAction;
@@ -399,19 +410,25 @@ function LabInteraction({ props }: { props: MagnetHandLabSceneProps }) {
     lastCue.current = null;
     bannerText.current = "";
     activePullId.current = null;
+    previousTarget.current = { ...MAGNET_HOME };
     setPullId(null);
     setBanner(null);
   }, [props.state.checkpoint]);
 
   useFrame(({ clock }) => {
     const point = trackedTablePoint(props.latest.current);
-    const target = point ?? previousTarget.current;
-    if (point) previousTarget.current = target;
+    // Rest at the clear home pad until a hand is tracked; return home when the hand is lost.
+    const target = point ?? MAGNET_HOME;
+    if (point) previousTarget.current = point;
 
     magnetTarget.current.set(tableX(target.x), tableY(target.y), .35);
     if (magnet.current) {
-      if (props.reducedMotion) magnet.current.position.copy(magnetTarget.current);
-      else magnet.current.position.lerp(magnetTarget.current, .16);
+      if (!magnetReady.current || props.reducedMotion) {
+        magnet.current.position.copy(magnetTarget.current);
+        magnetReady.current = true;
+      } else {
+        magnet.current.position.lerp(magnetTarget.current, point ? .16 : .14);
+      }
       const pulling = activePullId.current !== null;
       if (pulling && !props.reducedMotion) {
         magnet.current.rotation.z = Math.sin(clock.elapsedTime * 28) * .12;
@@ -505,11 +522,18 @@ function LabInteraction({ props }: { props: MagnetHandLabSceneProps }) {
   return <>
     <Workbench />
     {props.state.checkpoint === "hidden" ? <Campsite found={props.state.foundHiddenMagnet} reducedMotion={props.reducedMotion} /> : <>
-      <group ref={magnet}><HorseshoeMagnet /></group>
+      <MagnetHomePad />
+      <group ref={magnet} position={[tableX(MAGNET_HOME.x), tableY(MAGNET_HOME.y), .35]}><HorseshoeMagnet /></group>
       {MAGNET_OBJECTS.map((object) => <MagnetObjectModel
         key={object.id}
         object={object}
-        groupRef={(value) => { if (value) objectGroups.current[object.id] = value; else delete objectGroups.current[object.id]; }}
+        groupRef={(value) => {
+          if (value) {
+            objectGroups.current[object.id] = value;
+            const home = homePositions.get(object.id);
+            if (home && value.position.lengthSq() === 0) value.position.fromArray([...home]);
+          } else delete objectGroups.current[object.id];
+        }}
         materialRef={(value) => { if (value) objectMaterials.current[object.id] = value; else delete objectMaterials.current[object.id]; }}
       />)}
       {props.state.checkpoint === "sort" ? <SortTargets /> : null}

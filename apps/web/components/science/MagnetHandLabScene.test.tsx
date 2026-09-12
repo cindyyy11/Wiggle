@@ -67,7 +67,8 @@ it("asks for a hand when the tracked table point is low-confidence or non-finite
   expect(handStatusForFrame("sort", latest.current)).toBe("Pinch an object, then open your hand over the matching tray.");
 });
 it("names the nearby object and whether it pulls during explore", () => {
-  const frame = { ...latest.current, pointer: { x: (.22 - .5) / .43, y: (.28 - .5) / .43 } };
+  const [x, y] = MAGNET_OBJECTS[0].scenePosition;
+  const frame = { ...latest.current, pointer: { x: (x - .5) / .43, y: (y - .5) / .43 } };
   expect(handStatusForFrame("explore", frame)).toContain("paper clip");
   expect(handStatusForFrame("explore", frame)).toContain("sticks");
 });
@@ -75,7 +76,8 @@ it("names the nearby object and whether it pulls during explore", () => {
 it("cancels a lost grab without scoring and accepts a new object after reacquisition", () => {
   const controller = new MagnetHandGestureController();
   let state: MagnetPlayState = { ...initialMagnetPlay, checkpoint: "sort" };
-  const frame = { ...latest.current, pointer: { x: (.22 - .5) / .43, y: (.28 - .5) / .43 }, gesture: "pinch" as const };
+  const [x, y] = MAGNET_OBJECTS[0].scenePosition;
+  const frame = { ...latest.current, pointer: { x: (x - .5) / .43, y: (y - .5) / .43 }, gesture: "pinch" as const };
   const grab = actionForHandFrame(state, frame, controller, 0)!;
   expect(grab).toEqual({ type: "grab", id: "paper-clip" });
   state = magnetPlayReducer(state, grab);
@@ -130,8 +132,8 @@ it("renders a labelled decorative workbench for every checkpoint", async () => {
 });
 
 it("returns a deterministic first observation from the table interaction adapter", () => {
-  expect(observationActionForTablePoint(initialMagnetPlay, { x: .22, y: .28 })).toEqual({ type: "observe", id: "paper-clip" });
-  expect(observationActionForTablePoint({ ...initialMagnetPlay, explored: ["paper-clip"] }, { x: .22, y: .28 })).toBeNull();
+  expect(observationActionForTablePoint(initialMagnetPlay, { x: MAGNET_OBJECTS[0].scenePosition[0], y: MAGNET_OBJECTS[0].scenePosition[1] })).toEqual({ type: "observe", id: "paper-clip" });
+  expect(observationActionForTablePoint({ ...initialMagnetPlay, explored: ["paper-clip"] }, { x: MAGNET_OBJECTS[0].scenePosition[0], y: MAGNET_OBJECTS[0].scenePosition[1] })).toBeNull();
 });
 
 it("reports a graphics failure exactly once without announcing one for a healthy Canvas", async () => {

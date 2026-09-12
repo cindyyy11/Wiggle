@@ -29,11 +29,14 @@ export const SCIENCE_ZONES = [
 ] as const satisfies readonly ScienceZone[];
 
 export const MAGNET_OBJECTS = [
-  { id: "paper-clip", name: "paper clip", result: "attracted", color: "#9aa7b4", scenePosition: [.22, .28], sceneKind: "clip" },
-  { id: "iron-nail", name: "iron nail", result: "attracted", color: "#6f7882", scenePosition: [.73, .3], sceneKind: "nail" },
-  { id: "wooden-block", name: "wooden block", result: "not-attracted", color: "#bd8556", scenePosition: [.3, .72], sceneKind: "block" },
-  { id: "plastic-button", name: "plastic button", result: "not-attracted", color: "#6aa6cf", scenePosition: [.7, .7], sceneKind: "button" },
+  { id: "paper-clip", name: "paper clip", result: "attracted", color: "#9aa7b4", scenePosition: [.14, .34], sceneKind: "clip" },
+  { id: "iron-nail", name: "iron nail", result: "attracted", color: "#6f7882", scenePosition: [.86, .34], sceneKind: "nail" },
+  { id: "wooden-block", name: "wooden block", result: "not-attracted", color: "#bd8556", scenePosition: [.14, .80], sceneKind: "block" },
+  { id: "plastic-button", name: "plastic button", result: "not-attracted", color: "#6aa6cf", scenePosition: [.86, .80], sceneKind: "button" },
 ] as const satisfies readonly MagnetObject[];
+
+/** Clear center rest spot — kept outside every object's magnet field. */
+export const MAGNET_HOME: { readonly x: number; readonly y: number } = { x: .5, y: .55 };
 
 export function resultForMagnetObject(id: MagnetObjectId): MagnetResult {
   const magnetObject = MAGNET_OBJECTS.find((object) => object.id === id);
