@@ -6,7 +6,7 @@ Next.js web app, a FastAPI service, and shared TypeScript contracts.
 
 ## Prerequisites
 
-- Node.js 24.21 or newer (within the supported Node 24 line)
+- Node.js 24.x (24.19+ on Vercel; 24.21+ recommended locally)
 - npm 11.6 or newer
 - Python 3.12 or newer
 
