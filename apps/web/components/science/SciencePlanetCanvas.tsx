@@ -68,6 +68,7 @@ export function SciencePlanetCanvas({
   }, [preference]);
 
   useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => setSystemReducedMotion(media.matches);
     update();

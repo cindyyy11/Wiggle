@@ -157,3 +157,11 @@ it("reduces only decoration density on low quality", () => {
   expect(scienceDecorationCounts("low").stars).toBeLessThan(scienceDecorationCounts("high").stars);
   expect(scienceDecorationCounts("low").magneticFragments).toBeLessThan(scienceDecorationCounts("high").magneticFragments);
 });
+
+it("defaults to motion when matchMedia is unavailable", async () => {
+  Object.defineProperty(window, "matchMedia", { configurable: true, writable: true, value: undefined });
+
+  render(<SciencePlanetCanvas selectedZone="magnet-lab" onZoneSelect={vi.fn()} onBackToWorlds={vi.fn()} onStartMagnetLab={vi.fn()} />);
+
+  expect((await screen.findByRole("region", { name: "Science Planet" })).getAttribute("data-reduced-motion")).toBe("false");
+});
