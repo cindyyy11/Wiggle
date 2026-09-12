@@ -7,7 +7,8 @@ import { initialMagnetPlay } from "./magnetHandPlay";
 import { MagnetHandLabScene, observationActionForTablePoint } from "./MagnetHandLabScene";
 
 const canvasState = vi.hoisted(() => ({ throwOnRender: false }));
-const webgl = vi.hoisted(() => ({ supported: true, probeCalls: 0 }));
+const webgl = vi.hoisted(() => ({ supported: true, cleanupThrows: false, probeCalls: 0 }));
+const getContextMock = vi.hoisted(() => vi.fn());
 
 vi.mock("@react-three/fiber", () => ({
   // Keep R3F internals out of jsdom; interaction rules are tested through the pure adapter below.
@@ -20,11 +21,18 @@ vi.mock("@react-three/fiber", () => ({
 beforeEach(() => {
   canvasState.throwOnRender = false;
   webgl.supported = true;
+  webgl.cleanupThrows = false;
   webgl.probeCalls = 0;
-  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(() => {
+  getContextMock.mockReset();
+  getContextMock.mockImplementation(() => {
     webgl.probeCalls++;
-    return webgl.supported ? { getExtension: () => ({ loseContext: vi.fn() }) } as never : null;
+    return webgl.supported ? {
+      getExtension: () => ({ loseContext: () => {
+        if (webgl.cleanupThrows) throw new Error("Unable to release probe context");
+      } }),
+    } as never : null;
   });
+  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(getContextMock);
 });
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
@@ -85,6 +93,17 @@ it("reports a WebGL capability preflight failure once and never mounts Canvas", 
 
   await waitFor(() => expect(onHandStatus).toHaveBeenCalledTimes(1));
   expect(webgl.probeCalls).toBe(1);
+  expect(screen.queryByLabelText("Magnet Lab workbench")).toBeNull();
+  expect(onHandStatus).toHaveBeenCalledWith("The lab view needs a graphics-capable device.");
+});
+
+it("treats a throwing WebGL probe cleanup as unsupported", async () => {
+  webgl.cleanupThrows = true;
+  const onHandStatus = vi.fn();
+  render(<MagnetHandLabScene latest={latest} state={initialMagnetPlay} reducedMotion={false} onAction={vi.fn()} onHandStatus={onHandStatus} />);
+
+  await waitFor(() => expect(onHandStatus).toHaveBeenCalledTimes(1));
+  expect(getContextMock).toHaveBeenCalledWith("webgl2", { failIfMajorPerformanceCaveat: true });
   expect(screen.queryByLabelText("Magnet Lab workbench")).toBeNull();
   expect(onHandStatus).toHaveBeenCalledWith("The lab view needs a graphics-capable device.");
 });
