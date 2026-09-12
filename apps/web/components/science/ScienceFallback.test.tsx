@@ -2,10 +2,11 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { ScienceFallback } from "./ScienceFallback";
+import { SCIENCE_ZONES } from "./scienceWorld";
 
 afterEach(cleanup);
 
-it("keeps all six topic actions available in the fallback", () => {
+it("keeps all six topic and map actions available in the fallback", () => {
   const onZoneSelect = vi.fn();
   const onStartMagnetLab = vi.fn();
   render(
@@ -18,8 +19,14 @@ it("keeps all six topic actions available in the fallback", () => {
   );
 
   expect(screen.getByRole("img", { name: "Science Planet map" })).toBeTruthy();
-  fireEvent.click(screen.getByRole("button", { name: "Visit Sink & Float Bay" }));
-  expect(onZoneSelect).toHaveBeenCalledWith("sink-float");
+  expect(screen.getAllByRole("button", { name: /^Visit / })).toHaveLength(SCIENCE_ZONES.length);
+  expect(screen.getAllByRole("button", { name: /^Map point: / })).toHaveLength(SCIENCE_ZONES.length);
+  SCIENCE_ZONES.forEach((zone) => fireEvent.click(screen.getByRole("button", { name: `Visit ${zone.name}` })));
+  SCIENCE_ZONES.forEach((zone) => fireEvent.click(screen.getByRole("button", { name: `Map point: ${zone.name}` })));
+  expect(onZoneSelect.mock.calls.map(([zone]) => zone)).toEqual([
+    ...SCIENCE_ZONES.map((zone) => zone.id),
+    ...SCIENCE_ZONES.map((zone) => zone.id),
+  ]);
   expect(screen.getByRole("button", { name: "Start Magnet Lab" })).toBeTruthy();
 });
 
@@ -33,4 +40,16 @@ it("shows a truthful future-zone card without a start action", () => {
 
   expect(screen.getByText("Coming soon")).toBeTruthy();
   expect(screen.queryByRole("button", { name: "Start Magnet Lab" })).toBeNull();
+});
+
+it("shows local Magnet Lab completion feedback in the visible selected-zone card", () => {
+  render(<ScienceFallback
+    selectedZone="magnet-lab"
+    onZoneSelect={vi.fn()}
+    onBackToWorlds={vi.fn()}
+    onStartMagnetLab={vi.fn()}
+    completionMessage="Magnet Lab discovery complete."
+  />);
+
+  expect(screen.getByRole("status").textContent).toBe("Magnet Lab discovery complete.");
 });

@@ -33,7 +33,7 @@ export function SciencePlanet({ selectedZone, quality: _quality, onZoneSelect, o
       onZoneSelect={onZoneSelect}
       onBackToWorlds={onBackToWorlds}
       onStartMagnetLab={() => setMagnetLabOpen(true)}
+      completionMessage={magnetComplete ? "Magnet Lab discovery complete." : undefined}
     />
-    {magnetComplete ? <p role="status" aria-live="polite">Magnet Lab discovery complete.</p> : null}
   </>;
 }

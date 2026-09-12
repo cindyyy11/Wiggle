@@ -31,6 +31,7 @@
 .zoneCard p { line-height: 1.45; }
 .startButton { padding: .75rem 1rem; border-radius: .8rem; background: #ef8b78; box-shadow: 0 .23rem 0 #a04a3e; }
 .comingSoon { margin-bottom: 0; padding: .65rem .8rem; border: 2px dashed #705c8c; border-radius: .7rem; background: #eee7f7; color: #3f3153; font-weight: 700; }
+.completionStatus { margin: .85rem 0 0; padding: .65rem .8rem; border: 2px solid #27644c; border-radius: .7rem; background: #d9f0e1; color: #184b35; font-weight: 800; }
 .map { position: relative; width: min(100%, 66rem); min-height: clamp(21rem, 48vw, 31rem); margin: clamp(1.75rem, 5vw, 4rem) auto 0; border: 3px solid #173e5e; border-radius: 2rem; background: linear-gradient(120deg, #73c6e8, #d2f4e8 52%, #f9d986); isolation: isolate; overflow: hidden; }
 .mapVisual { position: absolute; inset: 0; }
 .map::before, .map::after { position: absolute; z-index: -1; border-radius: 50%; background: #fff8e699; content: ""; }

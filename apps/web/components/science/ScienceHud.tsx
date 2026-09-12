@@ -9,13 +9,14 @@ export type ScienceHudProps = {
   onZoneSelect: (zone: ScienceZoneId) => void;
   onBackToWorlds: () => void;
   onStartMagnetLab: () => void;
+  completionMessage?: string;
 };
 
 function selectedScienceZone(selectedZone: ScienceZoneId): ScienceZone {
   return SCIENCE_ZONES.find((zone) => zone.id === selectedZone) ?? SCIENCE_ZONES[0];
 }
 
-export function ScienceHud({ selectedZone, onZoneSelect, onBackToWorlds, onStartMagnetLab }: ScienceHudProps) {
+export function ScienceHud({ selectedZone, onZoneSelect, onBackToWorlds, onStartMagnetLab, completionMessage }: ScienceHudProps) {
   const zone = selectedScienceZone(selectedZone);
   const canStart = zone.id === "magnet-lab";
 
@@ -44,6 +45,7 @@ export function ScienceHud({ selectedZone, onZoneSelect, onBackToWorlds, onStart
       {canStart
         ? <button className={styles.startButton} type="button" onClick={onStartMagnetLab}>Start Magnet Lab</button>
         : <p className={styles.comingSoon} role="status">Coming soon — you can visit another discovery spot while this one is being prepared.</p>}
+      {completionMessage ? <p className={styles.completionStatus} role="status" aria-live="polite">{completionMessage}</p> : null}
     </section>
   </header>;
 }
