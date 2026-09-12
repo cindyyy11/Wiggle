@@ -17,6 +17,7 @@ import type { GesturePhase } from "../../features/gestures/gestureStateMachine";
 import type { GestureInteractionAction } from "../universe/gestureInteraction";
 import { PIZZA_SLICE_IDS } from "../universe/Landmarks";
 import { useWiggleSound } from "../../features/audio/useWiggleSound";
+import { speakIfUnmuted } from "../../features/voice/voicePreference";
 import { publishWiggleLiveEvent } from "../../features/sync/wiggleLiveChannel";
 import { seenConstellationStars, saveSeenConstellationStars } from "../wiggle/constellationMemory";
 import styles from "./mission.module.css";
@@ -102,7 +103,16 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
   const realityStarted = useRef(false);
   const [realityCompleted, setRealityCompleted] = useState(false);
   const [newStar, setNewStar] = useState<string | null>(null);
+  const [greeting, setGreeting] = useState("");
+  const greetingTimer = useRef<number | null>(null);
   const sound = useWiggleSound();
+  const greetChild = (line: string) => {
+    if (greetingTimer.current !== null) window.clearTimeout(greetingTimer.current);
+    setGreeting(line);
+    speakIfUnmuted(line);
+    greetingTimer.current = window.setTimeout(() => setGreeting(""), 5000);
+  };
+  useEffect(() => () => { if (greetingTimer.current !== null) window.clearTimeout(greetingTimer.current); }, []);
   const supportStarted = useRef(0);
   const lexiKey = useRef<{ action: string; key: string } | null>(null);
   // A live, wellbeing-first read of the Twin's mood during this mission (Part 3 of the
@@ -173,6 +183,7 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
       setLandmark("fraction-forest"); setDestination(MISSION_DESTINATION); setCamera("mission"); setPhase("standard");
       setNewStar(null);
       sound.play("missionStart");
+      greetChild("Ready for a fraction mission?");
       if (transport === "local") emit({ kind: "session_started" });
       emit({ kind: "task_started", mode: "standard" });
     });
@@ -382,6 +393,6 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
     <div className={styles.atlasHud} aria-label="Mission Atlas progress"><span>MISSION ATLAS</span><strong>{completed} discoveries</strong><small>✳ {completed * WIGGLE_REWARD} Wiggle Energy</small></div>
     {!phase && busy ? <p className={styles.starting} role="status">Your mission is coming into view…</p> : null}
     {!phase && feedback ? <p className={styles.starting} role="alert">{feedback}</p> : null}
-    {phase ? <FractionMission phase={phase} mode={mode} selectedSlices={slices} report={report} answer={answer} feedback={feedback} busy={busy} correctness={correctness} realityCompleted={realityCompleted} onAnswer={value => { interact(); setAnswer(value); setFeedback(""); }} onStuck={() => { interact(); setCameraEnabled(false); emit({ kind: "stuck_requested", mode }); setFeedback(""); setPhase("stuck"); supportReady.current = false; void operation(signal => adapt("visual_gesture", signal, true)); }} onSimulate={simulate} onSelect={select} onCheck={check} onClose={close} onBack={() => setPhase(mode === "standard" ? "standard" : "activity")} commands={commands} cameraEnabled={cameraEnabled} onCameraEnable={() => setCameraEnabled(true)} onCameraDisable={() => { setCameraEnabled(false); setGesturePhase(null); setHeld(null); }} tracking={handTracking} support={support} supportText={supportText} twinState={missionTwinState} newStar={newStar} onLexiRequest={requestLexi} onSupportClose={closeSupport} onSupportComplete={completeSupport} /> : null}
+    {phase ? <FractionMission phase={phase} mode={mode} selectedSlices={slices} report={report} answer={answer} feedback={feedback} busy={busy} correctness={correctness} realityCompleted={realityCompleted} onAnswer={value => { interact(); setAnswer(value); setFeedback(""); }} onStuck={() => { interact(); setCameraEnabled(false); emit({ kind: "stuck_requested", mode }); setFeedback(""); setPhase("stuck"); supportReady.current = false; void operation(signal => adapt("visual_gesture", signal, true)); }} onSimulate={simulate} onSelect={select} onCheck={check} onClose={close} onBack={() => setPhase(mode === "standard" ? "standard" : "activity")} commands={commands} cameraEnabled={cameraEnabled} onCameraEnable={() => setCameraEnabled(true)} onCameraDisable={() => { setCameraEnabled(false); setGesturePhase(null); setHeld(null); }} tracking={handTracking} support={support} supportText={supportText} twinState={missionTwinState} newStar={newStar} greeting={greeting} onLexiRequest={requestLexi} onSupportClose={closeSupport} onSupportComplete={completeSupport} /> : null}
   </UniverseCanvas></div>{splashVisible ? <section className={`${styles.splash} ${splashState === "leaving" ? styles.splashLeaving : ""}`} aria-label="Welcome to Wiggle"><img className={styles.splashBrand} src="/brand/wiggle-full.jpeg" alt="Wiggle. Wonder. Wow!" /><button ref={splashStartButton} type="button" className={styles.splashStart} onClick={startSplash} disabled={splashState === "leaving"}>Let's Wiggle</button></section> : null}</>;
 }
