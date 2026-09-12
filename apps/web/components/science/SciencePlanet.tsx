@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { MagnetLabMission } from "./MagnetLabMission";
-import { ScienceFallback } from "./ScienceFallback";
+import { SciencePlanetCanvas } from "./SciencePlanetCanvas";
 import type { ScienceZoneId } from "../worlds/subjectRoute";
 import type { QualityPreference } from "../universe/world";
 
@@ -13,7 +13,7 @@ export type SciencePlanetProps = {
   onBackToWorlds: () => void;
 };
 
-export function SciencePlanet({ selectedZone, quality: _quality, onZoneSelect, onBackToWorlds }: SciencePlanetProps) {
+export function SciencePlanet({ selectedZone, quality, onZoneSelect, onBackToWorlds }: SciencePlanetProps) {
   const [magnetLabOpen, setMagnetLabOpen] = useState(false);
   const [magnetComplete, setMagnetComplete] = useState(false);
 
@@ -28,8 +28,9 @@ export function SciencePlanet({ selectedZone, quality: _quality, onZoneSelect, o
   }
 
   return <>
-    <ScienceFallback
+    <SciencePlanetCanvas
       selectedZone={selectedZone}
+      quality={quality}
       onZoneSelect={onZoneSelect}
       onBackToWorlds={onBackToWorlds}
       onStartMagnetLab={() => setMagnetLabOpen(true)}
