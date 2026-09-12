@@ -25,3 +25,5 @@
 .splashStart:disabled{cursor:default;opacity:.72}
 @media(max-width:600px){.splash{padding:20px}.splashBrand{width:min(90vw,440px)}}
 @media(prefers-reduced-motion:reduce){.splash{transition:none}.splash:not(.splashLeaving) .splashBrand{animation:none}}
+.companion{display:block;margin:-6px auto 6px}
+.completion .newStar{color:#fbdb8d;font-size:13px;margin:0 0 14px}

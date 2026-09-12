@@ -12,4 +12,6 @@ export const demoParent: ParentInsightsResponse = {
   insight: { text: "Try dividing a snack into four equal parts and finding three quarters together." },
   missions: [{ title: "Pizza Fractions", objective: "identify-three-quarters" }],
   masteryHistory: [], independenceHistory: [],
+  today: { missionsCompleted: 0, independentMissions: 0, helpRequests: 0, resetBreaks: 0, learningMinutes: 0, offlineMinutes: 0 },
+  weeklySummary: null,
 };

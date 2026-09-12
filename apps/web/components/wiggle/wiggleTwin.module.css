@@ -1,0 +1,77 @@
+.avatar {
+  --twin-cream: #fff7e7;
+  --twin-sky: #a9d9ee;
+  --twin-navy: #285c85;
+  --twin-sage: #9dc99a;
+  --twin-coral: #ef8b78;
+  --twin-mustard: #f4c95d;
+  --twin-accent: var(--twin-sky);
+  position: relative;
+  display: inline-block;
+  width: var(--twin-size, 160px);
+  height: calc(var(--twin-size, 160px) * 1.15);
+  line-height: 0;
+}
+
+.avatar svg { display: block; width: 100%; height: 100%; overflow: visible; }
+
+.glow {
+  transform-origin: 50% 62%;
+  animation: glowPulse 3.4s ease-in-out infinite;
+}
+.avatar[data-state="overwhelmed"] .glow,
+.avatar[data-state="needs_reset"] .glow { animation-duration: 5.5s; opacity: .55; }
+.avatar[data-state="mastered"] .glow { animation-duration: 1.6s; }
+
+.body {
+  transform-origin: 50% 78%;
+  animation: bob 3.2s ease-in-out infinite;
+}
+.avatar[data-state="ready"] .body,
+.avatar[data-state="progressing"] .body { animation-duration: 2.6s; }
+.avatar[data-state="overwhelmed"] .body,
+.avatar[data-state="needs_reset"] .body { animation-duration: 5s; }
+.avatar[data-listening="true"] .body { animation-play-state: paused; transform: translateY(-2px) scale(1.02); }
+.avatar[data-state="mastered"] .body { animation: celebrate .9s ease-in-out 1; }
+
+.eyeGroup { transform-origin: center; animation: blink 5.2s ease-in-out infinite; }
+.avatar[data-state="overwhelmed"] .eyeGroup,
+.avatar[data-state="needs_reset"] .eyeGroup { animation: none; transform: scaleY(.72); }
+
+.hand { transform-origin: top center; animation: wiggleHand 2.4s ease-in-out infinite; }
+.handRight { animation-delay: .5s; }
+.avatar[data-state="overwhelmed"] .hand,
+.avatar[data-state="needs_reset"] .hand { animation: none; }
+
+.antenna { transform-origin: bottom center; }
+.avatar[data-state="stuck"] .antenna,
+.avatar[data-state="overwhelmed"] .antenna { transform: rotate(-8deg); }
+
+.sparkle { animation: sparkle 1.8s ease-in-out infinite; }
+.sparkle:nth-child(2) { animation-delay: .3s; }
+.sparkle:nth-child(3) { animation-delay: .6s; }
+
+.listenRing { animation: ping 1.8s ease-out infinite; transform-origin: 50% 62%; }
+.listenRing:nth-child(2) { animation-delay: .6s; }
+
+.mouth { transform-origin: center; }
+.avatar[data-speaking="true"] .mouth { animation: talk .38s ease-in-out infinite; }
+
+.resetBadge { animation: fadeIn .4s ease-out; }
+
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+@keyframes celebrate { 0% { transform: translateY(0) scale(1); } 30% { transform: translateY(-18px) scale(1.05); } 55% { transform: translateY(0) scale(.98); } 75% { transform: translateY(-6px) scale(1.02); } 100% { transform: translateY(0) scale(1); } }
+@keyframes glowPulse { 0%, 100% { opacity: .55; transform: scale(1); } 50% { opacity: .85; transform: scale(1.08); } }
+@keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.12); } }
+@keyframes wiggleHand { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(10deg); } }
+@keyframes sparkle { 0%, 100% { opacity: 0; transform: scale(.4) rotate(0deg); } 50% { opacity: 1; transform: scale(1) rotate(20deg); } }
+@keyframes ping { 0% { opacity: .5; transform: scale(.9); } 100% { opacity: 0; transform: scale(1.6); } }
+@keyframes talk { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.9); } }
+@keyframes fadeIn { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: scale(1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .glow, .body, .eyeGroup, .hand, .sparkle, .listenRing, .mouth, .resetBadge {
+    animation: none !important;
+    transform: none !important;
+  }
+}
