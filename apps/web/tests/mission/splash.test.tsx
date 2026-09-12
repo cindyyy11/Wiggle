@@ -41,3 +41,10 @@ it("requires one native Let’s Wiggle action before exposing the atlas", () => 
   expect(screen.getAllByRole("button", { name: "Start fractions mission" })).toHaveLength(1);
   expect(screen.queryByRole("button", { name: "Let's Wiggle" })).toBeNull();
 });
+
+it("skips the internal splash only when the shell requests it", () => {
+  render(<MissionAtlas quality="fallback" showSplash={false} />);
+
+  expect(screen.queryByRole("button", { name: "Let's Wiggle" })).toBeNull();
+  expect(screen.getByRole("region", { name: "Explore Numeria" })).toBeTruthy();
+});

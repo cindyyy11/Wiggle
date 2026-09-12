@@ -77,6 +77,26 @@ it("aborts a pending adaptation when the child leaves, without restoring the old
 });
 afterEach(cleanup);
 
+it("reports an active overlay and blocks Worlds until the existing leave action closes it", async () => {
+  const onMissionOverlayChange = vi.fn();
+  const onWorldsRequest = vi.fn();
+  render(
+    <MissionAtlas
+      quality="fallback"
+      showSplash={false}
+      onMissionOverlayChange={onMissionOverlayChange}
+      onWorldsRequest={onWorldsRequest}
+    />,
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Start fractions mission" }));
+  await screen.findByRole("region", { name: "Fraction mission" });
+  expect(screen.getByRole("button", { name: "Back to Worlds" })).toBeDisabled();
+  fireEvent.click(screen.getByRole("button", { name: "Leave mission" }));
+  expect(onMissionOverlayChange).toHaveBeenLastCalledWith(false);
+  fireEvent.click(screen.getByRole("button", { name: "Back to Worlds" }));
+  expect(onWorldsRequest).toHaveBeenCalledOnce();
+});
+
 it("completes the child hero loop through the accessible local world", async () => {
   render(<MissionAtlas quality="fallback" />);
   await enterAtlas();

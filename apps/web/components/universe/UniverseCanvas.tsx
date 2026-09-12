@@ -24,12 +24,15 @@ export interface UniverseCanvasProps {
   selectedLandmark?: LandmarkId;
   onLandmarkSelect?: (id: LandmarkId) => void;
   onMissionStart?: () => void;
+  onWorldsRequest?: () => void;
+  worldsDisabled?: boolean;
+  worldsDisabledMessage?: string;
   pizza?: PizzaPresentation;
   children?: ReactNode;
   className?: string;
 }
 
-export function UniverseCanvas({ mode: controlledMode, onModeChange, quality: preference = "auto", reducedMotion: reducedMotionOverride, destination, onDestinationChange, selectedLandmark: controlledLandmark, onLandmarkSelect, onMissionStart, pizza, children, className = "" }: UniverseCanvasProps) {
+export function UniverseCanvas({ mode: controlledMode, onModeChange, quality: preference = "auto", reducedMotion: reducedMotionOverride, destination, onDestinationChange, selectedLandmark: controlledLandmark, onLandmarkSelect, onMissionStart, onWorldsRequest, worldsDisabled = false, worldsDisabledMessage = "Worlds are unavailable right now.", pizza, children, className = "" }: UniverseCanvasProps) {
   const [localMode, setLocalMode] = useState<CameraMode>("globe");
   const [localLandmark, setLocalLandmark] = useState<LandmarkId>("fraction-forest");
   const [quality, setQuality] = useState<SceneQuality>("fallback");
@@ -42,6 +45,7 @@ export function UniverseCanvas({ mode: controlledMode, onModeChange, quality: pr
   const input = useRef(createExplorerInput());
   const activePointer = useRef<number | null>(null);
   const instructionsId = useId();
+  const worldsMessageId = useId();
   const mode = controlledMode ?? localMode;
   const selectedLandmark = controlledLandmark ?? localLandmark;
   const landmark = LANDMARKS.find(item => item.id === selectedLandmark) ?? LANDMARKS[0];
@@ -100,7 +104,7 @@ export function UniverseCanvas({ mode: controlledMode, onModeChange, quality: pr
 
   return <section className={`${styles.universe} ${className}`} aria-label="Explore Numeria" data-camera-mode={mode} data-quality={mapVisible ? "fallback" : quality}>
     <div className={styles.stars} aria-hidden="true" />
-    <header className={styles.heading}><a className={styles.wordmark} href="/" aria-label="Wiggle home"><img className={styles.wordmarkImage} src="/brand/wiggle-mark.png" alt="" /></a><div className={styles.worldTitle}><span>YOUR LEARNING UNIVERSE</span><h1>Numeria</h1><p>A little curiosity goes a long way.</p></div></header>
+    <header className={styles.heading}>{onWorldsRequest ? <><button type="button" className={styles.worldsButton} onClick={onWorldsRequest} disabled={worldsDisabled} aria-describedby={worldsDisabled ? worldsMessageId : undefined}>Back to Worlds</button>{worldsDisabled ? <p id={worldsMessageId} className={styles.worldsMessage} role="status">{worldsDisabledMessage}</p> : null}</> : <a className={styles.wordmark} href="/" aria-label="Wiggle home"><img className={styles.wordmarkImage} src="/brand/wiggle-mark.png" alt="" /></a>}<div className={styles.worldTitle}><span>YOUR LEARNING UNIVERSE</span><h1>Numeria</h1><p>A little curiosity goes a long way.</p></div></header>
     <div className={styles.scene}>
       {mapVisible ? <NumeriaMap /> : <GraphicsBoundary onFailure={graphicsFailed}><Scene mode={mode} quality={quality === "high" ? "high" : "low"} reducedMotion={reducedMotion} input={input} selectedLandmark={selectedLandmark} onLandmarkSelect={selectLandmark} onDestinationChange={onDestinationChange} onContextLost={graphicsFailed} onQualityChange={lowerQuality} pizza={pizza} /></GraphicsBoundary>}
     </div>
