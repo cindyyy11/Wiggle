@@ -17,6 +17,7 @@ import type { GesturePhase } from "../../features/gestures/gestureStateMachine";
 import type { GestureInteractionAction } from "../universe/gestureInteraction";
 import { PIZZA_SLICE_IDS } from "../universe/Landmarks";
 import { useWiggleSound } from "../../features/audio/useWiggleSound";
+import { publishWiggleLiveEvent } from "../../features/sync/wiggleLiveChannel";
 import { seenConstellationStars, saveSeenConstellationStars } from "../wiggle/constellationMemory";
 import styles from "./mission.module.css";
 
@@ -223,6 +224,7 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
     sound.play(correctness >= 0.85 ? "celebrate" : "correct");
     if (queue.current) { const delivery = controller.current ?? new AbortController(); controller.current = delivery; void queue.current.flush(client, delivery.signal, run.current.session.sessionId).catch(() => {}).finally(() => wakeQueue.current?.()); }
     void checkForNewStars();
+    publishWiggleLiveEvent({ type: "mission_completed", childId, missionTitle: "Fraction Forest Mission", occurredAt: new Date().toISOString() });
   };
   /**
    * Best-effort celebratory nuance only: re-reads the authoritative Twin after a
