@@ -10,6 +10,14 @@ import styles from "./parent.module.css";
 
 const percent = (value: number) => `${Math.round(value * 100)}%`;
 const names: Record<string, string> = { visual: "Pictures & diagrams", gesture: "Hands-on gestures", voice: "Spoken guidance", movement: "Moving to learn", story: "Learning through stories", text: "Reading", chunking: "Small steps", movementBreak: "Movement breaks", visualHint: "Picture hints", voiceHint: "Spoken hints", choice: "A choice of activities" };
+const TONE = ["sage", "blue", "mustard", "coral"] as const;
+type Tone = (typeof TONE)[number];
+const toneClass: Record<Tone, string> = {
+  sage: styles.toneSage,
+  blue: styles.toneBlue,
+  mustard: styles.toneMustard,
+  coral: styles.toneCoral,
+};
 
 const NAV = [
   { href: "#overview", label: "Overview" },
@@ -18,15 +26,52 @@ const NAV = [
   { href: "#actions", label: "Share & settings" },
 ] as const;
 
-function Trend({ title, points, description }: { title: string; points: readonly { label: string; value: number }[]; description: string }) {
-  return <article className={styles.panel}>
-    <h3 className={styles.panelTitle}>{title}</h3>
+function rankedSignals(data: ParentInsightsResponse) {
+  return [...Object.entries(data.twin.modalityEffectiveness), ...Object.entries(data.twin.strategyEffectiveness)]
+    .sort((a, b) => b[1] - a[1]);
+}
+
+function Trend({ title, points, description, tone = "sage" }: {
+  title: string;
+  points: readonly { label: string; value: number }[];
+  description: string;
+  tone?: Tone;
+}) {
+  const latest = points.length ? points[points.length - 1] : null;
+  return <article className={`${styles.panel} ${toneClass[tone]}`}>
+    <div className={styles.panelTop}>
+      <h3 className={styles.panelTitle}>{title}</h3>
+      {latest ? <p className={styles.latestChip} aria-label={`Latest ${percent(latest.value)}`}>{percent(latest.value)}</p> : null}
+    </div>
     <p className={styles.panelLead}>{description}</p>
     {points.length ? <>
-      <div className={styles.bars} aria-hidden="true">{points.slice(-8).map((point, index) => <div key={index}><span style={{ height: `${Math.max(4, point.value * 100)}%` }} /></div>)}</div>
+      <div className={styles.bars} data-tone={tone} aria-hidden="true">
+        {points.slice(-8).map((point, index) => (
+          <div key={index} title={`${point.label}: ${percent(point.value)}`}>
+            <span style={{ height: `${Math.max(8, point.value * 100)}%` }} />
+          </div>
+        ))}
+      </div>
       <ol className={styles.trendText}>{points.slice(-8).map((point, index) => <li key={index}>{point.label}: {percent(point.value)}</li>)}</ol>
     </> : <p className={styles.empty}>A trend will appear after completed missions. There isn’t enough history yet.</p>}
   </article>;
+}
+
+function SignalBars({ items, empty }: { items: readonly [string, number][]; empty: string }) {
+  if (!items.length) return <p className={styles.empty}>{empty}</p>;
+  return <ul className={styles.signalList}>
+    {items.map(([key, value], index) => (
+      <li key={key}>
+        <div className={styles.signalMeta}>
+          <span>{names[key] ?? key}</span>
+          <strong>{percent(value)}</strong>
+        </div>
+        <div className={styles.signalTrack} aria-hidden="true">
+          <span className={styles.signalFill} data-tone={TONE[index % TONE.length]} style={{ width: `${Math.max(6, value * 100)}%` }} />
+        </div>
+      </li>
+    ))}
+  </ul>;
 }
 
 export function ParentDashboard({ mode, onLock }: { mode: ParentDataMode; onLock: () => void }) {
@@ -58,7 +103,6 @@ export function ParentDashboard({ mode, onLock }: { mode: ParentDataMode; onLock
   const name = children.find(child => child.id === childId)?.name || "Your explorer";
   useEffect(() => {
     setLiveNotice("");
-    // Only a completed mission for the child currently shown re-fetches and announces - no polling, no noise.
     return subscribeWiggleLiveEvents(event => {
       if (event.type === "mission_completed" && event.childId === childId) {
         setLiveNotice(`${name} completed: ${event.missionTitle}`);
@@ -66,6 +110,12 @@ export function ParentDashboard({ mode, onLock }: { mode: ParentDataMode; onLock
       }
     });
   }, [childId, name]);
+
+  const signals = data ? rankedSignals(data) : [];
+  const topSignal = signals[0];
+  const masteryEntries = data ? Object.entries(data.twin.mastery) : [];
+  const topMastery = masteryEntries.length ? masteryEntries.slice().sort((a, b) => b[1] - a[1])[0] : null;
+
   return <>
     <header className={styles.header}>
       <a href="/" className={styles.brand}>wiggle<span> / parent space</span></a>
@@ -82,7 +132,7 @@ export function ParentDashboard({ mode, onLock }: { mode: ParentDataMode; onLock
       <div>
         <p className={styles.eyebrow}>Little steps. Real discoveries.</p>
         <h1>Mission control</h1>
-        <p className={styles.introLead}>A clear view of how {name} is learning — start with today’s snapshot, then dig into progress when you want more detail.</p>
+        <p className={styles.introLead}>A colourful snapshot of how {name} is learning — useful numbers first, then the detail when you want it.</p>
       </div>
       {children.length > 0 && <label className={styles.childSelect}>Your explorer<select value={childId} onChange={event => setChildId(event.target.value)}>{children.map(child => <option key={child.id} value={child.id}>{child.name}</option>)}</select></label>}
     </div>
@@ -106,14 +156,41 @@ export function ParentDashboard({ mode, onLock }: { mode: ParentDataMode; onLock
           <h2 id="overview-heading">Overview</h2>
           <p className={styles.regionLead}>The quick picture of {name}&rsquo;s day and one practical idea to try at home.</p>
         </div>
+
+        <div className={styles.snapshot} aria-label="Key numbers">
+          <div className={`${styles.snapCard} ${styles.snapSage}`}>
+            <p className={styles.snapLabel}>Missions done</p>
+            <p className={styles.snapValue}>{data.completedMissions}</p>
+            <p className={styles.snapHint}>All-time completed</p>
+          </div>
+          <div className={`${styles.snapCard} ${styles.snapBlue}`}>
+            <p className={styles.snapLabel}>Today</p>
+            <p className={styles.snapValue}>{data.today?.missionsCompleted ?? 0}</p>
+            <p className={styles.snapHint}>{data.today?.learningMinutes ?? 0} min learning</p>
+          </div>
+          <div className={`${styles.snapCard} ${styles.snapMustard}`}>
+            <p className={styles.snapLabel}>Independent today</p>
+            <p className={styles.snapValue}>{data.today?.independentMissions ?? 0}</p>
+            <p className={styles.snapHint}>{data.today?.helpRequests ?? 0} help requests</p>
+          </div>
+          <div className={`${styles.snapCard} ${styles.snapCoral}`}>
+            <p className={styles.snapLabel}>Working well</p>
+            <p className={styles.snapValueSmall}>{topSignal ? (names[topSignal[0]] ?? topSignal[0]) : "Still gathering"}</p>
+            <p className={styles.snapHint}>{topSignal ? `${percent(topSignal[1])} fit right now` : "Complete a mission to unlock"}</p>
+          </div>
+        </div>
+
         <div className={styles.overviewGrid}>
           <article className={styles.missionCard}>
             <p className={styles.eyebrow}>The journey so far</p>
             <p className={styles.statHero}>{data.completedMissions}</p>
             <h3 className={styles.statHeroLabel}>completed {data.completedMissions === 1 ? "mission" : "missions"}</h3>
             <p>Every attempt is a chance to discover a new way.</p>
-            <ul>{data.missions?.map(mission => <li key={mission.objective}><strong>{mission.title}</strong><span>Finding three quarters with equal parts</span></li>)}</ul>
-            <a href="/">Explore the universe</a>
+            <ul>{data.missions?.length
+              ? data.missions.map(mission => <li key={mission.objective}><strong>{mission.title}</strong><span>{mission.objective === "identify-three-quarters" ? "Finding three quarters with equal parts" : mission.objective}</span></li>)
+              : <li><strong>No completed missions yet</strong><span>Head into the universe to begin.</span></li>}
+            </ul>
+            <a className={styles.ctaLink} href="/">Explore the universe</a>
           </article>
           <article className={styles.insight}>
             <p className={styles.eyebrow}>Try this at home</p>
@@ -125,12 +202,12 @@ export function ParentDashboard({ mode, onLock }: { mode: ParentDataMode; onLock
             <h3 className={styles.panelTitle}>Today</h3>
             <p className={styles.panelLead}>What happened during {name}&rsquo;s missions today.</p>
             <dl className={styles.today}>
-              <div><dt>Missions completed</dt><dd>{data.today?.missionsCompleted ?? 0}</dd></div>
-              <div><dt>Independent missions</dt><dd>{data.today?.independentMissions ?? 0}</dd></div>
-              <div><dt>Help requests</dt><dd>{data.today?.helpRequests ?? 0}</dd></div>
-              <div><dt>Reset breaks</dt><dd>{data.today?.resetBreaks ?? 0}</dd></div>
-              <div><dt>Learning time</dt><dd>{data.today?.learningMinutes ?? 0} min</dd></div>
-              <div><dt>Offline activity</dt><dd>{data.today?.offlineMinutes ?? 0} min</dd></div>
+              <div data-tone="sage"><dt>Missions completed</dt><dd>{data.today?.missionsCompleted ?? 0}</dd></div>
+              <div data-tone="blue"><dt>Independent missions</dt><dd>{data.today?.independentMissions ?? 0}</dd></div>
+              <div data-tone="mustard"><dt>Help requests</dt><dd>{data.today?.helpRequests ?? 0}</dd></div>
+              <div data-tone="coral"><dt>Reset breaks</dt><dd>{data.today?.resetBreaks ?? 0}</dd></div>
+              <div data-tone="sage"><dt>Learning time</dt><dd>{data.today?.learningMinutes ?? 0} min</dd></div>
+              <div data-tone="blue"><dt>Offline activity</dt><dd>{data.today?.offlineMinutes ?? 0} min</dd></div>
             </dl>
           </article>
         </div>
@@ -143,24 +220,33 @@ export function ParentDashboard({ mode, onLock }: { mode: ParentDataMode; onLock
           <p className={styles.regionLead}>Estimates from practice — not grades. Look for gentle upward movement, not perfection.</p>
         </div>
         <div className={styles.grid}>
-          <article className={styles.panel}>
-            <h3 className={styles.panelTitle}>Mastery today</h3>
+          <article className={`${styles.panel} ${toneClass.sage}`}>
+            <div className={styles.panelTop}>
+              <h3 className={styles.panelTitle}>Mastery today</h3>
+              {topMastery ? <p className={styles.latestChip}>{percent(topMastery[1])}</p> : null}
+            </div>
             <p className={styles.panelLead}>Learning estimates that grow with practice.</p>
-            {Object.entries(data.twin.mastery).map(([objective, value]) => <div className={styles.meter} key={objective}><label htmlFor={`mastery-${objective}`}>{objective === "identify-three-quarters" ? "Finding three quarters" : objective} <strong>{percent(value)}</strong></label><meter id={`mastery-${objective}`} min={0} max={1} value={value}>{percent(value)}</meter></div>)}
+            {masteryEntries.length ? masteryEntries.map(([objective, value], index) => (
+              <div className={styles.meter} key={objective}>
+                <label htmlFor={`mastery-${objective}`}>{objective === "identify-three-quarters" ? "Finding three quarters" : objective} <strong>{percent(value)}</strong></label>
+                <div className={styles.meterTrack} aria-hidden="true"><span data-tone={TONE[index % TONE.length]} style={{ width: `${Math.max(6, value * 100)}%` }} /></div>
+                <meter id={`mastery-${objective}`} min={0} max={1} value={value} className={styles.srMeter}>{percent(value)}</meter>
+              </div>
+            )) : <p className={styles.empty}>Mastery appears after the first completed mission.</p>}
           </article>
-          <Trend title="Mastery trend" points={data.masteryHistory || []} description="Estimated mastery after each completed mission." />
-          <Trend title="Growing independence" points={data.independenceHistory || []} description="100% means a completed mission had no hint or “I’m stuck” request; 0% means support was requested. Asking for help is a useful skill. This does not measure adult help." />
+          <Trend title="Mastery trend" points={data.masteryHistory || []} description="Estimated mastery after each completed mission." tone="blue" />
+          <Trend title="Growing independence" points={data.independenceHistory || []} description="100% means a completed mission had no hint or “I’m stuck” request; 0% means support was requested. Asking for help is a useful skill. This does not measure adult help." tone="mustard" />
           {data.weeklySummary && <article className={`${styles.panel} ${styles.weekly}`} aria-label="Weekly summary">
             <p className={styles.eyebrow}>{name}&rsquo;s week</p>
             <h3 className={styles.panelTitle}>Wiggle noticed</h3>
             <p className={styles.panelLead}>{data.weeklySummary.wiggleNoticed}</p>
             <dl className={styles.today}>
-              {Object.entries(data.weeklySummary.masteryDeltaBySubject).slice(0, 1).map(([subject, delta]) => <div key={subject}><dt>Mastery</dt><dd>{delta >= 0 ? "+" : ""}{Math.round(delta * 100)}%</dd></div>)}
-              <div><dt>Independent completion</dt><dd>{data.weeklySummary.independentCompletionDelta >= 0 ? "+" : ""}{Math.round(data.weeklySummary.independentCompletionDelta * 100)}%</dd></div>
-              {data.weeklySummary.mostEffectiveStrategy && <div><dt>Most effective</dt><dd>{data.weeklySummary.mostEffectiveStrategy}</dd></div>}
-              {data.weeklySummary.biggestImprovement && <div><dt>Biggest improvement</dt><dd>{data.weeklySummary.biggestImprovement}</dd></div>}
+              {Object.entries(data.weeklySummary.masteryDeltaBySubject).slice(0, 1).map(([subject, delta]) => <div key={subject} data-tone="sage"><dt>Mastery</dt><dd>{delta >= 0 ? "+" : ""}{Math.round(delta * 100)}%</dd></div>)}
+              <div data-tone="blue"><dt>Independent completion</dt><dd>{data.weeklySummary.independentCompletionDelta >= 0 ? "+" : ""}{Math.round(data.weeklySummary.independentCompletionDelta * 100)}%</dd></div>
+              {data.weeklySummary.mostEffectiveStrategy && <div data-tone="mustard"><dt>Most effective</dt><dd className={styles.todayText}>{data.weeklySummary.mostEffectiveStrategy}</dd></div>}
+              {data.weeklySummary.biggestImprovement && <div data-tone="coral"><dt>Biggest improvement</dt><dd className={styles.todayText}>{data.weeklySummary.biggestImprovement}</dd></div>}
             </dl>
-            <p className={styles.eyebrow}>Parent suggestion</p>
+            <p className={styles.subLabel}>Parent suggestion</p>
             <p>{data.weeklySummary.parentSuggestion}</p>
           </article>}
         </div>
@@ -173,26 +259,26 @@ export function ParentDashboard({ mode, onLock }: { mode: ParentDataMode; onLock
           <p className={styles.regionLead}>Current signals from recent missions — not fixed labels or diagnoses.</p>
         </div>
         <div className={styles.grid}>
-          <article className={styles.panel} aria-label="What Wiggle learned">
+          <article className={`${styles.panel} ${toneClass.blue}`} aria-label="What Wiggle learned">
             <h3 className={styles.panelTitle}>What Wiggle learned</h3>
             <p className={styles.panelLead}>Current signals, not fixed learning labels.</p>
             <p className={styles.subLabel}>{name} currently responds best to</p>
-            <ol className={styles.strategies}>{[...Object.entries(data.twin.modalityEffectiveness), ...Object.entries(data.twin.strategyEffectiveness)].sort((a, b) => b[1] - a[1]).slice(0, 3).map(([key, value]) => <li key={key}><span>{names[key]}</span><strong>{percent(value)}</strong></li>)}</ol>
+            <SignalBars items={signals.slice(0, 3)} empty="Still gathering evidence" />
             <p className={styles.subLabel}>Less effective right now</p>
-            <ul className={styles.strategies}>{[...Object.entries(data.twin.modalityEffectiveness), ...Object.entries(data.twin.strategyEffectiveness)].sort((a, b) => a[1] - b[1]).slice(0, 2).map(([key, value]) => <li key={key}><span>{names[key]}</span><strong>{percent(value)}</strong></li>)}</ul>
+            <SignalBars items={[...signals].reverse().slice(0, 2)} empty="Nothing stands out yet" />
           </article>
-          <article className={styles.panel} aria-label="Learning patterns">
+          <article className={`${styles.panel} ${toneClass.coral}`} aria-label="Learning patterns">
             <h3 className={styles.panelTitle}>{name}&rsquo;s learning patterns</h3>
             <p className={styles.panelLead}>Not a score, not a diagnosis — just what the last few missions show.</p>
             {(() => {
               const patterns = getLearnerPatterns(data.twin);
               return <>
                 <p className={styles.subLabel}>Currently effective</p>
-                <ul className={styles.strategies}>{patterns.effective.length ? patterns.effective.map(key => <li key={key}><span>{patternLabels[key]}</span></li>) : <li><span>Still gathering evidence</span></li>}</ul>
+                <ul className={styles.patternChips}>{patterns.effective.length ? patterns.effective.map(key => <li key={key} data-tone="sage">{patternLabels[key]}</li>) : <li data-tone="blue">Still gathering evidence</li>}</ul>
                 <p className={styles.subLabel}>Improving</p>
-                <ul className={styles.strategies}>{patterns.improving.length ? patterns.improving.map(key => <li key={key}><span>{patternLabels[key]}</span></li>) : <li><span>Nothing new yet</span></li>}</ul>
+                <ul className={styles.patternChips}>{patterns.improving.length ? patterns.improving.map(key => <li key={key} data-tone="mustard">{patternLabels[key]}</li>) : <li data-tone="mustard">Nothing new yet</li>}</ul>
                 <p className={styles.subLabel}>Needs more data</p>
-                <ul className={styles.strategies}>{patterns.needsMoreData.length ? patterns.needsMoreData.map(key => <li key={key}><span>{patternLabels[key]}</span></li>) : <li><span>Everything has some evidence</span></li>}</ul>
+                <ul className={styles.patternChips}>{patterns.needsMoreData.length ? patterns.needsMoreData.map(key => <li key={key} data-tone="coral">{patternLabels[key]}</li>) : <li data-tone="coral">Everything has some evidence</li>}</ul>
               </>;
             })()}
           </article>
@@ -206,7 +292,7 @@ export function ParentDashboard({ mode, onLock }: { mode: ParentDataMode; onLock
           <p className={styles.regionLead}>Optional check-ins and break preferences. These never change mastery scores.</p>
         </div>
         <div className={styles.grid}>
-          <article className={styles.panel}>
+          <article className={`${styles.panel} ${toneClass.mustard}`}>
             <h3 className={styles.panelTitle}>Make room for a breather</h3>
             <p className={styles.panelLead}>Save your preferred time between breaks. Automatic reminders are not available yet.</p>
             <form onSubmit={async event => {

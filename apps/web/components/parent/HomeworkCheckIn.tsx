@@ -14,7 +14,7 @@ export function HomeworkCheckIn({ childId, submit = defaultSubmit }: {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const retry = useRef<{ body: string; key: string } | null>(null);
-  return <article className={styles.panel} aria-labelledby="check-in-title">
+  return <article className={`${styles.panel} ${styles.toneBlue}`} aria-labelledby="check-in-title">
     <h3 id="check-in-title" className={styles.panelTitle}>How did homework feel?</h3>
     <p className={styles.panelLead}>A little context helps. This check-in does not change mastery scores.</p>
     <form onSubmit={async event => {
