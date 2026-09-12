@@ -5,6 +5,16 @@ import { afterEach, expect, it, vi } from "vitest";
 import { SubjectWorlds } from "./SubjectWorlds";
 
 const missionProps = vi.hoisted(() => ({ current: undefined as unknown }));
+const soundPlay = vi.hoisted(() => vi.fn());
+
+vi.mock("../../features/audio/useWiggleSound", () => ({
+  useWiggleSound: () => ({
+    play: soundPlay,
+    unlock: () => undefined,
+    muted: false,
+    setMuted: () => undefined,
+  }),
+}));
 
 vi.mock("../mission/MissionAtlas", () => ({
   MissionAtlas: (props: {
@@ -43,6 +53,7 @@ afterEach(() => {
   vi.useRealTimers();
   cleanup();
   window.history.replaceState({}, "", "/");
+  soundPlay.mockClear();
 });
 
 function enterWorlds() {
@@ -141,6 +152,26 @@ it("slides between planets without navigating and keeps locked planets on the ch
   expect(screen.getByRole("status").textContent).toContain("Bahasa Melayu is coming soon");
   fireEvent.click(screen.getByRole("button", { name: "Previous planet" }));
   expect(screen.getByRole("button", { name: "Explore Science Planet" })).toBeTruthy();
+});
+
+it("plays slideWhoosh only when the selected planet actually changes", () => {
+  vi.useFakeTimers();
+  render(<SubjectWorlds initialRoute={{ world: null }} quality="fallback" />);
+  enterWorlds();
+  soundPlay.mockClear();
+
+  fireEvent.click(screen.getByRole("button", { name: "Next planet" }));
+  expect(screen.getByRole("heading", { name: "Science Planet" })).toBeTruthy();
+  expect(soundPlay).toHaveBeenCalledWith("slideWhoosh");
+  expect(soundPlay).toHaveBeenCalledTimes(1);
+
+  fireEvent.click(screen.getByRole("button", { name: "Show English" }));
+  soundPlay.mockClear();
+  const layer = screen.getByTestId("mock-constellation").parentElement!;
+  fireEvent.pointerDown(layer, { button: 0, clientX: 200, clientY: 100 });
+  fireEvent.pointerUp(layer, { button: 0, clientX: 100, clientY: 100 });
+  expect(screen.getByRole("heading", { name: "English" })).toBeTruthy();
+  expect(soundPlay).not.toHaveBeenCalled();
 });
 
 it("shows the global Twin launcher and Parent link on the worlds hub, and hides the launcher during an active Maths mission", () => {
