@@ -4,6 +4,7 @@ import React, { Component, useCallback, useEffect, useId, useRef, useState, type
 import dynamic from "next/dynamic";
 import { LANDMARKS, MISSION_DESTINATION, createExplorerInput, resolveQuality, type CameraMode, type Destination, type LandmarkId, type PizzaPresentation, type QualityPreference, type SceneQuality } from "./world";
 import { ExplorationHud } from "./ExplorationHud";
+import { useWiggleSound } from "../../features/audio/useWiggleSound";
 import styles from "./universe.module.css";
 
 const Scene = dynamic(() => import("./UniverseScene"), { ssr: false, loading: () => <div className={styles.loading} role="status">Gathering a little stardust…</div> });
@@ -86,6 +87,7 @@ export function UniverseCanvas({ mode: controlledMode, onModeChange, quality: pr
     return () => { clear(); window.removeEventListener("blur", clear); document.removeEventListener("visibilitychange", clear); };
   }, []);
 
+  const sound = useWiggleSound();
   const changeMode = (next: CameraMode) => { setLocalMode(next); onModeChange?.(next); };
   const selectLandmark = useCallback((id: LandmarkId) => {
     const next = LANDMARKS.find(item => item.id === id)!;
@@ -94,7 +96,8 @@ export function UniverseCanvas({ mode: controlledMode, onModeChange, quality: pr
     setAnnouncement(`On your way to ${next.name}. ${next.subtitle}`);
     onDestinationChange?.(next.destination);
     onLandmarkSelect?.(id);
-  }, [onDestinationChange, onLandmarkSelect]);
+    sound.play("whoosh");
+  }, [onDestinationChange, onLandmarkSelect, sound.play]);
   const graphicsFailed = useCallback(() => { setFailed(true); setAnnouncement("Your map is ready. Every destination and mission is still here."); }, []);
   const lowerQuality = useCallback(() => setQuality("low"), []);
   const startMission = () => { selectLandmark("fraction-forest"); onMissionStart?.(); };

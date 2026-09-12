@@ -24,7 +24,7 @@ export interface FractionMissionProps {
   commands: MissionInputCommands; cameraEnabled: boolean; onCameraEnable(): void; onCameraDisable(): void;
   tracking: HandTrackingState;
   support: "lexi" | "reset" | "reality" | null; supportText: string;
-  realityCompleted: boolean; twinState: TwinVisualState; newStar: string | null;
+  realityCompleted: boolean; twinState: TwinVisualState; newStar: string | null; greeting: string;
   onLexiRequest(action: LexiAction): void; onSupportClose(): void; onSupportComplete(): void;
 }
 
@@ -34,6 +34,7 @@ export function FractionMission(props: FractionMissionProps) {
   return <section ref={panel} tabIndex={-1} className={styles.panel} aria-label="Fraction mission" aria-busy={props.busy} data-mission-phase={props.phase}>
     {props.phase !== "complete" ? <button className={styles.close} onClick={props.onClose} aria-label="Leave mission">×</button> : null}
     {props.support !== "lexi" && props.phase !== "complete" ? <WiggleTwinAvatar state={props.twinState} size={64} className={styles.companion} /> : null}
+    {props.greeting && props.support !== "lexi" && props.phase !== "complete" ? <p className={styles.greeting} role="status">Lexi: &ldquo;{props.greeting}&rdquo;</p> : null}
     {props.support === "lexi" ? <LexiPanel text={props.supportText} busy={props.busy} twinState={props.twinState} onRequest={props.onLexiRequest} onClose={props.onSupportClose} /> : props.support === "reset" ? <ResetStation onComplete={props.onSupportComplete} onCancel={props.onSupportClose} /> : props.support === "reality" ? <RealityMission prompt={props.supportText} onComplete={props.onSupportComplete} onCancel={props.onSupportClose} /> : <fieldset disabled={props.busy}>
       {props.phase === "stuck" ? <StuckMode onExplore={props.onSimulate} onCheck={props.onCheck} selectedSlices={props.selectedSlices} /> : null}
       {props.phase === "simulation" ? <SimulationHologram report={props.report} onSelect={props.onSelect} /> : null}
