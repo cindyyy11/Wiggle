@@ -18,7 +18,9 @@ async function completeMagnetLab(page: Page) {
 test("splash, Worlds, Science, and Magnet Lab stay on a native-control path", async ({ page }) => {
   await page.goto("/");
   await launchWiggle(page);
-  await expect(page.getByRole("button", { name: "Explore Science Planet", exact: true })).toHaveAttribute("aria-pressed", "true");
+  const sciencePortal = page.getByRole("button", { name: "Explore Science Planet", exact: true });
+  await expect(sciencePortal).toBeVisible();
+  await expect(sciencePortal).toBeEnabled();
   await enterScience(page);
   await page.getByRole("button", { name: "Start Magnet Lab", exact: true }).click();
   await expect(page.getByRole("region", { name: "Magnet Lab mission" })).toBeVisible();

@@ -72,6 +72,7 @@ export function SubjectWorlds({ childId, allowLocalFallback, client, quality, in
       setStatusMessage(`${world === "english" ? "English" : "Bahasa Melayu"} is coming soon. Your current world is still here.`);
       return;
     }
+    setStatusMessage("");
     if (world === "science") {
       navigate({ world: "science", zone: DEFAULT_SCIENCE_ZONE, child: currentChild });
       return;
