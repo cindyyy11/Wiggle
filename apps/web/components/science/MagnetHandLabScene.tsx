@@ -396,12 +396,11 @@ export function MagnetHandLabScene(props: MagnetHandLabSceneProps): React.JSX.El
     <Canvas
       aria-label="Magnet Lab workbench"
       aria-hidden="true"
-      style={{ display: "block", width: "100%", minHeight: 320, background: "#211a33" }}
+      style={{ display: "block", width: "100%", minHeight: 320, background: "transparent" }}
       camera={{ position: [0, 0, 5.3], fov: 42, near: .1, far: 20 }}
       dpr={props.reducedMotion ? 1 : [1, 1.5]}
-      gl={{ antialias: !props.reducedMotion, alpha: false, powerPreference: "low-power", failIfMajorPerformanceCaveat: true }}
+      gl={{ antialias: !props.reducedMotion, alpha: true, powerPreference: "low-power", failIfMajorPerformanceCaveat: true }}
     >
-      <color attach="background" args={["#211a33"]} />
       <ambientLight intensity={1.45} color="#f7e7c5" />
       <hemisphereLight args={["#fff0d4", "#3e4664", 1.1]} />
       <directionalLight position={[-3, 4, 5]} intensity={2.35} color="#ffd991" />
