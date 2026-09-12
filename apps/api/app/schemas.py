@@ -129,6 +129,27 @@ class ParentMission(DomainModel):
     objective: str
 
 
+class TodaySummary(DomainModel):
+    """Counts for the current UTC day only, derived from learning_events. Never a clinical score."""
+
+    missions_completed: int = 0
+    independent_missions: int = 0
+    help_requests: int = 0
+    reset_breaks: int = 0
+    learning_minutes: int = 0
+    offline_minutes: int = 0
+
+
+class WeeklySummary(DomainModel):
+    child_name: str
+    mastery_delta_by_subject: dict[str, float] = Field(default_factory=dict)
+    independent_completion_delta: float
+    most_effective_strategy: str | None = None
+    biggest_improvement: str | None = None
+    wiggle_noticed: str
+    parent_suggestion: str
+
+
 class ParentInsightsResponse(DomainModel):
     child_id: str
     completed_missions: int
@@ -137,3 +158,5 @@ class ParentInsightsResponse(DomainModel):
     missions: tuple[ParentMission, ...] = ()
     mastery_history: tuple[ProgressPoint, ...] = ()
     independence_history: tuple[ProgressPoint, ...] = ()
+    today: TodaySummary = Field(default_factory=TodaySummary)
+    weekly_summary: WeeklySummary | None = None

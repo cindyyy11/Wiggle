@@ -10,12 +10,14 @@ from urllib.request import Request, urlopen
 
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, ValidationError, model_validator
 
+from app.domain.models import DomainModel
 from app.providers.base import (
     ActivityContent,
     AIProvider,
     LexiContent,
     ProviderContext,
     TextContent,
+    WeeklyNarrative,
 )
 from app.providers.local import LocalAIProvider
 
@@ -87,7 +89,7 @@ class GeminiProvider:
             raise ValueError("provider text must be a string")
         return text
 
-    def _generate[T: TextContent](
+    def _generate[T: DomainModel](
         self,
         operation: str,
         context: ProviderContext,
@@ -172,6 +174,14 @@ class GeminiProvider:
 
     def chat_with_lexi(self, context: ProviderContext) -> LexiContent:
         return self._generate("chat_with_lexi", context, LexiContent, self._fallback.chat_with_lexi)
+
+    def generate_weekly_summary(self, context: ProviderContext) -> WeeklyNarrative:
+        return self._generate(
+            "generate_weekly_summary",
+            context,
+            WeeklyNarrative,
+            self._fallback.generate_weekly_summary,
+        )
 
 
 def provider_from_env(environ: Mapping[str, str] | None = None) -> AIProvider:
