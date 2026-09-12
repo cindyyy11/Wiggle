@@ -31,6 +31,10 @@ vi.mock("../mission/MissionAtlas", () => ({
   },
 }));
 
+vi.mock("./WorldsConstellation", () => ({
+  WorldsConstellation: () => <div data-testid="mock-constellation" />,
+}));
+
 afterEach(() => {
   vi.useRealTimers();
   cleanup();
@@ -69,14 +73,18 @@ it("opens Worlds once, features Science, and forwards owned Maths props unchange
   expect(window.location.search).toBe("?child=owned&world=math");
 });
 
-it("opens a direct Science route after the splash with an honest staging region", () => {
+it("opens a direct Science route after the splash and preserves child context when returning to Worlds", () => {
   vi.useFakeTimers();
   render(<SubjectWorlds initialRoute={{ world: "science", zone: "magnet-lab", child: "owned" }} />);
 
   enterWorlds();
-  expect(screen.getByRole("region", { name: "Science Planet" })).toBeTruthy();
+  expect(screen.getByRole("main", { name: "Science Planet" })).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Visit Sink & Float Bay" }));
+  expect(window.location.search).toBe("?child=owned&world=science&zone=sink-float");
   expect(screen.getByRole("button", { name: "Back to Worlds" })).toBeTruthy();
-  expect(screen.queryByRole("region", { name: "Choose a subject world" })).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Back to Worlds" }));
+  expect(window.location.search).toBe("?child=owned");
+  expect(screen.getByRole("region", { name: "Choose a subject world" })).toBeTruthy();
 });
 
 it("announces locked worlds without changing the route and blocks navigation away from active Maths", () => {
