@@ -37,7 +37,8 @@ export function SubjectWorlds({ childId, allowLocalFallback, client, quality, in
   const [entered, setEntered] = useState(false);
   const [route, setRoute] = useState<SubjectRoute>(() => routeForChild(initialRoute, childId));
   const [mathsOverlayOpen, setMathsOverlayOpen] = useState(false);
-  const [statusMessage, setStatusMessage] = useState("Science Planet is ready to explore.");
+  const [activeWorld, setActiveWorld] = useState<SubjectWorldId | null>(null);
+  const [statusMessage, setStatusMessage] = useState("");
   const currentChild = childId ?? route.child;
 
   const navigate = (next: SubjectRoute) => {
@@ -66,6 +67,7 @@ export function SubjectWorlds({ childId, allowLocalFallback, client, quality, in
   }, [childId, mathsOverlayOpen, route]);
 
   const selectWorld = (world: SubjectWorldId) => {
+    setActiveWorld(null);
     if (!isEnterableWorld(world)) {
       setStatusMessage(`${world === "english" ? "English" : "Bahasa Melayu"} is coming soon. Your current world is still here.`);
       return;
@@ -101,8 +103,18 @@ export function SubjectWorlds({ childId, allowLocalFallback, client, quality, in
 
   return <section className={styles.worldsView} aria-label="Subject worlds">
     <div className={styles.constellationLayer}>
-      <WorldsConstellation selectedWorld="science" quality={quality} onSelect={selectWorld} />
+      <WorldsConstellation
+        activeWorld={activeWorld}
+        quality={quality}
+        onActiveWorldChange={setActiveWorld}
+        onSelect={selectWorld}
+      />
     </div>
-    <WorldSelector selectedWorld="science" onSelect={selectWorld} statusMessage={statusMessage} />
+    <WorldSelector
+      activeWorld={activeWorld}
+      onActiveWorldChange={setActiveWorld}
+      onSelect={selectWorld}
+      statusMessage={statusMessage}
+    />
   </section>;
 }

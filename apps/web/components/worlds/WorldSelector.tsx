@@ -1,37 +1,47 @@
 "use client";
 
-import type { CSSProperties } from "react";
 import { SUBJECT_WORLDS, type SubjectWorldId } from "./subjectRoute";
 import styles from "./SubjectWorlds.module.css";
 
 export type WorldSelectorProps = {
-  selectedWorld: SubjectWorldId;
+  activeWorld: SubjectWorldId | null;
+  onActiveWorldChange: (world: SubjectWorldId | null) => void;
   onSelect: (world: SubjectWorldId) => void;
   statusMessage: string;
 };
 
-export function WorldSelector({ selectedWorld, onSelect, statusMessage }: WorldSelectorProps) {
+const WORLD_CONTROL_ORDER = ["math", "science", "english", "bm"] as const;
+
+export function WorldSelector({ activeWorld, onActiveWorldChange, onSelect, statusMessage }: WorldSelectorProps) {
   return <section className={styles.selector} aria-label="Choose a subject world">
-    <div className={styles.selectorIntro}>
+    <header className={styles.orbitIntro}>
       <img src="/brand/wiggle-mark.png" alt="Wiggle" />
-      <p>YOUR LEARNING UNIVERSE</p>
-      <h1>Choose your next world</h1>
-      <span>Follow your curiosity. There is always something new to discover.</span>
-    </div>
-    <div className={styles.worldGrid}>
-      {SUBJECT_WORLDS.map(world => <button
+      <p>Your learning universe</p>
+      <h1>Choose a world to explore</h1>
+    </header>
+    <div className={styles.worldHotspots} role="group" aria-label="World portals">
+      {WORLD_CONTROL_ORDER.map(id => {
+        const world = SUBJECT_WORLDS.find(item => item.id === id)!;
+        const locked = world.status === "coming-soon";
+        const label = locked ? `${world.name} (coming soon)` : `Explore ${world.name}`;
+        const controlName = `planetControl${id[0].toUpperCase()}${id.slice(1)}`;
+        return <button
         key={world.id}
         type="button"
-        className={styles.worldButton}
-        style={{ "--world-accent": world.accent } as CSSProperties}
-        aria-label={world.status === "available" ? `Explore ${world.name}` : `${world.name} (coming soon)`}
-        aria-pressed={selectedWorld === world.id}
-        aria-describedby={world.status === "coming-soon" ? "world-lock-status" : undefined}
+        className={`${styles.planetControl} ${styles[controlName]}`}
+        data-active={String(activeWorld === id)}
+        aria-label={label}
+        aria-describedby={locked ? "world-lock-status" : undefined}
+        onFocus={() => onActiveWorldChange(id)}
+        onBlur={() => onActiveWorldChange(null)}
+        onPointerEnter={() => onActiveWorldChange(id)}
+        onPointerLeave={() => onActiveWorldChange(null)}
         onClick={() => onSelect(world.id)}
       >
-        <span className={styles.worldKicker}>{world.status === "available" ? "READY TO EXPLORE" : "ON ITS WAY"}</span>
-        <strong>{world.status === "available" ? `Explore ${world.name}` : `${world.name} (coming soon)`}</strong>
-      </button>)}
+        <span>{world.name}</span>
+        <small>{locked ? "Coming soon" : id === "math" ? "Maths · enter" : "Discover and experiment"}</small>
+      </button>;
+      })}
     </div>
     <p id="world-lock-status" className={styles.status} role="status" aria-live="polite">{statusMessage}</p>
   </section>;

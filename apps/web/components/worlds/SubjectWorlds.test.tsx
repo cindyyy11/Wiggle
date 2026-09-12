@@ -32,7 +32,11 @@ vi.mock("../mission/MissionAtlas", () => ({
 }));
 
 vi.mock("./WorldsConstellation", () => ({
-  WorldsConstellation: () => <div data-testid="mock-constellation" />,
+  WorldsConstellation: (props: { onSelect: (world: "math" | "science" | "english" | "bm") => void; activeWorld: string | null }) => <>
+    <div data-testid="mock-constellation" data-active-world={props.activeWorld ?? ""} />
+    <button type="button" onClick={() => props.onSelect("math")}>Select modeled Numeria</button>
+    <button type="button" onClick={() => props.onSelect("english")}>Select modeled English</button>
+  </>,
 }));
 
 afterEach(() => {
@@ -46,7 +50,7 @@ function enterWorlds() {
   act(() => vi.advanceTimersByTime(320));
 }
 
-it("opens Worlds once, features Science, and forwards owned Maths props unchanged", () => {
+it("keeps the splash, then routes Numeria from either orbit control to the existing MissionAtlas", () => {
   vi.useFakeTimers();
   const client = {} as never;
   render(
@@ -59,10 +63,11 @@ it("opens Worlds once, features Science, and forwards owned Maths props unchange
     />,
   );
 
+  expect(screen.getByRole("region", { name: "Welcome to Wiggle" })).toBeTruthy();
   enterWorlds();
   expect(screen.getByRole("region", { name: "Choose a subject world" })).toBeTruthy();
-  expect(screen.getByRole("button", { name: "Explore Science Planet" }).getAttribute("aria-pressed")).toBe("true");
   fireEvent.click(screen.getByRole("button", { name: "Explore Numeria" }));
+  expect(window.location.search).toBe("?child=owned&world=math");
   expect(screen.getByTestId("maths-props").dataset).toMatchObject({
     childId: "owned",
     demo: "false",
@@ -70,7 +75,19 @@ it("opens Worlds once, features Science, and forwards owned Maths props unchange
     splash: "false",
   });
   expect((missionProps.current as { client?: unknown }).client).toBe(client);
+  fireEvent.click(screen.getByRole("button", { name: "Back to Worlds" }));
+  expect(screen.getByRole("region", { name: "Choose a subject world" })).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "Let's Wiggle" })).toBeNull();
+
+  fireEvent.click(screen.getByRole("button", { name: "Select modeled Numeria" }));
   expect(window.location.search).toBe("?child=owned&world=math");
+  expect(screen.getByTestId("maths-props").dataset).toMatchObject({
+    childId: "owned",
+    demo: "false",
+    quality: "fallback",
+    splash: "false",
+  });
+  expect((missionProps.current as { client?: unknown }).client).toBe(client);
 });
 
 it("opens a direct Science route after the splash and preserves child context when returning to Worlds", () => {

@@ -41,7 +41,7 @@ it("keeps DOM world controls available when graphics fall back", () => {
   const onSelect = vi.fn();
   render(<>
     <WorldsConstellation activeWorld="science" quality="fallback" onActiveWorldChange={vi.fn()} onSelect={onSelect} />
-    <WorldSelector selectedWorld="science" onSelect={onSelect} statusMessage="" />
+    <WorldSelector activeWorld="science" onActiveWorldChange={vi.fn()} onSelect={onSelect} statusMessage="" />
   </>);
 
   fireEvent.click(screen.getByRole("button", { name: "Explore Numeria" }));
