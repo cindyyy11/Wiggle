@@ -313,6 +313,23 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
     selectSlice: (index: number, input?: CompletionInput) => changeSlice(index, false, input), grabSlice: (index: number, input?: CompletionInput) => changeSlice(index, true, input),
     summonLexi: () => openLexi(),
   };
+  if (splashState !== "complete") {
+    const splashClassName = splashState === "leaving"
+      ? styles.splash + " " + styles.splashLeaving
+      : styles.splash;
+
+    return <section className={splashClassName} aria-label="Welcome to Wiggle">
+      <img className={styles.splashBrand} src="/brand/wiggle-full.jpeg" alt="Wiggle. Wonder. Wow!" />
+      <button
+        className={styles.splashStart}
+        type="button"
+        onClick={startSplash}
+        disabled={splashState === "leaving"}
+      >
+        Let's Wiggle
+      </button>
+    </section>;
+  }
   const pizzaVisible = activityVisible && !support;
   const pizzaSlices = PIZZA_SLICE_IDS.map((id, index) => ({ id, state: slices.includes(index) ? "placed" as const : heldSlice === index ? "held" as const : "available" as const, focused: focusedSlice === index }));
   return <UniverseCanvas quality={quality} className={`${styles.atlas} ${phase ? styles.active : ""} ${phase === "stuck" ? styles.simplified : ""}`} mode={camera} onModeChange={setCamera} destination={destination} onDestinationChange={setDestination} selectedLandmark={landmark} onLandmarkSelect={setLandmark} onMissionStart={start} pizza={{ visible: pizzaVisible, selectedSlices: slices, slices: pizzaSlices, plate: { accepting: heldSlice !== null, focused: false }, hand: cameraEnabled ? { enabled: true, latest: handTracking.latest, gesture: handTracking.gesture, phase: gesturePhase, status: handTracking.status } : undefined, onGestureAction: handleGestureAction, onSliceSelect: commands.selectSlice }}>
