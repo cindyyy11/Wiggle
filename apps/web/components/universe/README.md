@@ -29,4 +29,4 @@ The default route renders `MissionAtlas`, which owns the fraction lesson and pas
 
 ## Checks
 
-Run `pnpm --filter @wiggle/web test`, `typecheck`, `lint`, and `build`. For the browser smoke suite, start the web server on port 3100, then run `node node_modules/@playwright/test/cli.js test` from `apps/web`. The suite uses installed Google Chrome on desktop and at 390 × 844, and saves screenshots in the ignored task evidence directory. Set the Playwright channel for another installed browser if Chrome is unavailable.
+Run `npm run test --workspace=@wiggle/web`, `npm run typecheck --workspace=@wiggle/web`, `npm run lint --workspace=@wiggle/web`, and `npm run build --workspace=@wiggle/web`. For the browser smoke suite, start the web server on port 3100, then run `node node_modules/@playwright/test/cli.js test` from `apps/web`. The suite uses installed Google Chrome on desktop and at 390 × 844, and saves screenshots in the ignored task evidence directory. Set the Playwright channel for another installed browser if Chrome is unavailable.

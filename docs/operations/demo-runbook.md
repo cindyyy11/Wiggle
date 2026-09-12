@@ -2,11 +2,11 @@
 
 ## Before judges arrive
 
-Install the dependencies and run the gates in [deployment.md](deployment.md). `pnpm dev` from the repository root starts Next on 3000 and the memory API on 8000. No environment file or provider key is required. This connected demo sends child events and parent insight to the same in-memory server. The web launcher reads an optional root `.env` and `apps/web/.env.local`; the API launcher reads an optional root `.env`.
+Install the dependencies and run the gates in [deployment.md](deployment.md). `npm run dev` from the repository root starts Next on 3000 and the memory API on 8000. No environment file or provider key is required. This connected demo sends child events and parent insight to the same in-memory server. The web launcher reads an optional root `.env` and `apps/web/.env.local`; the API launcher reads an optional root `.env`.
 
 Use a fresh browser profile and a fresh API process for predictable sample state. Open the universe, wait for its renderer, and check `http://127.0.0.1:8000/health`. Open `/parent` once, set a six-digit demo PIN you will remember, and lock it. Keep the parent tab ready. Default connected demo data and PIN hash reset when the API process restarts. This is an explicitly labelled shared sample household.
 
-For a production-mode local demo, run `pnpm build`, then start `python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1 --no-access-log` from `apps/api`. Start Next from `apps/web` with `WIGGLE_API_URL=http://127.0.0.1:8000` in that terminal's environment using `pnpm exec next start`. In PowerShell, set that value with `$env:WIGGLE_API_URL='http://127.0.0.1:8000'` before the Next command. Use the existing production build; don't rebuild while presenting.
+For a production-mode local demo, run `npm run build`, then start `python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --workers 1 --no-access-log` from `apps/api`. Start Next from `apps/web` with `WIGGLE_API_URL=http://127.0.0.1:8000` in that terminal's environment using `npm exec next start`. In PowerShell, set that value with `$env:WIGGLE_API_URL='http://127.0.0.1:8000'` before the Next command. Use the existing production build; don't rebuild while presenting.
 
 ## Judge flow
 
