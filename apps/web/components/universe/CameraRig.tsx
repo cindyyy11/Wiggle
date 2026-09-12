@@ -1,15 +1,38 @@
 "use client";
 
-import { useEffect, useMemo, useRef, type ComponentRef } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei/core/OrbitControls";
-import { Vector3 } from "three";
+import { PerspectiveCamera, Vector3 } from "three";
+import { activityCameraFrame, type ActivityView } from "./activityCamera";
 import { createFollowFrame, transportFollowCamera } from "./cameraMotion";
 import { MISSION_DESTINATION, RADIUS, surfacePoint, type CameraMode, type InputRef } from "./world";
 
-export function CameraRig({ mode, input, reducedMotion }: { mode: CameraMode; input: InputRef; reducedMotion: boolean }) {
+export function CameraRig({ mode, input, reducedMotion, activityView, resetViewKey, theme }: { mode: CameraMode; input: InputRef; reducedMotion: boolean; activityView?: ActivityView; resetViewKey?: number; theme?: "math" | "science" }) {
   const controls = useRef<ComponentRef<typeof OrbitControls>>(null);
-  const { camera, size } = useThree();
+  const { camera, size, gl } = useThree();
+  const guided = !!activityView && mode !== "globe";
+  const [safe, setSafe] = useState({ top: 130, bottom: size.height - 250 });
+  const zoomScale = useRef(1);
+  useEffect(() => {
+    zoomScale.current = 1; transition.current = true;
+  }, [resetViewKey, activityView?.resetKey, activityView?.destination.latitude, activityView?.destination.longitude, guided]);
+  useEffect(() => {
+    if (!guided) { if (camera instanceof PerspectiveCamera) camera.clearViewOffset(); return; }
+    const root = gl.domElement.closest("section");
+    const top = root?.querySelector("[data-camera-obstacle='top']");
+    const bottom = root?.querySelector("[data-camera-obstacle='bottom']");
+    const measure = () => {
+      const rect = gl.domElement.getBoundingClientRect();
+      setSafe({ top: (top?.getBoundingClientRect().bottom ?? rect.top + 120) - rect.top + 12, bottom: (bottom?.getBoundingClientRect().top ?? rect.bottom - 220) - rect.top - 12 });
+    };
+    measure();
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    if (top) observer?.observe(top); if (bottom) observer?.observe(bottom);
+    observer?.observe(gl.domElement);
+    return () => { observer?.disconnect(); if (camera instanceof PerspectiveCamera) camera.clearViewOffset(); };
+  }, [guided, camera, gl, size.width, size.height]);
+  const framing = activityView ? activityCameraFrame(activityView.destination, size.width, size.height, safe.top, safe.bottom) : null;
   const transition = useRef(true);
   const firstFrame = useRef(true);
   const scratch = useMemo(() => ({ target: new Vector3(), desired: new Vector3(), normal: new Vector3(), offset: new Vector3(), elevation: new Vector3(.2, 1.25, .8), follow: createFollowFrame(new Vector3(...input.current.position)) }), [input]);
@@ -19,8 +42,26 @@ export function CameraRig({ mode, input, reducedMotion }: { mode: CameraMode; in
   useFrame((_, rawDelta) => {
     const orbit = controls.current;
     if (!orbit) return;
+    if (input.current.restoreCamera) {
+      const pose = input.current.restoreCamera; input.current.restoreCamera = null;
+      camera.position.fromArray(pose.position); camera.up.fromArray(pose.up); orbit.target.fromArray(pose.target);
+      if (camera instanceof PerspectiveCamera) camera.clearViewOffset();
+      orbit.update(); transition.current = false; firstFrame.current = false;
+      scratch.follow.previousNormal.set(...input.current.position).normalize();
+      return;
+    }
+    if (theme === 'science' && !guided) input.current.cameraPose = { position: camera.position.toArray() as [number, number, number], target: orbit.target.toArray() as [number, number, number], up: camera.up.toArray() as [number, number, number] };
     const alpha = reducedMotion || firstFrame.current ? 1 : 1 - Math.exp(-Math.min(rawDelta, .05) * 6);
-    if (mode === "globe") { camera.up.set(0, 1, 0); scratch.target.set(narrow ? 0 : -.32, narrow ? -1.15 : .05, 0); scratch.desired.set(narrow ? 0 : .6, narrow ? 1.5 : 1.45, narrow ? 23 : 10.8); }
+    if (guided && framing) {
+      if (input.current.zoom) { zoomScale.current = Math.max(.9, Math.min(1.3, zoomScale.current * Math.pow(1.17, input.current.zoom))); input.current.zoom = 0; }
+      scratch.desired.copy(framing.position).sub(framing.target).multiplyScalar(zoomScale.current).add(framing.target);
+      camera.up.copy(framing.up);
+      camera.position.lerp(scratch.desired, alpha); orbit.target.lerp(framing.target, alpha);
+      if (camera instanceof PerspectiveCamera) camera.setViewOffset(size.width, size.height, 0, framing.offsetY, size.width, size.height);
+      camera.lookAt(orbit.target); firstFrame.current = false;
+      return;
+    }
+    if (mode === "globe") { camera.up.set(0, 1, 0); scratch.target.set(narrow ? 0 : -.32, narrow ? -1.15 : .05, 0); scratch.desired.set(narrow ? 0 : .6, narrow ? 1.5 : 1.45, theme === "science" ? Math.max(10.8, 8 * size.height / Math.max(size.width, 240)) : narrow ? 23 : 10.8); }
     else {
       scratch.target.set(...(mode === "mission" ? surfacePoint(MISSION_DESTINATION, RADIUS + .3) : input.current.position));
       scratch.normal.copy(scratch.target).normalize();
@@ -45,5 +86,5 @@ export function CameraRig({ mode, input, reducedMotion }: { mode: CameraMode; in
     orbit.update();
     firstFrame.current = false;
   });
-  return <OrbitControls ref={controls} makeDefault enablePan={false} enableDamping={!reducedMotion} dampingFactor={.09} rotateSpeed={.65} zoomSpeed={.65} minDistance={mode === "globe" ? 7.2 : 1.7} maxDistance={mode === "globe" ? (narrow ? 30 : 17) : 5.3} minPolarAngle={.12} maxPolarAngle={mode === "globe" ? Math.PI - .12 : Math.PI / 2 - .12} onStart={() => { transition.current = false; }} />;
+  return <OrbitControls ref={controls} makeDefault enabled={!guided} enablePan={false} enableRotate={!guided} enableZoom={!guided} enableDamping={!reducedMotion && !guided} dampingFactor={.09} rotateSpeed={.65} zoomSpeed={.65} minDistance={guided ? 1 : mode === "globe" ? 7.2 : 1.7} maxDistance={guided ? 25 : mode === "globe" ? (narrow ? 30 : 17) : 5.3} minPolarAngle={.12} maxPolarAngle={mode === "globe" ? Math.PI - .12 : Math.PI / 2 - .12} onStart={() => { transition.current = false; }} />;
 }

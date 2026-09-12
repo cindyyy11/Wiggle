@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { GESTURE_CONFIG } from "./config";
 import type { Gesture, HandFrame } from "./gestureClassifier";
 import { GestureStateMachine, type GesturePhase } from "./gestureStateMachine";
 import { mirroredPointerNdc, smoothPointer, type PointerNdc } from "./handMath";
 import type { LocalHandTracker } from "./handLandmarker";
 
-export type CameraStatus = "off" | "starting" | "ready" | "unavailable";
+export type CameraStatus = "off" | "starting" | "ready" | "denied" | "unavailable";
 export interface HandTrackingCallbacks {
   enabled: boolean;
   onGestureStart?: (phase: GesturePhase) => void;
@@ -22,10 +22,17 @@ export interface HandTrackingState {
   isTracking: boolean;
   /** Imperative frame data for render loops; updates do not schedule React work. */
   latest: React.RefObject<HandTrackingLatest>;
+  retry(): void;
 }
-export interface HandTrackingLatest { pointer: PointerNdc | null; handedness: string | null; confidence: number; isTracking: boolean }
+export interface HandTrackingLatest {
+  pointer: PointerNdc | null;
+  gesture: Gesture | null;
+  handedness: string | null;
+  confidence: number;
+  isTracking: boolean;
+}
 
-const createEmptyLatest = (): HandTrackingLatest => ({ pointer: null, handedness: null, confidence: 0, isTracking: false });
+const createEmptyLatest = (): HandTrackingLatest => ({ pointer: null, gesture: null, handedness: null, confidence: 0, isTracking: false });
 const emptyState: { status: CameraStatus; gesture: Gesture | null } = { status: "off", gesture: null };
 
 /** Browser-local camera lifecycle plus stable hand gesture phases for scene consumers. */
@@ -34,6 +41,8 @@ export function useHandTracking({ enabled, onGestureStart, onGestureHold, onGest
   const callbacks = useRef({ onGestureStart, onGestureHold, onGestureEnd });
   const latest = useRef<HandTrackingLatest>(createEmptyLatest());
   const [state, setState] = useState(emptyState);
+  const [attempt, setAttempt] = useState(0);
+  const retry = useCallback(() => setAttempt(value => value + 1), []);
   useEffect(() => { callbacks.current = { onGestureStart, onGestureHold, onGestureEnd }; }, [onGestureStart, onGestureHold, onGestureEnd]);
 
   useEffect(() => {
@@ -55,7 +64,13 @@ export function useHandTracking({ enabled, onGestureStart, onGestureHold, onGest
       tracker = undefined;
       if (element) element.srcObject = null;
     };
-    const setUnavailable = () => { stop(); latest.current = createEmptyLatest(); if (!cancelled) setState({ ...emptyState, status: "unavailable" }); };
+    const setFailure = (error: unknown) => {
+      stop();
+      latest.current = createEmptyLatest();
+      const status: CameraStatus = error instanceof DOMException && (error.name === "NotAllowedError" || error.name === "SecurityError")
+        ? "denied" : "unavailable";
+      if (!cancelled) setState({ ...emptyState, status });
+    };
     const emit = (phases: GesturePhase[]) => {
       for (const phase of phases) {
         if (phase.type === "start") callbacks.current.onGestureStart?.(phase);
@@ -66,10 +81,15 @@ export function useHandTracking({ enabled, onGestureStart, onGestureHold, onGest
     const publish = (frame: HandFrame | null, at: number) => {
       const raw = frame?.confidence && frame.confidence >= GESTURE_CONFIG.minConfidence
         ? (requireGesture(frame) ?? null) : null;
-      if (frame && raw) latest.current.pointer = smoothPointer(latest.current.pointer, mirroredPointerNdc(frame.pointer ?? frame.landmarks[8]), GESTURE_CONFIG.pointerSmoothing, GESTURE_CONFIG.pointerDeadZone);
+      const confidentPointer = frame && frame.confidence >= GESTURE_CONFIG.minConfidence
+        ? frame.pointer ?? frame.landmarks[8] : null;
+      latest.current.pointer = confidentPointer && Number.isFinite(confidentPointer.x) && Number.isFinite(confidentPointer.y)
+        ? smoothPointer(latest.current.pointer, mirroredPointerNdc(confidentPointer), GESTURE_CONFIG.pointerSmoothing, GESTURE_CONFIG.pointerDeadZone)
+        : null;
+      latest.current.gesture = raw;
       latest.current.handedness = frame?.handedness ?? null;
       latest.current.confidence = frame?.confidence ?? 0;
-      latest.current.isTracking = Boolean(frame);
+      latest.current.isTracking = Boolean(latest.current.pointer);
       const phases = machine.update(raw, at);
       emit(phases);
       if (phases.some(phase => phase.type !== "hold") && !cancelled) {
@@ -77,7 +97,7 @@ export function useHandTracking({ enabled, onGestureStart, onGestureHold, onGest
       }
     };
     const onHidden = () => { if (document.hidden) { cancelled = true; stop(); latest.current = createEmptyLatest(); setState(emptyState); } };
-    const onPageHide = () => { cancelled = true; stop(); };
+    const onPageHide = () => { cancelled = true; stop(); latest.current = createEmptyLatest(); setState(emptyState); };
     document.addEventListener("visibilitychange", onHidden);
     window.addEventListener("pagehide", onPageHide);
     setState({ ...emptyState, status: "starting" });
@@ -104,10 +124,10 @@ export function useHandTracking({ enabled, onGestureStart, onGestureHold, onGest
               publish(tracker!.detect(element, at), at);
             }
             animation = requestAnimationFrame(tick);
-          } catch { setUnavailable(); }
+          } catch (error) { setFailure(error); }
         };
         animation = requestAnimationFrame(tick);
-      } catch { setUnavailable(); }
+      } catch (error) { setFailure(error); }
     })();
     return () => {
       cancelled = true;
@@ -115,7 +135,7 @@ export function useHandTracking({ enabled, onGestureStart, onGestureHold, onGest
       document.removeEventListener("visibilitychange", onHidden);
       window.removeEventListener("pagehide", onPageHide);
     };
-  }, [enabled]);
+  }, [enabled, attempt]);
   return {
     video,
     latest,
@@ -125,6 +145,7 @@ export function useHandTracking({ enabled, onGestureStart, onGestureHold, onGest
     get handedness() { return latest.current.handedness; },
     get confidence() { return latest.current.confidence; },
     get isTracking() { return latest.current.isTracking; },
+    retry,
   };
 }
 

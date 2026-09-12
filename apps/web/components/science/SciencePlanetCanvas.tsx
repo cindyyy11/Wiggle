@@ -1,136 +1,80 @@
 "use client";
-
-import { Component, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import dynamic from "next/dynamic";
-import { ScienceFallback } from "./ScienceFallback";
-import { ScienceHud } from "./ScienceHud";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { UniverseCanvas } from "../universe/UniverseCanvas";
+import { createExplorerInput, destinationFromPoint, type CameraMode, type CameraPose, type Destination, type QualityPreference } from "../universe/world";
 import type { ScienceZoneId } from "../worlds/subjectRoute";
-import { resolveQuality, type QualityPreference, type SceneQuality } from "../universe/world";
+import { ScienceHud } from "./ScienceHud";
+import { scienceLand } from "./scienceLands";
+import { MagnetLabMission } from "./MagnetLabMission";
+import { ScienceExplorerBridge } from './ScienceExplorerBridge';
+import { ScienceSessionFrame } from './ScienceSessionFrame';
+import { ScienceStarterSession, type StarterProgress } from './ScienceStarterSession';
+import { isEntryKey, LAND_GUIDES } from './scienceInvitation';
+import type { StarterLand } from './scienceActivities';
+import sessionStyles from './ScienceSession.module.css';
 import styles from "./sciencePlanet.module.css";
 
-const Scene = dynamic(() => import("./SciencePlanetScene"), {
-  ssr: false,
-  loading: () => <p className={styles.loading} role="status">Building Science Planet…</p>,
-});
-
 export type SciencePlanetCanvasProps = {
-  quality?: QualityPreference;
-  reducedMotion?: boolean;
-  selectedZone: ScienceZoneId;
-  onZoneSelect: (zone: ScienceZoneId) => void;
-  onBackToWorlds: () => void;
-  onStartMagnetLab: () => void;
-  completionMessage?: string;
+  quality?: QualityPreference; reducedMotion?: boolean; selectedZone: ScienceZoneId;
+  onZoneSelect: (zone: ScienceZoneId) => void; onBackToWorlds: () => void;
+  onStartMagnetLab?: () => void; completionMessage?: string;
 };
-
-export function scienceDecorationCounts(quality: "high" | "low"): { clouds: number; stars: number; magneticFragments: number } {
-  return quality === "high"
-    ? { clouds: 8, stars: 96, magneticFragments: 14 }
-    : { clouds: 3, stars: 36, magneticFragments: 5 };
-}
-
-class GraphicsBoundary extends Component<{ children: ReactNode; onFailure: () => void }, { failed: boolean }> {
-  state = { failed: false };
-  static getDerivedStateFromError() { return { failed: true }; }
-  componentDidCatch() { this.props.onFailure(); }
-  render() { return this.state.failed ? null : this.props.children; }
-}
-
-export function SciencePlanetCanvas({
-  quality: preference = "auto",
-  reducedMotion: reducedMotionOverride,
-  selectedZone,
-  onZoneSelect,
-  onBackToWorlds,
-  onStartMagnetLab,
-  completionMessage,
-}: SciencePlanetCanvasProps) {
-  const [webglSupported, setWebglSupported] = useState<boolean | null>(null);
-  const [quality, setQuality] = useState<SceneQuality>("fallback");
-  const [failed, setFailed] = useState(false);
-  const [systemReducedMotion, setSystemReducedMotion] = useState(false);
-  const [announcement, setAnnouncement] = useState("");
-  const probedWebgl = useRef(false);
-  const reducedMotion = reducedMotionOverride ?? systemReducedMotion;
-
-  // Probe once on mount. Quality changes reuse the recorded result rather than creating contexts.
+export function SciencePlanetCanvas(props: SciencePlanetCanvasProps) {
+  const [mode, setMode] = useState<CameraMode>("globe");
+  const [destination, setDestination] = useState<Destination | null>(null);
+  const [session, setSession] = useState<ScienceZoneId | null>(null);
+  const [nearby, setNearby] = useState<ScienceZoneId | null>(null);
+  const [dismissed, setDismissed] = useState<ScienceZoneId | null>(null);
+  const [invitation, setInvitation] = useState<ScienceZoneId | null>(null);
+  const [selectedZone, setSelectedZone] = useState<ScienceZoneId>(scienceLand(props.selectedZone).id);
+  const [completed, setCompleted] = useState(false);
+  const [available, setAvailable] = useState(false);
+  const [resetKey, setResetKey] = useState(0);
+  const [progress, setProgress] = useState<Record<StarterLand, StarterProgress>>({ animals: { observed: [], matched: [] }, colors: { observed: [], matched: [] }, 'life-cycle': { observed: [], matched: [] } });
+  const input = useRef(createExplorerInput());
+  const entry = useRef<{ position: Destination; mode: CameraMode; camera?: CameraPose } | null>(null);
+  const active = session === 'magnet-lab';
+  const paused = !!session;
+  useEffect(() => { setSelectedZone(scienceLand(props.selectedZone).id); }, [props.selectedZone]);
+  useEffect(() => { input.current.paused = paused; if (paused) { input.current.keys.clear(); input.current.destination = null; } }, [paused]);
+  const onNearby = useCallback((land: ScienceZoneId | null) => { setNearby(land); setDismissed(null); setInvitation(land); }, []);
+  const walk = (point: Destination) => { setDestination({ ...point }); input.current.destination = { ...point }; setMode("follow"); };
+  const select = (zone: ScienceZoneId) => { setSelectedZone(zone); props.onZoneSelect(zone); setDismissed(null); setInvitation(available ? null : zone); walk(scienceLand(zone).destination); if (nearby === zone) setInvitation(zone); };
+  const start = useCallback((zone: ScienceZoneId) => {
+    entry.current = { position: destinationFromPoint(...input.current.position), mode, camera: input.current.cameraPose };
+    input.current.keys.clear(); input.current.horizontal = 0; input.current.vertical = 0; input.current.destination = null; input.current.hop = false;
+    input.current.paused = true; setSession(zone); setInvitation(null);
+    if (zone === 'magnet-lab') props.onStartMagnetLab?.();
+  }, [mode, props]);
+  const close = useCallback(() => {
+    setSession(null);
+    input.current.paused = false; input.current.keys.clear(); input.current.horizontal = 0; input.current.vertical = 0; input.current.destination = null; input.current.hop = false;
+    setDestination(null);
+    if (entry.current) { input.current.teleport = entry.current.position; input.current.restoreCamera = entry.current.camera; setMode(entry.current.mode); }
+    setDismissed(nearby); setInvitation(null); setResetKey(key => key + 1);
+  }, [nearby]);
+  const shownInvitation = !session && invitation !== dismissed ? invitation : null;
   useEffect(() => {
-    if (preference === "fallback" || probedWebgl.current) return;
-    probedWebgl.current = true;
-    const canvas = document.createElement("canvas");
-    let supported = false;
-    try {
-      const context = canvas.getContext("webgl2", { failIfMajorPerformanceCaveat: true });
-      supported = !!context;
-      context?.getExtension("WEBGL_lose_context")?.loseContext();
-    } catch { supported = false; }
-    setWebglSupported(supported);
-  }, [preference]);
-
-  useEffect(() => {
-    if (typeof window.matchMedia !== "function") return;
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setSystemReducedMotion(media.matches);
-    update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, []);
-
-  useEffect(() => {
-    if (failed || webglSupported === null) return;
-    if (preference === "fallback" || !webglSupported) { setQuality("fallback"); return; }
-    const device = navigator as Navigator & { deviceMemory?: number };
-    setQuality(resolveQuality(preference, webglSupported, device.deviceMemory, device.hardwareConcurrency || 8));
-  }, [failed, preference, webglSupported]);
-
-  const graphicsFailed = useCallback(() => {
-    setFailed(true);
-    setAnnouncement("Science Planet map is ready. Every topic is still here.");
-  }, []);
-  const lowerQuality = useCallback(() => setQuality("low"), []);
-  const fallback = failed || quality === "fallback";
-
-  if (fallback) {
-    return <>
-      {failed ? <p className={styles.graphicsFallbackAnnouncement} role="status" aria-live="polite">{announcement}</p> : null}
-      <ScienceFallback
-        selectedZone={selectedZone}
-        onZoneSelect={onZoneSelect}
-        onBackToWorlds={onBackToWorlds}
-        onStartMagnetLab={onStartMagnetLab}
-        completionMessage={completionMessage}
-      />
-    </>;
-  }
-
-  const displayQuality = quality === "high" ? "high" : "low";
-  return <section
-    className={styles.planet}
-    aria-label="Science Planet"
-    data-quality={displayQuality}
-    data-reduced-motion={String(reducedMotion)}
-  >
-    <div className={styles.canvasBackdrop}>
-      <GraphicsBoundary onFailure={graphicsFailed}>
-        <Scene
-          quality={displayQuality}
-          reducedMotion={reducedMotion}
-          selectedZone={selectedZone}
-          onZoneSelect={onZoneSelect}
-          onContextLost={graphicsFailed}
-          onQualityChange={lowerQuality}
-          counts={scienceDecorationCounts(displayQuality)}
-        />
-      </GraphicsBoundary>
-    </div>
-    <ScienceHud
-      selectedZone={selectedZone}
-      onZoneSelect={onZoneSelect}
-      onBackToWorlds={onBackToWorlds}
-      onStartMagnetLab={onStartMagnetLab}
-      completionMessage={completionMessage}
+    if (!shownInvitation) return;
+    const key = (event: KeyboardEvent) => { if (isEntryKey(event)) { event.preventDefault(); start(shownInvitation); } };
+    window.addEventListener('keydown', key); return () => window.removeEventListener('keydown', key);
+  }, [shownInvitation, start]);
+  const explore = () => { if (available && nearby !== selectedZone) select(selectedZone); else { setDismissed(null); setInvitation(selectedZone); } };
+  const starter = session && session !== 'magnet-lab' ? session as StarterLand : null;
+  return <ScienceSessionFrame open={!!session} name={scienceLand(session ?? selectedZone).name} onClose={close}>
+    <div inert={!!session} aria-hidden={session ? true : undefined}>
+    <UniverseCanvas explorerInput={input} controlsDisabled={paused} resetViewKey={resetKey} theme="science" className={styles.spaceWorld} quality={props.quality} reducedMotion={props.reducedMotion} mode={mode} destination={destination} onSceneAvailability={setAvailable}
+      sceneContent={<ScienceExplorerBridge onNearby={onNearby} onVisit={select} paused={!!session} />}
+      hud={<div className={styles.spaceHud}>
+        <ScienceHud {...props} selectedZone={selectedZone} onExplore={explore} onStartMagnetLab={explore} onZoneSelect={select} completionMessage={completed ? "Wonderful exploring! Magnet Lab complete." : props.completionMessage} />
+        <button type="button" className={styles.cameraButton} onClick={() => setMode(mode === "globe" ? "follow" : "globe")}>{mode === "globe" ? "Follow explorer" : "View whole planet"}</button>
+        <button type="button" className={styles.resetView} onClick={() => { setResetKey(key => key + 1); setMode("globe"); }}>Reset view</button>
+        <p className={styles.walkHint}>Tap the ground to walk · Arrow keys / WASD · Space to hop<br />Meet a guide, then press B to explore.</p>
+        {shownInvitation ? <section className={sessionStyles.invitation} aria-label={scienceLand(shownInvitation).name + " invitation"}><div className={sessionStyles.guideFace} data-guide={shownInvitation} aria-hidden="true"><i /><i /></div><div><h2>{LAND_GUIDES[shownInvitation].name}</h2><p>{LAND_GUIDES[shownInvitation].message}</p><div className={sessionStyles.inviteActions}><button type="button" onClick={() => start(shownInvitation)}>Let’s explore <kbd>B</kbd></button><button type="button" onClick={() => { setDismissed(shownInvitation); setInvitation(null); }}>Not now</button></div></div></section> : null}
+      </div>}
     />
-    <p className={styles.canvasHint}>A soft, touchable-looking world is here to explore. Topic buttons stay ready whenever you need them.</p>
-    <p className={styles.graphicsAnnouncement} role="status" aria-live="polite">{announcement}</p>
-  </section>;
+    </div>
+    {active ? <div className={sessionStyles.magnetOverlay} data-session-controls><MagnetLabMission manageFocus={false} onExit={close} onComplete={() => setCompleted(true)} /></div> : null}
+    {starter ? <ScienceStarterSession key={starter} land={starter} graphics={available} progress={progress[starter]} onProgress={value => setProgress(previous => ({ ...previous, [starter]: value }))} onClose={close} /> : null}
+  </ScienceSessionFrame>;
 }

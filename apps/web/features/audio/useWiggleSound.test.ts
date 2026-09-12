@@ -25,4 +25,12 @@ describe("useWiggleSound", () => {
     act(() => result.current.setMuted(true));
     expect(() => act(() => result.current.play("correct"))).not.toThrow();
   });
+
+  it("exposes unlock and plays magnet and slide whoosh effects without throwing", () => {
+    const { result } = renderHook(() => useWiggleSound());
+    expect(() => act(() => result.current.unlock())).not.toThrow();
+    expect(() => act(() => result.current.play("magnetPull"))).not.toThrow();
+    expect(() => act(() => result.current.play("magnetStay"))).not.toThrow();
+    expect(() => act(() => result.current.play("slideWhoosh"))).not.toThrow();
+  });
 });
