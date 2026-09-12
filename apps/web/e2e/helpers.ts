@@ -1,8 +1,11 @@
 import { expect, type Page } from "@playwright/test";
+import { launchNumeria } from "../tests/browser/helpers";
+
+export { keyboardActivate } from "../tests/browser/helpers";
 
 export async function startMission(page: Page) {
   await page.goto("/");
-  await page.getByRole("button", { name: "Let's Wiggle", exact: true }).click();
+  await launchNumeria(page);
   await expect(page.getByRole("button", { name: "Start fractions mission", exact: true })).toBeVisible();
   const started = page.waitForResponse(response => response.url().endsWith("/session/start") && response.status() === 200);
   await page.getByRole("button", { name: "Start fractions mission", exact: true }).click();
@@ -20,19 +23,4 @@ export async function completeVisualMission(page: Page) {
   const outcome = await (await completed).json();
   await expect(page.getByText("+20 Wiggle Energy", { exact: true })).toBeVisible();
   return { session, outcome };
-}
-
-/** Exercise the actual tab sequence; no programmatic focus or pointer events. */
-export async function keyboardActivate(page: Page, name: string) {
-  const target = page.getByRole("button", { name, exact: true });
-  await expect(target).toBeVisible();
-  await expect(target).toBeEnabled();
-  for (let step = 0; step < 70; step++) {
-    if (await target.evaluate(element => element === document.activeElement)) {
-      await page.keyboard.press("Enter");
-      return;
-    }
-    await page.keyboard.press("Tab");
-  }
-  throw new Error(`Keyboard could not reach ${name}`);
 }
