@@ -1,8 +1,18 @@
+<p align="center">
+  <img src="apps/web/public/brand/wiggle-full.jpeg" alt="Wiggle. Wonder. Wow!" width="420" />
+</p>
+
 # Wiggle
 
-Wiggle is a learning universe that adapts fraction missions through observable,
-deterministic learner-state updates. This repository is an npm-workspace monorepo with a
-Next.js web app, a FastAPI service, and shared TypeScript contracts.
+A playful learning universe where kids explore subject worlds, complete adaptive missions, and build a Digital Twin from real evidence — not guesswork.
+
+This monorepo ships:
+
+| Package | Role |
+| --- | --- |
+| `apps/web` | Next.js child universe + parent space |
+| `apps/api` | FastAPI mission, twin, and parent services |
+| `packages/contracts` | Shared TypeScript API contracts |
 
 ## Prerequisites
 
@@ -12,10 +22,7 @@ Next.js web app, a FastAPI service, and shared TypeScript contracts.
 
 ## Local development
 
-No credentials are required. `npm run dev` connects the child mission and parent
-space to the same local memory API. An optional root `.env` can be copied from
-`.env.example` for provider configuration; the web app also reads
-`apps/web/.env.local`. Never expose service-role or Gemini keys to the browser.
+No credentials are required for the connected demo. `npm run dev` wires the child mission and parent space to the same local memory API.
 
 ```sh
 npm ci
@@ -23,11 +30,11 @@ python -m pip install -e "apps/api[dev]"
 npm run dev
 ```
 
-`npm run dev` starts the web app at `http://localhost:3000` and the API on port 8000.
-Open `/parent` to set a demo PIN and see completed mission history. The connected
-demo is shared sample data and resets when the API restarts.
+- Web: [http://localhost:3000](http://localhost:3000)
+- API health: [http://localhost:8000/health](http://localhost:8000/health)
+- Parent space: [http://localhost:3000/parent](http://localhost:3000/parent) — set a demo PIN to review completed mission history
 
-The API health endpoint is available at `http://localhost:8000/health`.
+Optional env files: copy `.env.example` to `.env` at the repo root; the web app also reads `apps/web/.env.local`. Never expose service-role or Gemini keys to the browser. Demo data resets when the API restarts.
 
 ## Quality checks
 
@@ -39,17 +46,14 @@ npm run build
 npm run test:e2e
 ```
 
-The root lint, type-check, and test commands include the API's Ruff, mypy, and
-pytest gates. To run one API gate on its own, use `npm run api:test`,
-`npm run api:lint`, or `npm run api:typecheck`.
+Root lint, type-check, and test include the API’s Ruff, mypy, and pytest gates. Run one API gate alone with `npm run api:test`, `npm run api:lint`, or `npm run api:typecheck`.
 
-The browser suite starts fresh production servers on 3100/3101 and a test-only
-API on 8101. It covers desktop and 390 × 844 mobile, the complete connected loop,
-keyboard/pointer controls, camera/WebGL fallbacks, Gemini timeout, replay and
-parent insights. Chrome is required. Live Supabase tests need separate setup;
-their skips are not a live RLS pass.
+The browser suite starts fresh production servers on 3100/3101 and a test-only API on 8101. It covers desktop and 390×844 mobile, the connected loop, keyboard/pointer controls, camera/WebGL fallbacks, Gemini timeout, replay, and parent insights. Chrome is required. Live Supabase tests need separate setup; their skips are not a live RLS pass.
 
-See [deployment and smoke checks](docs/operations/deployment.md), the
-[two-minute demo runbook](docs/operations/demo-runbook.md), and
-[visual QA and blockers](design-qa.md). Vercel/Render/Supabase configuration is
-prepared; no live deployment is claimed.
+## Deploy
+
+Production shape is **Vercel** (web), **Render** (API), and **Supabase** (auth/database). See:
+
+- [Deployment and smoke checks](docs/operations/deployment.md)
+- [Two-minute demo runbook](docs/operations/demo-runbook.md)
+- [Visual QA and blockers](design-qa.md)
