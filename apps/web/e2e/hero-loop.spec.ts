@@ -34,6 +34,8 @@ test("connected pointer loop persists the intervention and gives the parent an i
 test("keyboard-only navigation completes the connected mission in reduced motion", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
+  await keyboardActivate(page, "Let's Wiggle");
+  await expect(page.getByRole("button", { name: "Start fractions mission", exact: true })).toBeVisible();
   await keyboardActivate(page, "Start fractions mission");
   await keyboardActivate(page, "Visual");
   for (const slice of [1, 2, 3]) await keyboardActivate(page, `Slice ${slice}`);
