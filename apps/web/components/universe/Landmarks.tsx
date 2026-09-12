@@ -65,7 +65,7 @@ function MissionPedestal({ active, pizza, interactionTargets }: { active: boolea
 function PlateTarget({ presentation, interactionTargets }: { presentation: PizzaPresentation; interactionTargets?: SceneInteractionTargets }) {
   const accepting = plateIsAccepting(presentation);
   return <group position={[.27, .37, 0]} name="Pizza plate target">
-    <mesh ref={mesh => registerInteractiveMesh(interactionTargets, mesh, presentation.plate?.id ?? PIZZA_PLATE_ID, "plate")} rotation={[-Math.PI / 2, 0, 0]}>
+    <mesh ref={mesh => registerInteractiveMesh(interactionTargets, mesh, PIZZA_PLATE_ID, "plate")} rotation={[-Math.PI / 2, 0, 0]}>
       <cylinderGeometry args={[.32, .32, .035, 32]} /><meshStandardMaterial color={accepting ? "#fff7e7" : "#d9edc8"} emissive="#f4c95d" emissiveIntensity={accepting ? .32 : .04} roughness={.84} />
     </mesh>
     <mesh position={[0, .022, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[.255, .295, 32]} /><meshBasicMaterial color="#f4c95d" transparent opacity={accepting ? .95 : .46} /></mesh>
