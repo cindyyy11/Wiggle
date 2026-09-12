@@ -21,6 +21,13 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe("Numeria quality and accessible controls", () => {
+  it("uses the compact Wiggle mark as the accessible home link", () => {
+    render(<UniverseCanvas quality="fallback" />);
+    const home = screen.getByRole("link", { name: "Wiggle home" });
+    const mark = home.querySelector('img[src="/brand/wiggle-mark.png"]');
+    expect(mark?.getAttribute("alt")).toBe("");
+  });
+
   it("chooses a map without WebGL and reduces detail on constrained devices", () => {
     expect(resolveQuality("auto", false, 8, 8)).toBe("fallback");
     expect(resolveQuality("auto", true, 2, 8)).toBe("fallback");
