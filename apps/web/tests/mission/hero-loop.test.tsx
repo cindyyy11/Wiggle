@@ -11,10 +11,16 @@ import type { SelectAdaptationResponse } from "@wiggle/contracts";
 
 vi.mock("next/dynamic", () => ({ default: () => () => null }));
 
+const enterAtlas = async () => {
+  fireEvent.click(screen.getByRole("button", { name: "Let's Wiggle" }));
+  await screen.findByRole("button", { name: "Start fractions mission" });
+};
+
 it("keeps household failures out of demo play and retains the session-start retry key", async () => {
   const client = new ApiClient();
   const start = vi.spyOn(client, "start").mockRejectedValue(new ApiError(503));
   render(<MissionAtlas quality="fallback" client={client} childId="owned-child" allowLocalFallback={false} />);
+  await enterAtlas();
   fireEvent.click(screen.getByRole("button", { name: "Start fractions mission" }));
   await screen.findByRole("alert");
   expect(screen.queryByRole("heading", { name: "Make three quarters" })).toBeNull();
@@ -31,6 +37,7 @@ beforeEach(() => {
 
 it("keeps the objective and selected slice controls available across all modes", async () => {
   render(<MissionAtlas quality="fallback" />);
+  await enterAtlas();
   fireEvent.click(screen.getByRole("button", { name: "Start fractions mission" }));
   await screen.findByRole("heading", { name: "Make three quarters" });
   for (const mode of ["Visual", "Gesture", "Tiny steps", "Standard"]) {
@@ -54,6 +61,7 @@ it("aborts a pending adaptation when the child leaves, without restoring the old
   let finish: (value: SelectAdaptationResponse) => void = () => {};
   const select = vi.spyOn(client, "select").mockImplementation(() => new Promise(resolve => { finish = resolve; }));
   render(<MissionAtlas quality="fallback" client={client} />);
+  await enterAtlas();
   fireEvent.click(screen.getByRole("button", { name: "Start fractions mission" }));
   await screen.findByRole("heading", { name: "Make three quarters" });
   fireEvent.click(screen.getByRole("button", { name: "Visual" }));
@@ -71,6 +79,7 @@ afterEach(cleanup);
 
 it("completes the child hero loop through the accessible local world", async () => {
   render(<MissionAtlas quality="fallback" />);
+  await enterAtlas();
   fireEvent.click(screen.getByRole("button", { name: "Start fractions mission" }));
   await screen.findByRole("heading", { name: "Make three quarters" });
   fireEvent.click(screen.getByRole("button", { name: "2 of 4" }));
@@ -99,6 +108,7 @@ it("completes the child hero loop through the accessible local world", async () 
 
 it("finishes directly from immediate stuck support without visiting simulation", async () => {
   render(<MissionAtlas quality="fallback" />);
+  await enterAtlas();
   fireEvent.click(screen.getByRole("button", { name: "Start fractions mission" }));
   await screen.findByRole("heading", { name: "Make three quarters" });
   fireEvent.click(screen.getByRole("button", { name: "Visual" }));
@@ -126,6 +136,7 @@ it("allows a fresh API session to simulate, adapt and complete despite an old re
   const select = vi.spyOn(client, "select").mockResolvedValue({ interventionId: "new", strategy: "visual_gesture", mode: "visual_gesture", predictedSuccess: .87, activity });
   const complete = vi.spyOn(client, "complete").mockResolvedValue({} as never);
   render(<MissionAtlas quality="fallback" client={client} />);
+  await enterAtlas();
   fireEvent.click(screen.getByRole("button", { name: "Start fractions mission" }));
   await screen.findByRole("heading", { name: "Make three quarters" });
   fireEvent.click(screen.getByRole("button", { name: "I'm stuck" }));

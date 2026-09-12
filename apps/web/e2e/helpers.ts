@@ -2,6 +2,8 @@ import { expect, type Page } from "@playwright/test";
 
 export async function startMission(page: Page) {
   await page.goto("/");
+  await page.getByRole("button", { name: "Let's Wiggle", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Start fractions mission", exact: true })).toBeVisible();
   const started = page.waitForResponse(response => response.url().endsWith("/session/start") && response.status() === 200);
   await page.getByRole("button", { name: "Start fractions mission", exact: true }).click();
   const session = await (await started).json() as { sessionId: string; childId: string };

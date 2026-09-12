@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { demoSession } from "../../lib/demo/seed";
+import { launchWiggle } from "./helpers";
 
 test("offline API telemetry does not block curated supports and replays after reconnect", async ({ page }) => {
   let online = false;
@@ -13,6 +14,7 @@ test("offline API telemetry does not block curated supports and replays after re
     return route.fulfill({ json: { acceptedEventIds: ids } });
   });
   await page.goto("/");
+  await launchWiggle(page);
   await page.getByRole("button", { name: "Start fractions mission", exact: true }).click();
   await page.getByRole("button", { name: "Ask Lexi", exact: true }).click();
   await page.getByRole("button", { name: "Give me a hint" }).click();
@@ -53,6 +55,7 @@ test("opted-in camera runs local inference and stops every track on exit", async
     } });
   });
   await page.goto("/");
+  await launchWiggle(page);
   await page.getByRole("button", { name: "Start fractions mission", exact: true }).click();
   expect(requests.some(request => /mediapipe|hand_landmarker|vision_wasm/.test(request.url))).toBe(false);
   await expect(page.locator("html")).not.toHaveAttribute("data-camera-calls");
@@ -76,6 +79,7 @@ test("camera denial preserves keyboard/touch play and accessible supports", asyn
     Object.defineProperty(navigator.mediaDevices, "getUserMedia", { value: async () => { throw new DOMException("Denied", "NotAllowedError"); } });
   });
   await page.goto("/");
+  await launchWiggle(page);
   await page.getByRole("button", { name: "Start fractions mission", exact: true }).click();
   await page.getByRole("button", { name: "Gesture", exact: true }).click();
   await expect(page.getByText(/Camera unavailable/)).toBeVisible();

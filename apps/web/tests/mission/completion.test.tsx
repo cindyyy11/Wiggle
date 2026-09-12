@@ -21,9 +21,14 @@ beforeEach(() => {
 afterEach(cleanup);
 const click = (name: string) => fireEvent.click(screen.getByRole("button", { name }));
 const idle = () => waitFor(() => expect(screen.getByRole("region", { name: "Fraction mission" }).getAttribute("aria-busy")).toBe("false"));
+const enterAtlas = async () => {
+  click("Let's Wiggle");
+  await screen.findByRole("button", { name: "Start fractions mission" });
+};
 
 it.each(["buttons", "stuck", "recognized", "removed", "unchanged-grab"])("records actual selected input for %s completion", async kind => {
   render(<MissionAtlas quality="fallback" />);
+  await enterAtlas();
   click("Start fractions mission"); await screen.findByRole("heading", { name: "Make three quarters" });
   click(kind === "stuck" ? "I'm stuck" : "Gesture"); await idle();
   if (kind === "recognized" || kind === "removed") {
@@ -45,6 +50,7 @@ it.each(["buttons", "stuck", "recognized", "removed", "unchanged-grab"])("record
 
 it("offers a cancellable Reality Mission after completion and records one optional lifecycle", async () => {
   render(<MissionAtlas quality="fallback" />);
+  await enterAtlas();
   click("Start fractions mission"); await screen.findByRole("heading", { name: "Make three quarters" });
   click("3 of 4"); fireEvent.click(screen.getByRole("button", { name: /Check my answer/ }));
   await screen.findByText("+20 Wiggle Energy");

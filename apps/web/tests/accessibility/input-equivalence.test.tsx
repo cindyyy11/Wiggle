@@ -9,6 +9,10 @@ import { ApiClient } from "../../lib/api/client";
 import { demoSession } from "../../lib/demo/seed";
 
 vi.mock("next/dynamic", () => ({ default: () => () => null }));
+const enterAtlas = async () => {
+  fireEvent.click(screen.getByRole("button", { name: "Let's Wiggle" }));
+  await screen.findByRole("button", { name: "Start fractions mission" });
+};
 beforeEach(() => {
   localStorage.clear();
   Object.defineProperty(window, "matchMedia", { writable: true, value: () => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }) });
@@ -30,6 +34,7 @@ it("never requests camera for ordinary or automatic stuck support and denial nev
   const camera = vi.fn().mockRejectedValue(new DOMException("Denied", "NotAllowedError"));
   Object.defineProperty(navigator, "mediaDevices", { configurable: true, value: { getUserMedia: camera } });
   render(<MissionAtlas quality="fallback" />);
+  await enterAtlas();
   fireEvent.click(screen.getByRole("button", { name: "Start fractions mission" }));
   await screen.findByRole("heading", { name: "Make three quarters" });
   expect(camera).not.toHaveBeenCalled();
@@ -48,6 +53,7 @@ it("never requests camera for ordinary or automatic stuck support and denial nev
 
 it("offers curated hints, reset and offline work without losing the fraction mission", async () => {
   render(<MissionAtlas quality="fallback" />);
+  await enterAtlas();
   fireEvent.click(screen.getByRole("button", { name: "Start fractions mission" }));
   await screen.findByRole("heading", { name: "Make three quarters" });
   fireEvent.click(screen.getByRole("button", { name: "Visual" }));
@@ -76,6 +82,7 @@ it("uses typed Lexi requests and ignores delayed responses after leaving", async
   vi.spyOn(client, "events").mockImplementation(async body => ({ acceptedEventIds: body.events.map(event => event.id) }));
   const lexi = vi.spyOn(client, "lexi").mockImplementation(() => new Promise(() => {}));
   render(<MissionAtlas quality="fallback" client={client} />);
+  await enterAtlas();
   fireEvent.click(screen.getByRole("button", { name: "Start fractions mission" }));
   await screen.findByRole("heading", { name: "Make three quarters" });
   fireEvent.click(screen.getByRole("button", { name: "Ask Lexi" }));
@@ -95,6 +102,7 @@ it.each(["telemetry", "lexi"] as const)("keeps hints and Reality Missions availa
   });
   const lexi = vi.spyOn(client, "lexi").mockRejectedValue(new TypeError("Network unavailable"));
   render(<MissionAtlas quality="fallback" client={client} />);
+  await enterAtlas();
   fireEvent.click(screen.getByRole("button", { name: "Start fractions mission" }));
   await screen.findByRole("heading", { name: "Make three quarters" });
   fireEvent.click(screen.getByRole("button", { name: "Ask Lexi" }));
