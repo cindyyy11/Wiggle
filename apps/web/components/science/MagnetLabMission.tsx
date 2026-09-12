@@ -1,136 +1,107 @@
 "use client";
 
-import { useRef, useState } from "react";
-import {
-  MAGNET_OBJECTS,
-  resultForMagnetObject,
-  type MagnetObjectId,
-  type MagnetResult,
-} from "./scienceWorld";
+import { useEffect, useReducer, useRef, useState } from "react";
+import { useHandTracking } from "../../features/gestures/useHandTracking";
+import { MagnetHandLabScene } from "./MagnetHandLabScene";
+import { initialMagnetPlay, magnetPlayReducer } from "./magnetHandPlay";
+import { MAGNET_OBJECTS } from "./scienceWorld";
 import styles from "./magnetLab.module.css";
 
-export type MagnetLabMissionProps = {
-  onExit: () => void;
-  onComplete: () => void;
-};
+export type MagnetLabMissionProps = { onExit(): void; onComplete(): void };
 
-type FeedbackKind = "status" | "alert";
+const copy = {
+  explore: "Move your open hand to guide the magnet!",
+  sort: "Pinch an object, move it to a tray, then open your hand.",
+  hidden: "Point around the campsite to find the hidden magnet.",
+};
+const titles = { explore: "What does a magnet pull?", sort: "Find each object's home", hidden: "A campsite mystery!" };
 
 export function MagnetLabMission({ onExit, onComplete }: MagnetLabMissionProps) {
-  const [selectedId, setSelectedId] = useState<MagnetObjectId | null>(null);
-  const [observed, setObserved] = useState(false);
-  const [completedIds, setCompletedIds] = useState<MagnetObjectId[]>([]);
-  const [feedback, setFeedback] = useState("Choose an object, then try the magnet.");
-  const [feedbackKind, setFeedbackKind] = useState<FeedbackKind>("status");
-  const completedIdsRef = useRef<MagnetObjectId[]>([]);
-  const completionNotifiedRef = useRef(false);
+  const tracking = useHandTracking({ enabled: true });
+  const [state, dispatch] = useReducer(magnetPlayReducer, initialMagnetPlay);
+  const [handStatus, setHandStatus] = useState("Show your hand to the camera.");
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const section = useRef<HTMLElement>(null);
+  const notified = useRef(false);
+  const exit = useRef(onExit);
+  exit.current = onExit;
 
-  const selectedObject = selectedId
-    ? MAGNET_OBJECTS.find((object) => object.id === selectedId) ?? null
-    : null;
-  const complete = completedIds.length === MAGNET_OBJECTS.length;
+  useEffect(() => {
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    section.current?.querySelector<HTMLButtonElement>("button")?.focus();
+    const keydown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); exit.current(); }
+      if (event.key !== "Tab") return;
+      const controls = Array.from(section.current?.querySelectorAll<HTMLElement>('button:not(:disabled), [href], [tabindex="0"]') ?? []);
+      const first = controls[0], last = controls[controls.length - 1];
+      if (event.shiftKey && (document.activeElement === first || !section.current?.contains(document.activeElement))) {
+        event.preventDefault(); last?.focus();
+      } else if (!event.shiftKey && (document.activeElement === last || !section.current?.contains(document.activeElement))) {
+        event.preventDefault(); first?.focus();
+      }
+    };
+    document.addEventListener("keydown", keydown, true);
+    return () => {
+      document.removeEventListener("keydown", keydown, true);
+      const restore = () => {
+        if (previous?.isConnected && previous !== document.body) previous.focus();
+        else Array.from(document.querySelectorAll<HTMLButtonElement>("button")).find(button => button.textContent?.trim() === "Start Magnet Lab")?.focus();
+      };
+      restore();
+      // The parent remounts the planet's start control in the same commit.
+      queueMicrotask(restore);
+    };
+  }, []);
 
-  function selectObject(id: MagnetObjectId) {
-    setSelectedId(id);
-    setObserved(false);
-    setFeedbackKind("status");
-    setFeedback(`Ready to test the ${MAGNET_OBJECTS.find((object) => object.id === id)?.name}.`);
-  }
+  useEffect(() => {
+    if (!window.matchMedia) return;
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReducedMotion(media.matches);
+    update(); media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
 
-  function observe() {
-    if (!selectedObject) {
-      setFeedbackKind("status");
-      setFeedback("Choose an object before trying the magnet.");
-      return;
-    }
+  useEffect(() => {
+    if (!state.foundHiddenMagnet || notified.current) return;
+    notified.current = true;
+    onComplete();
+  }, [state.foundHiddenMagnet, onComplete]);
 
-    setObserved(true);
-    setFeedbackKind("status");
-    setFeedback(
-      resultForMagnetObject(selectedObject.id) === "attracted"
-        ? `The ${selectedObject.name} moves toward the magnet.`
-        : `The ${selectedObject.name} stays where it is.`,
-    );
-  }
+  const needsHelp = tracking.status === "denied" || tracking.status === "unavailable" || tracking.status === "off";
+  const ready = tracking.status === "ready";
+  const count = state.checkpoint === "explore" ? state.explored.length : state.checkpoint === "sort" ? state.sorted.length : Number(state.foundHiddenMagnet);
+  const total = state.checkpoint === "hidden" ? 1 : MAGNET_OBJECTS.length;
+  const announcement = needsHelp ? "This magnet activity needs your camera so your hand can guide the magnet."
+    : !ready ? "Starting your camera… Ask an adult to allow camera access."
+    : state.foundHiddenMagnet ? "You found the hidden magnet! Magnet Lab complete."
+    : handStatus + " " + count + " of " + total + " discoveries.";
 
-  function classify(answer: MagnetResult) {
-    if (!selectedId) {
-      setFeedbackKind("status");
-      setFeedback("Choose an object before classifying it.");
-      return;
-    }
-    if (!observed) {
-      setFeedbackKind("status");
-      setFeedback("Try the magnet first to observe what happens.");
-      return;
-    }
-    if (answer !== resultForMagnetObject(selectedId)) {
-      setFeedbackKind("alert");
-      setFeedback("Try that object with the magnet again.");
-      return;
-    }
-
-    if (completedIdsRef.current.includes(selectedId)) {
-      setObserved(false);
-      setFeedbackKind("status");
-      setFeedback("You already discovered that result. Choose another object.");
-      return;
-    }
-
-    const next = [...completedIdsRef.current, selectedId];
-    completedIdsRef.current = next;
-    setCompletedIds(next);
-    setObserved(false);
-    setFeedbackKind("status");
-    setFeedback(answer === "attracted" ? "It moves toward the magnet!" : "It stays where it is.");
-
-    if (next.length === MAGNET_OBJECTS.length && !completionNotifiedRef.current) {
-      completionNotifiedRef.current = true;
-      onComplete();
-    }
-  }
-
-  return <section className={styles.mission} aria-label="Magnet Lab mission">
-    <header className={styles.header}>
-      <div>
-        <p className={styles.eyebrow}>SCIENCE PLANET · MAGNET LAB</p>
-        <h2>What does a magnet pull?</h2>
-        <p>Test each safe object, watch what happens, then name the result.</p>
-      </div>
-      <button className={styles.exit} type="button" onClick={onExit}>Exit Magnet Lab</button>
+  return <section ref={section} className={styles.mission} aria-label="Magnet Lab mission">
+    <button className={styles.exit} type="button" onClick={onExit}>Back to Science Planet</button>
+    <header className={styles.missionCard}>
+      <h1>{needsHelp ? "Ask an adult to turn on the camera" : !ready ? "Let's get your hand ready" : titles[state.checkpoint]}</h1>
+      {ready && <><p>{copy[state.checkpoint]}</p>
+        <div className={styles.progress} aria-label={count + " of " + total + " discoveries"}>
+          {Array.from({ length: total }, (_, index) => <span key={index} data-complete={index < count} />)}
+        </div>
+        <p className={styles.checkpoint}>Mission {state.checkpoint === "explore" ? 1 : state.checkpoint === "sort" ? 2 : 3} of 3</p>
+      </>}
     </header>
-
-    <p className={styles.progress} aria-live="polite">{completedIds.length} of {MAGNET_OBJECTS.length} discoveries</p>
-
-    <div className={styles.objectGrid} aria-label="Objects to test">
-      {MAGNET_OBJECTS.map((object) => <button
-        key={object.id}
-        className={styles.objectButton}
-        type="button"
-        aria-pressed={selectedId === object.id}
-        onClick={() => selectObject(object.id)}
-      >
-        <span className={styles.objectSwatch} style={{ backgroundColor: object.color }} aria-hidden="true" />
-        Test {object.name}
-        {completedIds.includes(object.id) ? <span className={styles.discovered} aria-hidden="true">Discovered</span> : null}
-      </button>)}
+    <aside className={styles.guide}>
+      <img className={styles.guideMark} src="/brand/wiggle-mark.png" alt="" />
+      <p role="status" aria-live="polite">{announcement}</p>
+      {needsHelp && <button className={styles.retry} type="button" onClick={tracking.retry}>Try again</button>}
+    </aside>
+    <div className={styles.workbench}>
+      {ready && <MagnetHandLabScene latest={tracking.latest} state={state} reducedMotion={reducedMotion} onAction={dispatch} onHandStatus={setHandStatus} />}
     </div>
-
-    <div className={styles.actionPanel}>
-      <p className={styles.selection}>Selected: {selectedObject?.name ?? "nothing yet"}</p>
-      <button className={styles.tryButton} type="button" onClick={observe}>Try the magnet</button>
-      <p className={styles.observation}>
-        {observed && selectedObject ? `Observation: ${feedback}` : "Observation: try the magnet to see what happens."}
-      </p>
-      <div className={styles.classify} aria-label="Classify the object">
-        <button type="button" onClick={() => classify("attracted")}>Attracted</button>
-        <button type="button" onClick={() => classify("not-attracted")}>Not attracted</button>
+    <aside className={styles.cameraCard}>
+      <h2>Your Hand</h2>
+      <div className={styles.videoFrame}>
+        <video ref={tracking.video} muted playsInline className={ready ? styles.video : styles.videoStarting} aria-label="Your local camera preview" />
+        {!ready && <p>{needsHelp ? "Camera needed" : "Getting ready…"}</p>}
       </div>
-      {feedbackKind === "alert"
-        ? <p className={styles.feedback} role="alert">{feedback}</p>
-        : <p className={styles.feedback} role="status" aria-live="polite">{feedback}</p>}
-    </div>
-
-    {complete ? <p className={styles.complete} role="status">Magnet Lab complete</p> : null}
+      <p>Your hand guides the magnet.</p>
+    </aside>
   </section>;
 }
