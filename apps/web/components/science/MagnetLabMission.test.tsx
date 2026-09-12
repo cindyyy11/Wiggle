@@ -21,6 +21,16 @@ it("requires observation before a classification can progress", () => {
   expect(screen.getByRole("status").textContent).toContain("Try the magnet first to observe what happens.");
 });
 
+it("uses one polite announcement for an observed result", () => {
+  render(<MagnetLabMission onExit={vi.fn()} onComplete={vi.fn()} />);
+
+  fireEvent.click(screen.getByRole("button", { name: "Test paper clip" }));
+  fireEvent.click(screen.getByRole("button", { name: "Try the magnet" }));
+
+  expect(screen.getByText("Observation: The paper clip moves toward the magnet.").getAttribute("aria-live")).toBeNull();
+  expect(screen.getByRole("status").textContent).toBe("The paper clip moves toward the magnet.");
+});
+
 it("does not advance after an incorrect classification and completes once after all correct results", () => {
   const onComplete = vi.fn();
   render(<MagnetLabMission onExit={vi.fn()} onComplete={onComplete} />);

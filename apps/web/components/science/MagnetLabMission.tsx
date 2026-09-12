@@ -119,7 +119,7 @@ export function MagnetLabMission({ onExit, onComplete }: MagnetLabMissionProps) 
     <div className={styles.actionPanel}>
       <p className={styles.selection}>Selected: {selectedObject?.name ?? "nothing yet"}</p>
       <button className={styles.tryButton} type="button" onClick={observe}>Try the magnet</button>
-      <p className={styles.observation} aria-live="polite">
+      <p className={styles.observation}>
         {observed && selectedObject ? `Observation: ${feedback}` : "Observation: try the magnet to see what happens."}
       </p>
       <div className={styles.classify} aria-label="Classify the object">
