@@ -20,9 +20,10 @@ it("keeps all subject-orbit actions available through native controls when WebGL
   render(<SubjectWorlds initialRoute={{ world: null }} quality="fallback" />);
 
   enterWorlds();
-  for (const name of ["Explore Numeria", "Explore Science Planet", "English (coming soon)", "Bahasa Melayu (coming soon)"]) {
+  for (const name of ["Show Numeria", "Show Science Planet", "Show English", "Show Bahasa Melayu"]) {
     expect(screen.getByRole("button", { name })).toBeTruthy();
   }
+  fireEvent.click(screen.getByRole("button", { name: "Show Science Planet" }));
   fireEvent.click(screen.getByRole("button", { name: "Explore Science Planet" }));
 
   fireEvent.click(screen.getByRole("button", { name: "Visit Magnet Lab" }));
@@ -39,6 +40,7 @@ it("announces locked worlds without moving focus away from the selector", () => 
     ["English (coming soon)", "English is coming soon"],
     ["Bahasa Melayu (coming soon)", "Bahasa Melayu is coming soon"],
   ]) {
+    fireEvent.click(screen.getByRole("button", { name: `Show ${buttonName.replace(" (coming soon)", "")}` }));
     const locked = screen.getByRole("button", { name: buttonName });
     locked.focus();
     fireEvent.click(locked);

@@ -12,6 +12,7 @@ export type MagnetGestureInput = {
 };
 
 export type MagnetGestureAction =
+  | { type: "cancel"; id: MagnetObjectId }
   | { type: "grab"; id: MagnetObjectId }
   | { type: "drop"; id: MagnetObjectId; target: MagnetResult }
   | { type: "investigate"; target: "toolbox" };
@@ -40,8 +41,7 @@ export class MagnetHandGestureController {
 
   update(input: MagnetGestureInput): MagnetGestureAction | null {
     if (!input.isTracking) {
-      this.handleTrackingLoss(input.at);
-      return null;
+      return this.handleTrackingLoss(input.at);
     }
 
     this.lostSince = null;
@@ -72,15 +72,18 @@ export class MagnetHandGestureController {
     this.investigating = false;
   }
 
-  private handleTrackingLoss(at: number): void {
+  private handleTrackingLoss(at: number): MagnetGestureAction | null {
     if (!this.held) {
       this.investigating = false;
-      return;
+      return null;
     }
     this.lostSince ??= at;
     if (at - this.lostSince >= GESTURE_CONFIG.lostHandGraceMs) {
+      const id = this.held;
       this.held = null;
       this.lostSince = null;
+      return { type: "cancel", id };
     }
+    return null;
   }
 }

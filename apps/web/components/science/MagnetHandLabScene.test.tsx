@@ -3,8 +3,10 @@ import React from "react";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { HandTrackingLatest } from "../../features/gestures/useHandTracking";
-import { initialMagnetPlay } from "./magnetHandPlay";
-import { MagnetHandLabScene, observationActionForTablePoint } from "./MagnetHandLabScene";
+import { initialMagnetPlay, magnetPlayReducer, type MagnetPlayState } from "./magnetHandPlay";
+import { MagnetHandGestureController } from "./magnetHandGesture";
+import { MAGNET_OBJECTS } from "./scienceWorld";
+import { MagnetHandLabScene, observationActionForTablePoint, actionForHandFrame } from "./MagnetHandLabScene";
 
 const canvasState = vi.hoisted(() => ({ throwOnRender: false }));
 const webgl = vi.hoisted(() => ({ supported: true, cleanupThrows: false, probeCalls: 0 }));
@@ -45,6 +47,58 @@ const latest = {
     isTracking: true,
   },
 } as React.RefObject<HandTrackingLatest>;
+
+it("rejects stale, missing, low-confidence and non-finite pointers for every checkpoint", () => {
+  for (const invalid of [
+    { isTracking: false }, { pointer: null }, { confidence: .1 },
+    { pointer: { x: NaN, y: 0 } }, { pointer: { x: 0, y: Infinity } },
+  ]) {
+    for (const checkpoint of ["explore", "sort", "hidden"] as const) {
+      const frame = { ...latest.current, gesture: "point" as const, ...invalid };
+      expect(actionForHandFrame({ ...initialMagnetPlay, checkpoint }, frame, new MagnetHandGestureController(), 0)).toBeNull();
+    }
+  }
+});
+
+it("cancels a lost grab without scoring and accepts a new object after reacquisition", () => {
+  const controller = new MagnetHandGestureController();
+  let state: MagnetPlayState = { ...initialMagnetPlay, checkpoint: "sort" };
+  const frame = { ...latest.current, pointer: { x: (.22 - .5) / .43, y: (.28 - .5) / .43 }, gesture: "pinch" as const };
+  const grab = actionForHandFrame(state, frame, controller, 0)!;
+  expect(grab).toEqual({ type: "grab", id: "paper-clip" });
+  state = magnetPlayReducer(state, grab);
+  const lost = { ...frame, isTracking: false, gesture: "open_palm" as const };
+  expect(actionForHandFrame(state, lost, controller, 100)).toBeNull();
+  const cancel = actionForHandFrame(state, lost, controller, 501)!;
+  expect(cancel).toEqual({ type: "cancel", id: "paper-clip" });
+  state = magnetPlayReducer(state, cancel);
+  expect(state.held).toBeNull();
+  expect(state.sorted).toEqual([]);
+  expect(state.foundHiddenMagnet).toBe(false);
+  const again = actionForHandFrame(state, frame, controller, 600)!;
+  expect(magnetPlayReducer(state, again).held).toBe("paper-clip");
+});
+
+it("completes all checkpoints from deterministic confident hand frames", () => {
+  const controller = new MagnetHandGestureController();
+  let state = initialMagnetPlay;
+  let at = 0;
+  const move = (x: number, y: number, gesture: HandTrackingLatest["gesture"]) => {
+    const frame = { ...latest.current, pointer: { x: (x - .5) / .43, y: (y - .5) / .43 }, gesture };
+    const action = actionForHandFrame(state, frame, controller, at += 100);
+    if (action) state = magnetPlayReducer(state, action);
+  };
+  for (const object of MAGNET_OBJECTS) move(object.scenePosition[0], object.scenePosition[1], "open_palm");
+  expect(state.checkpoint).toBe("sort");
+  for (const object of MAGNET_OBJECTS) {
+    move(object.scenePosition[0], object.scenePosition[1], "pinch");
+    move(object.result === "attracted" ? .25 : .75, .08, "open_palm");
+  }
+  expect(state.checkpoint).toBe("hidden");
+  expect(state.sorted).toHaveLength(4);
+  move(.5, .54, "point");
+  expect(state.foundHiddenMagnet).toBe(true);
+});
 
 it("renders a labelled decorative workbench for every checkpoint", async () => {
   const onAction = vi.fn();

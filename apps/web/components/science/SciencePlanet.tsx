@@ -16,12 +16,14 @@ export type SciencePlanetProps = {
 export function SciencePlanet({ selectedZone, quality, onZoneSelect, onBackToWorlds }: SciencePlanetProps) {
   const [magnetLabOpen, setMagnetLabOpen] = useState(false);
   const [magnetComplete, setMagnetComplete] = useState(false);
+  const [focusLabEntry, setFocusLabEntry] = useState(false);
 
   if (magnetLabOpen) {
     return <MagnetLabMission
-      onExit={() => setMagnetLabOpen(false)}
+      onExit={() => { setFocusLabEntry(true); setMagnetLabOpen(false); }}
       onComplete={() => {
         setMagnetComplete(true);
+        setFocusLabEntry(true);
         setMagnetLabOpen(false);
       }}
     />;
@@ -31,9 +33,10 @@ export function SciencePlanet({ selectedZone, quality, onZoneSelect, onBackToWor
     <SciencePlanetCanvas
       selectedZone={selectedZone}
       quality={quality}
-      onZoneSelect={onZoneSelect}
+      onZoneSelect={(zone) => { setFocusLabEntry(false); onZoneSelect(zone); }}
       onBackToWorlds={onBackToWorlds}
       onStartMagnetLab={() => setMagnetLabOpen(true)}
+      focusLabEntry={focusLabEntry}
       completionMessage={magnetComplete ? "Magnet Lab discovery complete." : undefined}
     />
   </>;

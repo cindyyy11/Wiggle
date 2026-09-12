@@ -6,8 +6,19 @@ export async function launchWiggle(page: Page): Promise<void> {
 }
 
 export async function enterScience(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "Show Science Planet", exact: true }).click();
   await page.getByRole("button", { name: "Explore Science Planet", exact: true }).click();
   await expect(page.getByRole("region", { name: "Science Planet" })).toBeVisible();
+}
+
+export async function denyCamera(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    let calls = 0;
+    Object.assign(window, { __magnetCameraCalls: () => calls });
+    Object.defineProperty(navigator, "mediaDevices", { configurable: true, value: {
+      getUserMedia: () => { calls++; return Promise.reject(new DOMException("Denied", "NotAllowedError")); },
+    } });
+  });
 }
 
 export async function enterNumeria(page: Page): Promise<void> {

@@ -21,6 +21,7 @@ export type SciencePlanetCanvasProps = {
   onBackToWorlds: () => void;
   onStartMagnetLab: () => void;
   completionMessage?: string;
+  focusLabEntry?: boolean;
 };
 
 export function scienceDecorationCounts(quality: "high" | "low"): { clouds: number; stars: number; magneticFragments: number } {
@@ -44,6 +45,7 @@ export function SciencePlanetCanvas({
   onBackToWorlds,
   onStartMagnetLab,
   completionMessage,
+  focusLabEntry,
 }: SciencePlanetCanvasProps) {
   const [webglSupported, setWebglSupported] = useState<boolean | null>(null);
   const [quality, setQuality] = useState<SceneQuality>("fallback");
@@ -99,6 +101,7 @@ export function SciencePlanetCanvas({
         onBackToWorlds={onBackToWorlds}
         onStartMagnetLab={onStartMagnetLab}
         completionMessage={completionMessage}
+        focusLabEntry={focusLabEntry}
       />
     </>;
   }
@@ -129,6 +132,7 @@ export function SciencePlanetCanvas({
       onBackToWorlds={onBackToWorlds}
       onStartMagnetLab={onStartMagnetLab}
       completionMessage={completionMessage}
+      focusLabEntry={focusLabEntry}
     />
     <p className={styles.canvasHint}>A soft, touchable-looking world is here to explore. Topic buttons stay ready whenever you need them.</p>
     <p className={styles.graphicsAnnouncement} role="status" aria-live="polite">{announcement}</p>

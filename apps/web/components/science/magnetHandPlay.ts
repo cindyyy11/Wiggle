@@ -18,6 +18,7 @@ export type MagnetPlayState = {
 };
 
 export type MagnetPlayAction =
+  | { type: "cancel"; id: MagnetObjectId }
   | { type: "observe"; id: MagnetObjectId }
   | { type: "grab"; id: MagnetObjectId }
   | { type: "drop"; id: MagnetObjectId; target: MagnetResult }
@@ -53,6 +54,8 @@ export function isWithinMagnetField(magnet: TablePoint, object: TablePoint): boo
 /** Immutable curriculum state for the three Magnet Lab checkpoints. */
 export function magnetPlayReducer(state: MagnetPlayState, action: MagnetPlayAction): MagnetPlayState {
   switch (action.type) {
+    case "cancel":
+      return state.held === action.id ? { ...state, held: null } : state;
     case "observe": {
       if (state.checkpoint !== "explore" || state.explored.includes(action.id)) return state;
       const explored = [...state.explored, action.id];

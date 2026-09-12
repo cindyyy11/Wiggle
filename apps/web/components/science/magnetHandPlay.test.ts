@@ -4,6 +4,7 @@ import {
   initialMagnetPlay,
   isWithinMagnetField,
   magnetPlayReducer,
+  type MagnetPlayState,
 } from "./magnetHandPlay";
 
 const reduce = magnetPlayReducer;
@@ -43,13 +44,13 @@ describe("magnetPlayReducer", () => {
   });
 
   it("advances from exploring to sorting after all four objects", () => {
-    const completeExplore = ["paper-clip", "iron-nail", "wooden-block", "plastic-button"]
+    const completeExplore = (["paper-clip", "iron-nail", "wooden-block", "plastic-button"] as const)
       .reduce((state, id) => reduce(state, { type: "observe", id }), initialMagnetPlay);
     expect(completeExplore.checkpoint).toBe("sort");
   });
 
   it("keeps an incorrectly sorted object available to try again", () => {
-    const sorting = { ...initialMagnetPlay, checkpoint: "sort" as const };
+    const sorting: MagnetPlayState = { ...initialMagnetPlay, checkpoint: "sort" };
     const held = reduce(sorting, { type: "grab", id: "paper-clip" });
     const incorrect = reduce(held, { type: "drop", id: "paper-clip", target: "not-attracted" });
     expect(incorrect.held).toBeNull();
@@ -58,7 +59,7 @@ describe("magnetPlayReducer", () => {
   });
 
   it("only advances after all four objects are placed in their correct tray", () => {
-    const sorting = { ...initialMagnetPlay, checkpoint: "sort" as const };
+    const sorting: MagnetPlayState = { ...initialMagnetPlay, checkpoint: "sort" };
     const sortedThree = ([
       ["paper-clip", "attracted"],
       ["iron-nail", "attracted"],

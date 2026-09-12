@@ -12,6 +12,7 @@ export type ScienceFallbackProps = {
   onBackToWorlds: () => void;
   onStartMagnetLab: () => void;
   completionMessage?: string;
+  focusLabEntry?: boolean;
 };
 
 export function ScienceFallback(props: ScienceFallbackProps) {
