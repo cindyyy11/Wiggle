@@ -124,7 +124,7 @@ it("announces locked worlds without changing the route and blocks navigation awa
   act(() => window.dispatchEvent(new PopStateEvent("popstate")));
   expect(screen.getByTestId("maths-props")).toBeTruthy();
   expect(window.location.search).toBe("?child=owned&world=math");
-  expect(screen.getByText("Finish or leave your Maths mission before changing worlds.")).toBeTruthy();
+  expect(screen.getAllByText("Finish or leave your Maths mission before changing worlds.").length).toBeGreaterThan(0);
 });
 
 it("slides between planets without navigating and keeps locked planets on the chooser", () => {
@@ -141,4 +141,29 @@ it("slides between planets without navigating and keeps locked planets on the ch
   expect(screen.getByRole("status").textContent).toContain("Bahasa Melayu is coming soon");
   fireEvent.click(screen.getByRole("button", { name: "Previous planet" }));
   expect(screen.getByRole("button", { name: "Explore Science Planet" })).toBeTruthy();
+});
+
+it("shows the global Twin launcher and Parent link on the worlds hub, and hides the launcher during an active Maths mission", () => {
+  vi.useFakeTimers();
+  render(<SubjectWorlds childId="owned" allowLocalFallback={false} initialRoute={{ world: null, child: "owned" }} />);
+  enterWorlds();
+
+  expect(screen.getByRole("link", { name: "Parent mission control" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Ready for a mission whenever you are!" })).toBeTruthy();
+
+  fireEvent.click(screen.getByRole("button", { name: "Explore Numeria" }));
+  fireEvent.click(screen.getByRole("button", { name: "Open Maths mission" }));
+
+  expect(screen.queryByRole("button", { name: "Ready for a mission whenever you are!" })).toBeNull();
+  expect(screen.getByRole("button", { name: "Parent mission control" })).toBeTruthy();
+  expect(screen.getByText("Finish or leave your Maths mission before changing worlds.")).toBeTruthy();
+});
+
+it("tells the Twin launcher when the child is in Science", async () => {
+  vi.useFakeTimers();
+  render(<SubjectWorlds initialRoute={{ world: "science", zone: "magnet-lab", child: "owned" }} />);
+  enterWorlds();
+  vi.useRealTimers();
+  fireEvent.click(screen.getByRole("button", { name: "Ready for a mission whenever you are!" }));
+  await screen.findByText(/Science is full of surprises today!/);
 });

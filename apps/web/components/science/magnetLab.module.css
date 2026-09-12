@@ -30,9 +30,48 @@
 .progress span[data-complete="true"] { background: #5b785b; border-color: #5b785b; }
 .missionCard .checkpoint { margin-bottom: 0; font-size: .8rem; font-weight: 700; color: #654d5c; }
 .guide { grid-column: 1; grid-row: 2; z-index: 2; align-self: start; }
-.guideMark { display: block; width: 5rem; max-width: 100%; height: 5rem; object-fit: contain; margin: 0 auto .75rem; }
-.guide p { margin: 0; padding: 1rem; border-radius: 1.25rem; background: #f9e7ce; color: #342c43; box-shadow: 0 .5rem 1.5rem #100d2040; }
+.guideSpeaker {
+  display: grid;
+  place-items: center;
+  margin: 0 auto .35rem;
+  width: fit-content;
+}
+.guideMark { display: block; width: 5rem; max-width: 100%; height: 5rem; object-fit: contain; }
+.guideSpeaker[data-talking="true"] .guideMark {
+  animation: guide-talk 380ms ease-in-out infinite;
+  transform-origin: 50% 80%;
+}
+.speechBubble {
+  position: relative;
+  margin: .55rem 0 0;
+  padding: 1rem 1.05rem;
+  border-radius: 1.25rem;
+  background: #f9e7ce;
+  color: #342c43;
+  box-shadow: 0 .5rem 1.5rem #100d2040;
+  animation: bubble-pop 320ms ease-out;
+}
+.speechBubble::before {
+  content: "";
+  position: absolute;
+  top: -.42rem;
+  left: 50%;
+  width: .75rem;
+  height: .75rem;
+  background: #f9e7ce;
+  transform: translateX(-50%) rotate(45deg);
+  box-shadow: -.2rem -.2rem .35rem #100d2014;
+}
+.speechBubble[data-reduced-motion="true"] { animation: none; }
 .retry { width: 100%; margin-top: 1rem; background: #ef936d; color: #342c43; }
+@keyframes bubble-pop {
+  from { opacity: 0; transform: translateY(.45rem) scale(.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes guide-talk {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-.12rem) rotate(-3deg); }
+}
 .workbench { grid-column: 1 / -1; grid-row: 2; min-width: 0; height: clamp(24rem, 48vw, 38rem); z-index: 1; align-self: end; }
 .cameraBackdrop, .cameraBackdropReady {
   position: absolute;
@@ -94,9 +133,11 @@
   .mission { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; gap: 1rem; padding: 1rem; border-radius: 1.3rem; }
   .exit, .missionCard, .guide, .workbench, .cameraCard, .objectKey { grid-column: 1; grid-row: auto; }
   .missionCard { padding: 1.1rem; }
-  .guide { display: grid; grid-template-columns: 3rem minmax(0, 1fr); align-items: center; gap: .65rem; }
+  .guide { display: grid; grid-template-columns: 3rem minmax(0, 1fr); align-items: start; gap: .65rem; }
+  .guideSpeaker { margin: 0; }
   .guideMark { width: 3rem; height: 3rem; margin: 0; }
-  .guide p { padding: .75rem; font-size: .9rem; }
+  .speechBubble { margin: 0; padding: .75rem; font-size: .9rem; animation-duration: 240ms; }
+  .speechBubble::before { top: .85rem; left: -.28rem; transform: rotate(45deg); }
   .retry { grid-column: 2; margin-top: 0; }
   .workbench { height: clamp(20rem, 75vw, 30rem); }
   .cameraCard { padding: .75rem 1rem; }
@@ -104,4 +145,6 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .mission button { transition: none; }
+  .speechBubble { animation: none; }
+  .guideSpeaker[data-talking="true"] .guideMark { animation: none; }
 }

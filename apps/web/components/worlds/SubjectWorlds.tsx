@@ -5,6 +5,9 @@ import { MissionAtlas } from "../mission/MissionAtlas";
 import { SciencePlanet } from "../science/SciencePlanet";
 import type { ApiClient } from "../../lib/api/client";
 import type { QualityPreference } from "../universe/world";
+import { DEMO_CHILD_ID } from "../../lib/demo/seed";
+import { ParentEntryLink } from "../wiggle/ParentEntryLink";
+import { TwinLauncher } from "../wiggle/TwinLauncher";
 import {
   DEFAULT_SCIENCE_ZONE,
   buildWorldHref,
@@ -91,7 +94,7 @@ export function SubjectWorlds({ childId, allowLocalFallback, client, quality, in
 
   if (!entered) return <WiggleSplash onEntered={() => setEntered(true)} />;
 
-  if (route.world === "math") return <section className={styles.worldContent} aria-label="Numeria">
+  const content = route.world === "math" ? <section className={styles.worldContent} aria-label="Numeria">
     <MissionAtlas
       childId={childId}
       allowLocalFallback={allowLocalFallback}
@@ -102,16 +105,12 @@ export function SubjectWorlds({ childId, allowLocalFallback, client, quality, in
       onWorldsRequest={() => navigate({ world: null, child: currentChild })}
     />
     <p className={styles.routeStatus} role="status" aria-live="polite">{statusMessage}</p>
-  </section>;
-
-  if (route.world === "science") return <SciencePlanet
+  </section> : route.world === "science" ? <SciencePlanet
     selectedZone={route.zone}
     quality={quality}
     onZoneSelect={(zone) => navigate({ world: "science", zone, child: currentChild })}
     onBackToWorlds={() => navigate({ world: null, child: currentChild })}
-  />;
-
-  return <section className={styles.worldsView} aria-label="Subject worlds">
+  /> : <section className={styles.worldsView} aria-label="Subject worlds">
     <div className={styles.constellationLayer}
       onPointerDownCapture={event => { if (event.button !== 0) return; swipeStart.current = { x: event.clientX, y: event.clientY }; suppressClick.current = false; }}
       onPointerUpCapture={event => {
@@ -141,4 +140,10 @@ export function SubjectWorlds({ childId, allowLocalFallback, client, quality, in
       statusMessage={statusMessage}
     />
   </section>;
+
+  return <>
+    {content}
+    <ParentEntryLink disabled={mathsOverlayOpen} disabledMessage="Finish or leave your Maths mission before changing worlds." />
+    {!mathsOverlayOpen ? <TwinLauncher childId={currentChild ?? DEMO_CHILD_ID} client={client} context={route.world === "science" ? "science" : null} /> : null}
+  </>;
 }

@@ -2,6 +2,7 @@
 import { useRef, useState } from "react";
 import type { CheckInRequest, CheckInResponse } from "@wiggle/contracts";
 import { parentRequest } from "../../lib/api/parent";
+import styles from "./parent.module.css";
 
 const HOW_OPTIONS = [
   { label: "Smooth", difficulty: .15 },
@@ -39,13 +40,15 @@ export function QuickCheckIn({ childId, submit = defaultSubmit }: {
     }
   };
 
-  return <section aria-labelledby="quick-check-in-title">
-    <h2 id="quick-check-in-title">How did learning go today?</h2>
-    <div role="group" aria-label="How did learning go today?">
+  return <article className={styles.panel} aria-labelledby="quick-check-in-title">
+    <h3 id="quick-check-in-title" className={styles.panelTitle}>How did learning go today?</h3>
+    <p className={styles.panelLead}>Tap one option. This is context only — it does not change scores.</p>
+    <div className={styles.choiceGroup} role="group" aria-label="How did learning go today?">
       {HOW_OPTIONS.map(option => (
         <button
           key={option.label}
           type="button"
+          className={styles.choice}
           disabled={busy}
           aria-pressed={how === option.label}
           onClick={() => { setHow(option.label); void send(option.label, hardest); }}
@@ -55,12 +58,13 @@ export function QuickCheckIn({ childId, submit = defaultSubmit }: {
       ))}
     </div>
     {how && how !== "Smooth" ? <>
-      <p>What seemed hardest? (optional)</p>
-      <div role="group" aria-label="What seemed hardest?">
+      <p className={styles.subLabel}>What seemed hardest? (optional)</p>
+      <div className={styles.choiceGroup} role="group" aria-label="What seemed hardest?">
         {HARDEST_OPTIONS.map(option => (
           <button
             key={option}
             type="button"
+            className={styles.choice}
             disabled={busy}
             aria-pressed={hardest === option}
             onClick={() => { setHardest(option); void send(how, option); }}
@@ -72,5 +76,5 @@ export function QuickCheckIn({ childId, submit = defaultSubmit }: {
     </> : null}
     {message && <p role="status">{message}</p>}
     {error && <p role="alert">{error}</p>}
-  </section>;
+  </article>;
 }
