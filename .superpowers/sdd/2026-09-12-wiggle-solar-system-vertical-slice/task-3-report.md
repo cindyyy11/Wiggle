@@ -46,3 +46,8 @@ Passed:
 - `npm run lint --workspace=@wiggle/web`
 - `npm run build --workspace=@wiggle/web`
 - `PLAYWRIGHT_EXTERNAL_SERVERS=1 npm run test:e2e --workspace=@wiggle/web -- wiggle-hub.spec.ts` — desktop and mobile projects, 2 tests passed
+
+## Exploration-context refinement
+
+- Clarified the hub as an original miniature-world context rather than a menu destination: the visible scene guide invites orbiting and zooming the nearby clay planets before choosing one.
+- The Numeria transition now says “Landing near Numeria’s Number Valley,” making the handoff feel like entry into the existing spherical explorer space. `WiggleExperience` continues to mount the existing `MissionAtlas` in-place for the `numeria` phase, preserving click-to-walk, keyboard movement, hop, follow/globe camera, and landmark approach controls as the primary play loop.

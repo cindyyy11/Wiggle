@@ -72,7 +72,7 @@ describe("solar-system travel", () => {
     const enter = vi.fn();
     render(<SolarSystemHub onEnterNumeria={enter} />);
     fireEvent.click(screen.getByRole("button", { name: "Enter Numeria" }));
-    expect(screen.getByRole("status").textContent).toContain("Following the starlight");
+    expect(screen.getByRole("status").textContent).toContain("Landing near Numeria’s Number Valley");
     act(() => vi.advanceTimersByTime(travelDuration("numeria", "numeria") / 2));
     expect(screen.getByRole("status").getAttribute("data-travel-progress")).toBe("0.500");
     act(() => vi.advanceTimersByTime(travelDuration("numeria", "numeria") / 2 - 1));
