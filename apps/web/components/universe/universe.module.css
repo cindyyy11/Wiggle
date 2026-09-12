@@ -13,3 +13,4 @@
 .cameraControls .parentLink{display:grid;place-items:center;width:44px;min-height:44px;border:1px solid #ffffff22;border-radius:50%;font-size:10px;color:inherit;text-decoration:none;background:#0e1a30e8}.cameraControls .parentLink:hover{background:#283853}
 @media(max-width:900px){.zoom{display:flex;position:absolute;left:0;bottom:110px}.zoom button{width:44px;height:44px}}
 @media(max-width:600px){.cameraControls button{width:44px}.destinations{bottom:206px}.destinations button{font-size:11px}.destinations button:last-child{display:flex;grid-column:1 / 3;justify-self:center;min-width:180px}.destinationCard p{font-size:11px}.universe .missionButton{font-size:11px}.zoom{left:auto;right:0;bottom:350px;margin:0;gap:4px}.zoom button{background:#112037ee}.sliceControls{bottom:356px}.map{top:41%;width:67vw}}
+.wordmarkImage{width:48px;height:48px;object-fit:contain;display:block}

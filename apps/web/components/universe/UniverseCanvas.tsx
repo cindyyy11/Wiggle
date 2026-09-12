@@ -97,7 +97,7 @@ export function UniverseCanvas({ mode: controlledMode, onModeChange, quality: pr
 
   return <section className={`${styles.universe} ${className}`} aria-label="Explore Numeria" data-camera-mode={mode} data-quality={mapVisible ? "fallback" : quality}>
     <div className={styles.stars} aria-hidden="true" />
-    <header className={styles.heading}><a className={styles.wordmark} href="/" aria-label="Wiggle home">wiggle<span>✳</span></a><div className={styles.worldTitle}><span>YOUR LEARNING UNIVERSE</span><h1>Numeria</h1><p>A little curiosity goes a long way.</p></div></header>
+    <header className={styles.heading}><a className={styles.wordmark} href="/" aria-label="Wiggle home"><img className={styles.wordmarkImage} src="/brand/wiggle-mark.png" alt="" /></a><div className={styles.worldTitle}><span>YOUR LEARNING UNIVERSE</span><h1>Numeria</h1><p>A little curiosity goes a long way.</p></div></header>
     <div className={styles.scene}>
       {mapVisible ? <NumeriaMap /> : <GraphicsBoundary onFailure={graphicsFailed}><Scene mode={mode} quality={quality === "high" ? "high" : "low"} reducedMotion={reducedMotion} input={input} selectedLandmark={selectedLandmark} onLandmarkSelect={selectLandmark} onDestinationChange={onDestinationChange} onContextLost={graphicsFailed} onQualityChange={lowerQuality} pizza={pizza} /></GraphicsBoundary>}
     </div>
