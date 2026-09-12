@@ -14,7 +14,7 @@ describe("GestureInteractionLayer scene boundary", () => {
   });
 
   it("reads current tracking data from Task 1's mutable frame instead of a render-time pointer prop", () => {
-    const latest = { current: { pointer: { x: -.2, y: .4 }, handedness: "left", confidence: .9, isTracking: true } };
+    const latest = { current: { pointer: { x: -.2, y: .4 }, gesture: null, handedness: "left", confidence: .9, isTracking: true } };
     expect(latestHandFrame(latest)).toMatchObject({ pointer: new Vector2(-.2, .4), isTracking: true });
     latest.current.pointer = { x: .6, y: -.1 }; latest.current.isTracking = false;
     expect(latestHandFrame(latest)).toMatchObject({ pointer: new Vector2(.6, -.1), isTracking: false });
