@@ -1,0 +1,114 @@
+// apps/web/components/wiggle/TwinLauncher.tsx
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import type { LearnerTwin, TwinVisualState } from "@wiggle/contracts";
+import { getTwinVisualState, twinVisualCopy } from "@wiggle/contracts";
+import { ApiClient } from "../../lib/api/client";
+import { demoParent } from "../../lib/demo/parent";
+import { speakIfUnmuted } from "../../features/voice/voicePreference";
+import { getLastSeenTwin, saveSeenTwin } from "./twinMemory";
+import { nextConstellationSuggestion } from "./nextConstellationSuggestion";
+import { WiggleTwinAvatar } from "./WiggleTwinAvatar";
+import styles from "./twinLauncher.module.css";
+
+export type TwinLauncherContext = "science" | null;
+
+export interface TwinLauncherProps {
+  childId: string;
+  client?: ApiClient;
+  context?: TwinLauncherContext;
+}
+
+interface TwinSuggestion {
+  title: string;
+  description: string;
+}
+
+/**
+ * The ambient, everywhere-reachable Twin presence (see
+ * docs/superpowers/specs/2026-09-13-global-wiggle-twin-launcher-design.md). Shows
+ * the child's current Twin mood and lets them peek at their whole Twin or hear the
+ * message read aloud, without ever needing an active mission session. When a
+ * mission session exists, Lexi's own beacon inside the mission already covers
+ * this role, so the caller hides this launcher instead of rendering a second,
+ * competing panel.
+ */
+export function TwinLauncher({ childId, client: suppliedClient, context = null }: TwinLauncherProps) {
+  const [client] = useState(() => suppliedClient ?? new ApiClient());
+  const [state, setState] = useState<TwinVisualState>("ready");
+  const [message, setMessage] = useState<string>(twinVisualCopy.ready);
+  const [suggestion, setSuggestion] = useState<TwinSuggestion | null>(null);
+  const [open, setOpen] = useState(false);
+  const heading = useRef<HTMLHeadingElement>(null);
+  const launcherButton = useRef<HTMLButtonElement>(null);
+
+  const applyTwin = (twin: LearnerTwin, persist: boolean) => {
+    const previous = getLastSeenTwin(childId);
+    const nextState = getTwinVisualState(twin, previous);
+    setState(nextState);
+    setMessage(twinVisualCopy[nextState]);
+    const star = nextConstellationSuggestion(twin);
+    setSuggestion(star ? { title: star.title, description: star.description } : null);
+    if (persist) saveSeenTwin(childId, twin);
+  };
+
+  const loadTwin = async (signal: AbortSignal, persist: boolean) => {
+    try {
+      const { twin } = await client.twin(childId, signal);
+      if (!signal.aborted) applyTwin(twin, persist);
+    } catch {
+      if (!signal.aborted) applyTwin(demoParent.twin, persist);
+    }
+  };
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void loadTwin(controller.signal, false);
+    return () => controller.abort();
+  }, [client, childId]);
+
+  useEffect(() => { if (open) heading.current?.focus(); }, [open]);
+
+  const close = () => {
+    setOpen(false);
+    window.speechSynthesis?.cancel();
+    launcherButton.current?.focus();
+  };
+
+  const toggle = () => {
+    if (open) { close(); return; }
+    setOpen(true);
+    const controller = new AbortController();
+    void loadTwin(controller.signal, true);
+  };
+
+  const scienceLine = context === "science" ? " Science is full of surprises today!" : "";
+
+  return <div className={styles.launcher}>
+    <button
+      ref={launcherButton}
+      type="button"
+      className={styles.button}
+      aria-label={open ? "Close my Wiggle Twin" : twinVisualCopy[state]}
+      aria-expanded={open}
+      onClick={toggle}
+    >
+      <span aria-hidden="true"><WiggleTwinAvatar state={state} size={52} /></span>
+    </button>
+    {open ? <section
+      className={styles.panel}
+      aria-label="My Wiggle Twin"
+      onKeyDown={event => { if (event.key === "Escape") close(); }}
+    >
+      <h2 ref={heading} tabIndex={-1}>My Wiggle Twin</h2>
+      <p role="status">{message}{scienceLine}</p>
+      {suggestion ? <p className={styles.suggestion}>What can I try? {suggestion.description}</p> : null}
+      <div className={styles.actions}>
+        <button type="button" onClick={() => speakIfUnmuted(`${message}${scienceLine}`)}>Read aloud</button>
+        <a href={`/twin?child=${encodeURIComponent(childId)}`}>See my whole Twin</a>
+      </div>
+      <button type="button" className={styles.close} onClick={close}>Close</button>
+    </section> : null}
+  </div>;
+}
