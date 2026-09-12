@@ -96,7 +96,7 @@ export function UniverseCanvas({ mode: controlledMode, onModeChange, quality: pr
   }, [onDestinationChange, onLandmarkSelect]);
   const graphicsFailed = useCallback(() => { setFailed(true); setAnnouncement("Your map is ready. Every destination and mission is still here."); }, []);
   const lowerQuality = useCallback(() => setQuality("low"), []);
-  const startMission = () => { selectLandmark("fraction-forest"); changeMode("mission"); onMissionStart?.(); };
+  const startMission = () => { selectLandmark("fraction-forest"); onMissionStart?.(); };
   const stopDirection = (event: PointerEvent<HTMLButtonElement>) => {
     if (event.pointerId !== activePointer.current) return;
     activePointer.current = null; input.current.horizontal = 0; input.current.vertical = 0;

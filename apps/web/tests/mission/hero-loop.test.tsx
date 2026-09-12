@@ -90,9 +90,9 @@ it("blocks shell Worlds and Parent navigation until the existing leave action cl
   );
   fireEvent.click(screen.getByRole("button", { name: "Start fractions mission" }));
   await screen.findByRole("region", { name: "Fraction mission" });
-  expect(screen.getByRole("button", { name: "Back to Worlds" })).toBeDisabled();
-  const parent = screen.getByRole("button", { name: "Parent mission control" });
-  expect(parent).toBeDisabled();
+  expect((screen.getByRole("button", { name: "Back to Worlds" }) as HTMLButtonElement).disabled).toBe(true);
+  const parent = screen.getByRole("button", { name: "Parent mission control" }) as HTMLButtonElement;
+  expect(parent.disabled).toBe(true);
   expect(parent.getAttribute("aria-describedby")).toBeTruthy();
   expect(screen.queryByRole("link", { name: "Parent mission control" })).toBeNull();
   fireEvent.click(parent);
@@ -100,7 +100,7 @@ it("blocks shell Worlds and Parent navigation until the existing leave action cl
   expect(screen.getByRole("region", { name: "Fraction mission" })).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Leave mission" }));
   expect(onMissionOverlayChange).toHaveBeenLastCalledWith(false);
-  expect(screen.getByRole("link", { name: "Parent mission control" })).toHaveAttribute("href", "/parent");
+  expect(screen.getByRole("link", { name: "Parent mission control" }).getAttribute("href")).toBe("/parent");
   fireEvent.click(screen.getByRole("button", { name: "Back to Worlds" }));
   expect(onWorldsRequest).toHaveBeenCalledOnce();
 });
@@ -113,7 +113,7 @@ it("blocks the shell Parent control while a Maths mission is still starting", as
 
   fireEvent.click(screen.getByRole("button", { name: "Start fractions mission" }));
   expect(screen.getByText("Your mission is coming into view…")).toBeTruthy();
-  expect(screen.getByRole("button", { name: "Parent mission control" })).toBeDisabled();
+  expect((screen.getByRole("button", { name: "Parent mission control" }) as HTMLButtonElement).disabled).toBe(true);
   expect(screen.queryByRole("link", { name: "Parent mission control" })).toBeNull();
 
   resolveStart(demoSession("starting-session"));
@@ -125,7 +125,7 @@ it("preserves the live Parent route for direct MissionAtlas use", async () => {
 
   fireEvent.click(screen.getByRole("button", { name: "Start fractions mission" }));
   await screen.findByRole("region", { name: "Fraction mission" });
-  expect(screen.getByRole("link", { name: "Parent mission control" })).toHaveAttribute("href", "/parent");
+  expect(screen.getByRole("link", { name: "Parent mission control" }).getAttribute("href")).toBe("/parent");
 });
 
 it("completes the child hero loop through the accessible local world", async () => {

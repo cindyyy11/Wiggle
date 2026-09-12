@@ -4,21 +4,21 @@ import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-libra
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { MissionAtlas } from "../../components/mission/MissionAtlas";
 import { EventQueue } from "../../features/events/eventQueue";
-import type { GestureEvent } from "../../features/gestures/gestureClassifier";
+import type { GestureInteractionAction } from "../../components/universe/gestureInteraction";
 
-const hand = vi.hoisted(() => ({ recognized: undefined as ((event: GestureEvent) => void) | undefined }));
-vi.mock("next/dynamic", () => ({ default: () => () => null }));
-vi.mock("../../features/gestures/useGestureControls", () => ({
-  useGestureControls: (_enabled: boolean, onGesture: (event: GestureEvent) => void) => {
-    hand.recognized = onGesture;
-    return { video: { current: null }, status: "off" };
+const hand = vi.hoisted(() => ({ action: undefined as ((action: GestureInteractionAction) => void) | undefined }));
+vi.mock("next/dynamic", () => ({
+  default: () => function Scene({ pizza }: { pizza?: { onGestureAction?: (action: GestureInteractionAction) => void } }) {
+    hand.action = pizza?.onGestureAction;
+    return null;
   },
 }));
 beforeEach(() => {
-  localStorage.clear(); hand.recognized = undefined;
+  localStorage.clear(); hand.action = undefined;
   Object.defineProperty(window, "matchMedia", { writable: true, value: () => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }) });
+  vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue({ getExtension: () => null } as never);
 });
-afterEach(cleanup);
+afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 const click = (name: string) => fireEvent.click(screen.getByRole("button", { name }));
 const idle = () => waitFor(() => expect(screen.getByRole("region", { name: "Fraction mission" }).getAttribute("aria-busy")).toBe("false"));
 const enterAtlas = async () => {
@@ -27,16 +27,20 @@ const enterAtlas = async () => {
 };
 
 it.each(["buttons", "stuck", "recognized", "removed", "unchanged-grab"])("records actual selected input for %s completion", async kind => {
-  render(<MissionAtlas quality="fallback" />);
+  render(<MissionAtlas quality="low" />);
   await enterAtlas();
   click("Start fractions mission"); await screen.findByRole("heading", { name: "Make three quarters" });
   click(kind === "stuck" ? "I'm stuck" : "Gesture"); await idle();
   if (kind === "recognized" || kind === "removed") {
-    act(() => hand.recognized!({ gesture: "point", x: .1, y: .5 }));
+    await waitFor(() => expect(hand.action).toBeTypeOf("function"));
+    act(() => hand.action!({ type: "drop", gesture: "pinch", targetId: "pizza-slice-1", success: true }));
     if (kind === "removed") { click("Slice 1"); click("Slice 1"); }
   } else {
     click("Slice 1");
-    if (kind === "unchanged-grab") act(() => hand.recognized!({ gesture: "fist", x: .1, y: .5 }));
+    if (kind === "unchanged-grab") {
+      await waitFor(() => expect(hand.action).toBeTypeOf("function"));
+      act(() => hand.action!({ type: "grab", gesture: "fist", targetId: "pizza-slice-1" }));
+    }
   }
   click("Slice 2"); click("Slice 3"); click("Check my pizza");
   await screen.findByText("+20 Wiggle Energy");
@@ -49,7 +53,7 @@ it.each(["buttons", "stuck", "recognized", "removed", "unchanged-grab"])("record
 });
 
 it("offers a cancellable Reality Mission after completion and records one optional lifecycle", async () => {
-  render(<MissionAtlas quality="fallback" />);
+  render(<MissionAtlas quality="low" />);
   await enterAtlas();
   click("Start fractions mission"); await screen.findByRole("heading", { name: "Make three quarters" });
   click("3 of 4"); fireEvent.click(screen.getByRole("button", { name: /Check my answer/ }));
