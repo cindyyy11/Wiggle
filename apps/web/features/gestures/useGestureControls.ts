@@ -1,59 +1,17 @@
-import { useEffect, useRef, useState } from "react";
-import { GestureClassifier, type GestureEvent } from "./gestureClassifier";
-import type { LocalHandTracker } from "./handLandmarker";
+import { useEffect, useRef } from "react";
+import type { GestureEvent } from "./gestureClassifier";
+import { useHandTracking } from "./useHandTracking";
 
-export type CameraStatus = "off" | "starting" | "ready" | "unavailable";
+export type { CameraStatus } from "./useHandTracking";
+/** Compatibility adapter for UI callers while scene interaction migrates to useHandTracking. */
 export function useGestureControls(enabled: boolean, onGesture: (event: GestureEvent) => void) {
-  const video = useRef<HTMLVideoElement>(null);
-  const handler = useRef(onGesture);
-  const [status, setStatus] = useState<CameraStatus>("off");
-  useEffect(() => { handler.current = onGesture; }, [onGesture]);
+  const tracking = useHandTracking({ enabled });
+  const previous = useRef<GestureEvent["gesture"] | null>(null);
   useEffect(() => {
-    if (!enabled) { setStatus("off"); return; }
-    let cancelled = false; let stream: MediaStream | undefined; let tracker: LocalHandTracker | undefined;
-    let animation = 0; let lastFrame = -Infinity; let lastVideoTime = -1;
-    const element = video.current;
-    const classifier = new GestureClassifier();
-    const stop = () => {
-      cancelAnimationFrame(animation);
-      stream?.getTracks().forEach(track => track.stop()); stream = undefined;
-      tracker?.close(); tracker = undefined;
-      if (element) element.srcObject = null;
-    };
-    const onHidden = () => { if (document.hidden) { cancelled = true; stop(); setStatus("off"); } };
-    const onPageHide = () => { cancelled = true; stop(); };
-    document.addEventListener("visibilitychange", onHidden);
-    window.addEventListener("pagehide", onPageHide);
-    setStatus("starting");
-    void (async () => {
-      try {
-        if (!navigator.mediaDevices?.getUserMedia || !element) throw new Error("Camera unavailable");
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
-        if (cancelled) { stop(); return; }
-        element.srcObject = stream;
-        await element.play();
-        if (cancelled) { stop(); return; }
-        const { loadHandLandmarker } = await import("./handLandmarker");
-        if (cancelled) { stop(); return; }
-        tracker = await loadHandLandmarker();
-        if (cancelled) { stop(); return; }
-        setStatus("ready");
-        const tick = (time: number) => {
-          if (cancelled) return;
-          try {
-            // Bound inference to 12 FPS, and never reprocess the same decoded frame.
-            if (time - lastFrame >= 80 && element.readyState >= 2 && element.currentTime !== lastVideoTime) {
-              lastFrame = time; lastVideoTime = element.currentTime;
-              const event = classifier.update(tracker!.detect(element, time), time);
-              if (event) handler.current(event);
-            }
-            animation = requestAnimationFrame(tick);
-          } catch { stop(); setStatus("unavailable"); }
-        };
-        animation = requestAnimationFrame(tick);
-      } catch { stop(); if (!cancelled) setStatus("unavailable"); }
-    })();
-    return () => { cancelled = true; stop(); document.removeEventListener("visibilitychange", onHidden); window.removeEventListener("pagehide", onPageHide); };
-  }, [enabled]);
-  return { video, status };
+    if (!tracking.gesture || tracking.gesture === previous.current) return;
+    previous.current = tracking.gesture;
+    onGesture({ gesture: tracking.gesture, x: tracking.pointer ? (tracking.pointer.x + 1) / 2 : .5, y: tracking.pointer ? (1 - tracking.pointer.y) / 2 : .5 });
+  }, [onGesture, tracking.gesture, tracking.pointer]);
+  useEffect(() => { if (!tracking.gesture) previous.current = null; }, [tracking.gesture]);
+  return { video: tracking.video, status: tracking.status };
 }

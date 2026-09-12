@@ -1,20 +1,19 @@
 export type Gesture = "pinch" | "point" | "open_palm" | "fist";
 export interface Landmark { x: number; y: number; z: number }
-export interface HandFrame { landmarks: Landmark[]; handedness: string; confidence: number }
+export interface HandFrame { landmarks: Landmark[]; pointer?: Landmark; handedness: string; confidence: number }
 export interface GestureEvent { gesture: Gesture; x: number; y: number }
-const distance = (a: Landmark, b: Landmark) => Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+import { GESTURE_CONFIG } from "./config";
+import { isFingerExtended, pinchRatio } from "./handMath";
 
 /** Scale/hand independent geometry; uncertain or incomplete hands produce no action. */
 export function classifyHand(frame: HandFrame): Gesture | null {
   const points = frame.landmarks;
   if (points.length !== 21 || points.some(p => ![p.x, p.y, p.z].every(Number.isFinite))) return null;
-  const scale = distance(points[0], points[9]);
-  if (scale < .04) return null;
-  const extension = [5, 9, 13, 17].map(base => distance(points[base + 3], points[0]) / distance(points[base + 1], points[0]));
-  if (distance(points[4], points[8]) / scale < .22) return "pinch";
-  if (extension.every(value => value > 1.3)) return "open_palm";
-  if (extension[0] > 1.3 && extension.slice(1).every(value => value < .85)) return "point";
-  if (extension.every(value => value < .85)) return "fist";
+  const extension = [5, 9, 13, 17].map(base => isFingerExtended(points, base));
+  if (pinchRatio(points) < GESTURE_CONFIG.pinchRatio) return "pinch";
+  if (extension.every(Boolean)) return "open_palm";
+  if (extension[0] && extension.slice(1).every(value => !value)) return "point";
+  if (extension.every(value => !value)) return "fist";
   return null;
 }
 
