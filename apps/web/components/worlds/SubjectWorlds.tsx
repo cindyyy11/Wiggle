@@ -13,6 +13,7 @@ import {
   type SubjectWorldId,
 } from "./subjectRoute";
 import { WiggleSplash } from "./WiggleSplash";
+import { WorldsConstellation } from "./WorldsConstellation";
 import { WorldSelector } from "./WorldSelector";
 import styles from "./SubjectWorlds.module.css";
 
@@ -99,5 +100,10 @@ export function SubjectWorlds({ childId, allowLocalFallback, client, quality, in
     <p className={styles.routeStatus} role="status" aria-live="polite">{statusMessage}</p>
   </section>;
 
-  return <WorldSelector selectedWorld="science" onSelect={selectWorld} statusMessage={statusMessage} />;
+  return <section className={styles.worldsView} aria-label="Subject worlds">
+    <div className={styles.constellationLayer}>
+      <WorldsConstellation selectedWorld="science" quality={quality} onSelect={selectWorld} />
+    </div>
+    <WorldSelector selectedWorld="science" onSelect={selectWorld} statusMessage={statusMessage} />
+  </section>;
 }
