@@ -1,6 +1,6 @@
 "use client";
 
-import { Component, useEffect, useMemo, useRef, type ReactNode } from "react";
+import { Component, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { CanvasTexture, Group, MeshStandardMaterial, Vector3 } from "three";
 import type React from "react";
@@ -350,7 +350,39 @@ function LabInteraction({ props }: { props: MagnetHandLabSceneProps }) {
 }
 
 export function MagnetHandLabScene(props: MagnetHandLabSceneProps): React.JSX.Element {
-  return <LabGraphicsBoundary onFailure={() => props.onHandStatus("The lab view needs a graphics-capable device.")}>
+  const [webglSupported, setWebglSupported] = useState<boolean | null>(null);
+  const graphicsFailureReported = useRef(false);
+  const probedWebgl = useRef(false);
+  const statusCallback = useRef(props.onHandStatus);
+  statusCallback.current = props.onHandStatus;
+  const reportGraphicsFailure = useCallback(() => {
+    if (graphicsFailureReported.current) return;
+    graphicsFailureReported.current = true;
+    setWebglSupported(false);
+    statusCallback.current("The lab view needs a graphics-capable device.");
+  }, []);
+
+  useEffect(() => {
+    if (probedWebgl.current) return;
+    probedWebgl.current = true;
+    let cancelled = false;
+    let supported = false;
+    let context: WebGL2RenderingContext | null = null;
+    try {
+      const probe = document.createElement("canvas");
+      context = probe.getContext("webgl2", { failIfMajorPerformanceCaveat: true });
+      supported = Boolean(context);
+    } catch { supported = false; }
+    context?.getExtension("WEBGL_lose_context")?.loseContext();
+    if (cancelled) return;
+    if (supported) setWebglSupported(true);
+    else reportGraphicsFailure();
+    return () => { cancelled = true; };
+  }, [reportGraphicsFailure]);
+
+  if (webglSupported !== true) return <></>;
+
+  return <LabGraphicsBoundary onFailure={reportGraphicsFailure}>
     <Canvas
       aria-label="Magnet Lab workbench"
       aria-hidden="true"
