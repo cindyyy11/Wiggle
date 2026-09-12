@@ -66,7 +66,7 @@ export function SolarSystemHub({ onEnterNumeria }: SolarSystemHubProps) {
         <img className={styles.hubMark} src="/brand/wiggle-mark.png" alt="Wiggle character mark" />
         <div>
           <p className={styles.tagline}>Wiggle. Wonder. Wow!</p>
-          <h1 id="world-hub-title">Pick a bright place to wonder.</h1>
+          <h1 id="world-hub-title">Orbit a little world, then land where curiosity leads.</h1>
         </div>
         <button className={styles.spaceLogButton} type="button" onClick={toggleSpaceLog} aria-label="My Space Log, shortcut J">
           My Space Log <kbd>J</kbd>
@@ -77,6 +77,7 @@ export function SolarSystemHub({ onEnterNumeria }: SolarSystemHubProps) {
         <div className={styles.solarScene}>
           <SolarSystemScene selected={selected} reducedMotion={reducedMotion} onSelect={choosePlanet} />
           <p className={styles.lexiAnchor} aria-hidden="true">Lexi is keeping an eye on the stars.</p>
+          <p className={styles.sceneGuide}>Drag to orbit · scroll to zoom · choose a nearby world</p>
         </div>
 
         <nav className={styles.destinationControls} aria-label="Choose a learning world">
@@ -122,7 +123,7 @@ export function SolarSystemHub({ onEnterNumeria }: SolarSystemHubProps) {
             transition={{ duration: 0.12, ease: "easeOut" }}
             style={{ backgroundPosition: `${50 + progress * 14}% ${50 - progress * 10}%` }}
           >
-            <span>Following the starlight to Numeria…</span>
+            <span>Landing near Numeria’s Number Valley…</span>
           </motion.div>
         ) : null}
       </AnimatePresence>
