@@ -1,0 +1,133 @@
+.mission {
+  width: min(100%, 52rem);
+  margin: 0 auto;
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+  border: 3px solid #2e5266;
+  border-radius: 1.5rem;
+  background: #f7fcff;
+  color: #183342;
+  box-shadow: 0 1rem 0 #cde7f1;
+}
+
+.header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.header h2 {
+  margin: 0.25rem 0;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+}
+
+.header p { margin: 0; }
+
+.eyebrow {
+  color: #a04a3e;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.exit,
+.tryButton,
+.classify button,
+.objectButton {
+  border: 2px solid #2e5266;
+  border-radius: 0.75rem;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.exit,
+.tryButton,
+.classify button { padding: 0.7rem 1rem; }
+
+.exit { white-space: nowrap; }
+
+.progress {
+  margin: 1.5rem 0 0.75rem;
+  font-weight: 800;
+}
+
+.objectGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.objectButton {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 3.25rem;
+  padding: 0.7rem;
+  text-align: left;
+}
+
+.objectButton[aria-pressed="true"] { background: #dceff5; }
+
+.objectSwatch {
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 1px solid #2e5266;
+  border-radius: 50%;
+}
+
+.discovered {
+  color: #27644c;
+  font-size: 0.75rem;
+}
+
+.actionPanel {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  background: #e4f2f7;
+}
+
+.selection,
+.observation,
+.feedback { margin: 0.7rem 0; }
+
+.tryButton {
+  background: #ef8b78;
+  box-shadow: 0 0.2rem 0 #a04a3e;
+}
+
+.classify {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.classify button:first-child { background: #d9f0e1; }
+.classify button:last-child { background: #fff0b6; }
+
+.exit:focus-visible,
+.tryButton:focus-visible,
+.classify button:focus-visible,
+.objectButton:focus-visible {
+  outline: 3px solid #0d6f99;
+  outline-offset: 3px;
+}
+
+.complete {
+  margin: 1.25rem 0 0;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  background: #d9f0e1;
+  color: #184b35;
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+@media (max-width: 38rem) {
+  .header { flex-direction: column; }
+  .objectGrid { grid-template-columns: 1fr; }
+}
