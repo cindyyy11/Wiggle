@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
-import { travelDuration } from "./solarSystemMotion";
+import { travelProgress } from "./solarSystemMotion";
 import { PLANETS, type PlanetId } from "./worlds";
 import { useWorldStore } from "./worldStore";
 import styles from "./wiggle.module.css";
@@ -17,26 +17,43 @@ type SolarSystemHubProps = {
   onEnterNumeria: () => void;
 };
 
+type TravelState = {
+  from: PlanetId;
+  startedAt: number;
+};
+
 /** The small, configuration-driven map between Wiggle's opening and Numeria. */
 export function SolarSystemHub({ onEnterNumeria }: SolarSystemHubProps) {
   const selectedPlanetId = useWorldStore((state) => state.selectedPlanetId);
   const reducedMotion = useWorldStore((state) => state.reducedMotion);
   const selectPlanet = useWorldStore((state) => state.selectPlanet);
   const toggleSpaceLog = useWorldStore((state) => state.toggleSpaceLog);
-  const [travelling, setTravelling] = useState(false);
+  const [travel, setTravel] = useState<TravelState | null>(null);
+  const [progress, setProgress] = useState(0);
   const selected = selectedPlanetId ?? "numeria";
   const planet = PLANETS.find((item) => item.id === selected) ?? PLANETS[0];
-  const duration = travelDuration(selected, "numeria");
+  const travelling = travel !== null;
 
   useEffect(() => {
-    if (!travelling) return;
-    const timer = window.setTimeout(onEnterNumeria, duration);
-    return () => window.clearTimeout(timer);
-  }, [duration, onEnterNumeria, travelling]);
+    if (!travel) return;
+    let timer: number | undefined;
+    const tick = () => {
+      const next = travelProgress(travel.from, "numeria", Date.now() - travel.startedAt, false);
+      setProgress(next);
+      if (next >= 1) {
+        onEnterNumeria();
+        return;
+      }
+      timer = window.setTimeout(tick, 16);
+    };
+    tick();
+    return () => { if (timer !== undefined) window.clearTimeout(timer); };
+  }, [onEnterNumeria, travel]);
 
   const enterNumeria = () => {
     if (reducedMotion) { onEnterNumeria(); return; }
-    setTravelling(true);
+    setProgress(0);
+    setTravel({ from: selected, startedAt: Date.now() });
   };
 
   const choosePlanet = (id: PlanetId) => {
@@ -98,10 +115,12 @@ export function SolarSystemHub({ onEnterNumeria }: SolarSystemHubProps) {
           <motion.div
             className={styles.travelOverlay}
             role="status"
+            data-travel-progress={progress.toFixed(3)}
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            animate={{ opacity: 1, scale: 1 + progress * 0.08 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: duration / 1000, ease: "easeInOut" }}
+            transition={{ duration: 0.12, ease: "easeOut" }}
+            style={{ backgroundPosition: `${50 + progress * 14}% ${50 - progress * 10}%` }}
           >
             <span>Following the starlight to Numeria…</span>
           </motion.div>

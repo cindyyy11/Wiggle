@@ -4,10 +4,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { SolarSystemHub } from "./SolarSystemHub";
 import { travelDuration, travelProgress } from "./solarSystemMotion";
+import { canAnimatePlanet, PLANET_VISUALS, SOLAR_STAR_COUNT } from "./solarSystemScene";
 import { PLANETS } from "./worlds";
 import { useWorldStore } from "./worldStore";
 
-vi.mock("./solarSystemScene", () => ({
+vi.mock("./solarSystemScene", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./solarSystemScene")>()),
   SolarSystemScene: () => <div data-testid="solar-scene" />,
 }));
 
@@ -30,6 +32,14 @@ describe("solar-system travel", () => {
     expect(travelProgress("lexicon", "numeria", -30, false)).toBe(0);
     expect(travelProgress("lexicon", "numeria", duration / 2, false)).toBe(0.5);
     expect(travelProgress("lexicon", "numeria", duration * 2, false)).toBe(1);
+  });
+
+  it("keeps the miniature scene bounded, distinct, and still when motion is reduced", () => {
+    expect(SOLAR_STAR_COUNT).toBeLessThanOrEqual(100);
+    expect(Object.keys(PLANET_VISUALS)).toEqual(PLANETS.map((planet) => planet.id));
+    expect(new Set(Object.values(PLANET_VISUALS)).size).toBe(PLANETS.length);
+    expect(canAnimatePlanet(false)).toBe(true);
+    expect(canAnimatePlanet(true)).toBe(false);
   });
 
   it("completes travel immediately when reduced motion is enabled", () => {
@@ -63,7 +73,9 @@ describe("solar-system travel", () => {
     render(<SolarSystemHub onEnterNumeria={enter} />);
     fireEvent.click(screen.getByRole("button", { name: "Enter Numeria" }));
     expect(screen.getByRole("status").textContent).toContain("Following the starlight");
-    act(() => vi.advanceTimersByTime(travelDuration("numeria", "numeria") - 1));
+    act(() => vi.advanceTimersByTime(travelDuration("numeria", "numeria") / 2));
+    expect(screen.getByRole("status").getAttribute("data-travel-progress")).toBe("0.500");
+    act(() => vi.advanceTimersByTime(travelDuration("numeria", "numeria") / 2 - 1));
     expect(enter).not.toHaveBeenCalled();
     act(() => vi.advanceTimersByTime(1));
     expect(enter).toHaveBeenCalledTimes(1);

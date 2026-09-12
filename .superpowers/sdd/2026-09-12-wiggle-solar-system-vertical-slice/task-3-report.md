@@ -25,3 +25,24 @@ Passed:
 - `My Space Log` toggles the persisted store flag and shows its accessible `J` hint. The actual keyboard shortcut, focus-managed panel, and discovery content remain Task 4 work.
 - The solar canvas is intentionally hidden from the accessibility tree because the adjacent DOM destination controls are the equivalent accessible navigation. It is still the foreground visual surface and supports mouse/touch planet selection plus orbit/zoom.
 - No GLTF or remote model downloads were added. The scene uses only procedural, low-detail primitives and a capped star field.
+
+## Review fix round 1
+
+### Fixed findings
+
+- Planet-level `useFrame` rotation now receives and honors `reducedMotion`; the extracted `canAnimatePlanet()` helper is covered directly so individual planet rotation cannot continue in the reduced-motion branch.
+- The live travel treatment now consumes `travelProgress()` in production. A deterministic `Date.now()` loop updates Framer Motion scale and the overlay's gradient position every 16ms, exposes the clamped value as `data-travel-progress`, and enters Numeria only at progress `1`. Reduced motion still calls the Numeria entry callback immediately without mounting the overlay.
+- Replaced the compressed hub stylesheet with a maintainable formatted version and raised the mid-width layout breakpoint from 850px to 910px. The two-column middle layout uses shrinkable tracks, preventing the former 851–909px three-column overflow.
+- Added actual scene constraints coverage: the fixed capped star count, one distinct visual silhouette per configured planet, and the reduced-motion helper are asserted without relying solely on the mocked canvas.
+- Added an 880px Playwright regression that verifies the hub controls and Numeria preview are visible with no document horizontal overflow.
+- Unstaged only the unrelated `.worktrees/playful-brand` deletion before preparing this fix; its contents were not changed.
+
+### Fix-round verification
+
+Passed:
+
+- `npm run test --workspace=@wiggle/web -- solarSystemScene.test.tsx` — 5 tests
+- `npm run typecheck --workspace=@wiggle/web`
+- `npm run lint --workspace=@wiggle/web`
+- `npm run build --workspace=@wiggle/web`
+- `PLAYWRIGHT_EXTERNAL_SERVERS=1 npm run test:e2e --workspace=@wiggle/web -- wiggle-hub.spec.ts` — desktop and mobile projects, 2 tests passed

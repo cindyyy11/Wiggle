@@ -12,6 +12,19 @@ export type SolarSystemSceneProps = {
   onSelect: (id: PlanetId) => void;
 };
 
+export const SOLAR_STAR_COUNT = 88;
+export const PLANET_VISUALS = {
+  numeria: "ringed-sphere",
+  lexicon: "page-facet",
+  novalab: "ringed-icosahedron",
+  "reset-moon": "cratered-moon",
+  constellation: "star-cluster",
+} as const satisfies Record<PlanetId, string>;
+
+export function canAnimatePlanet(reducedMotion: boolean): boolean {
+  return !reducedMotion;
+}
+
 const orbitScale = 4.65;
 
 function orbitPoints(radius: number) {
@@ -41,12 +54,22 @@ function planetPosition(planet: PlanetDefinition): [number, number, number] {
   return [Math.cos(angle) * radius, Math.sin(angle * 1.8) * 0.28, Math.sin(angle) * radius * 0.58];
 }
 
-function Planet({ planet, active, onSelect }: { planet: PlanetDefinition; active: boolean; onSelect: (id: PlanetId) => void }) {
+function Planet({
+  planet,
+  active,
+  reducedMotion,
+  onSelect,
+}: {
+  planet: PlanetDefinition;
+  active: boolean;
+  reducedMotion: boolean;
+  onSelect: (id: PlanetId) => void;
+}) {
   const body = useRef<Group>(null);
   const size = planet.id === "numeria" ? 0.48 : 0.26 + planet.orbitalPosition.radius * 0.14;
 
   useFrame((_, delta) => {
-    if (body.current) body.current.rotation.y += Math.min(delta, 0.05) * 0.18;
+    if (body.current && canAnimatePlanet(reducedMotion)) body.current.rotation.y += Math.min(delta, 0.05) * 0.18;
   });
 
   return (
@@ -56,11 +79,7 @@ function Planet({ planet, active, onSelect }: { planet: PlanetDefinition; active
       scale={active ? 1.22 : 1}
       onClick={(event) => { event.stopPropagation(); onSelect(planet.id); }}
     >
-      {planet.id === "numeria" ? <NumeriaShape size={size} color={planet.palette.primary} accent={planet.palette.accent} /> : null}
-      {planet.id === "lexicon" ? <LexiconShape size={size} color={planet.palette.primary} accent={planet.palette.accent} /> : null}
-      {planet.id === "novalab" ? <NovaLabShape size={size} color={planet.palette.primary} accent={planet.palette.accent} /> : null}
-      {planet.id === "reset-moon" ? <ResetMoonShape size={size} color={planet.palette.primary} accent={planet.palette.accent} /> : null}
-      {planet.id === "constellation" ? <ConstellationShape size={size} color={planet.palette.primary} accent={planet.palette.accent} /> : null}
+      <PlanetSilhouette planet={planet} size={size} />
       <mesh scale={1.045}>
         <icosahedronGeometry args={[size, 1]} />
         <meshBasicMaterial color={planet.palette.glow} transparent opacity={active ? 0.13 : 0.04} />
@@ -69,35 +88,75 @@ function Planet({ planet, active, onSelect }: { planet: PlanetDefinition; active
   );
 }
 
+function PlanetSilhouette({ planet, size }: { planet: PlanetDefinition; size: number }) {
+  const props = { size, color: planet.palette.primary, accent: planet.palette.accent };
+  switch (PLANET_VISUALS[planet.id]) {
+    case "ringed-sphere": return <NumeriaShape {...props} />;
+    case "page-facet": return <LexiconShape {...props} />;
+    case "ringed-icosahedron": return <NovaLabShape {...props} />;
+    case "cratered-moon": return <ResetMoonShape {...props} />;
+    case "star-cluster": return <ConstellationShape {...props} />;
+  }
+}
+
 function ClayMaterial({ color }: { color: string }) {
   return <meshStandardMaterial color={color} roughness={0.9} metalness={0.01} flatShading />;
 }
 
 function NumeriaShape({ size, color, accent }: { size: number; color: string; accent: string }) {
-  return <><mesh castShadow receiveShadow><sphereGeometry args={[size, 14, 10]} /><ClayMaterial color={color} /></mesh><mesh rotation={[0.55, 0.15, 0]}><torusGeometry args={[size * 1.2, size * 0.055, 5, 22]} /><ClayMaterial color={accent} /></mesh></>;
+  return (
+    <>
+      <mesh castShadow receiveShadow><sphereGeometry args={[size, 14, 10]} /><ClayMaterial color={color} /></mesh>
+      <mesh rotation={[0.55, 0.15, 0]}><torusGeometry args={[size * 1.2, size * 0.055, 5, 22]} /><ClayMaterial color={accent} /></mesh>
+    </>
+  );
 }
 
 function LexiconShape({ size, color, accent }: { size: number; color: string; accent: string }) {
-  return <><mesh castShadow receiveShadow><dodecahedronGeometry args={[size, 0]} /><ClayMaterial color={color} /></mesh><mesh position={[size * 0.55, 0, size * 0.34]} rotation={[0.4, 0.3, 0.2]}><boxGeometry args={[size * 0.32, size * 0.46, size * 0.07]} /><ClayMaterial color={accent} /></mesh></>;
+  return (
+    <>
+      <mesh castShadow receiveShadow><dodecahedronGeometry args={[size, 0]} /><ClayMaterial color={color} /></mesh>
+      <mesh position={[size * 0.55, 0, size * 0.34]} rotation={[0.4, 0.3, 0.2]}><boxGeometry args={[size * 0.32, size * 0.46, size * 0.07]} /><ClayMaterial color={accent} /></mesh>
+    </>
+  );
 }
 
 function NovaLabShape({ size, color, accent }: { size: number; color: string; accent: string }) {
-  return <><mesh castShadow receiveShadow><icosahedronGeometry args={[size, 1]} /><ClayMaterial color={color} /></mesh><mesh rotation={[0.95, 0.3, 0]}><torusGeometry args={[size * 1.1, size * 0.035, 5, 20]} /><ClayMaterial color={accent} /></mesh></>;
+  return (
+    <>
+      <mesh castShadow receiveShadow><icosahedronGeometry args={[size, 1]} /><ClayMaterial color={color} /></mesh>
+      <mesh rotation={[0.95, 0.3, 0]}><torusGeometry args={[size * 1.1, size * 0.035, 5, 20]} /><ClayMaterial color={accent} /></mesh>
+    </>
+  );
 }
 
 function ResetMoonShape({ size, color, accent }: { size: number; color: string; accent: string }) {
-  return <><mesh castShadow receiveShadow><sphereGeometry args={[size, 10, 8]} /><ClayMaterial color={color} /></mesh><mesh position={[size * 0.3, size * 0.24, size * 0.8]}><sphereGeometry args={[size * 0.19, 8, 6]} /><ClayMaterial color={accent} /></mesh><mesh position={[-size * 0.26, -size * 0.15, size * 0.86]}><sphereGeometry args={[size * 0.09, 7, 5]} /><ClayMaterial color={accent} /></mesh></>;
+  return (
+    <>
+      <mesh castShadow receiveShadow><sphereGeometry args={[size, 10, 8]} /><ClayMaterial color={color} /></mesh>
+      <mesh position={[size * 0.3, size * 0.24, size * 0.8]}><sphereGeometry args={[size * 0.19, 8, 6]} /><ClayMaterial color={accent} /></mesh>
+      <mesh position={[-size * 0.26, -size * 0.15, size * 0.86]}><sphereGeometry args={[size * 0.09, 7, 5]} /><ClayMaterial color={accent} /></mesh>
+    </>
+  );
 }
 
 function ConstellationShape({ size, color, accent }: { size: number; color: string; accent: string }) {
-  return <><mesh castShadow receiveShadow><icosahedronGeometry args={[size * 0.65, 1]} /><ClayMaterial color={color} /></mesh>{[-1, 1].map((side) => <mesh key={side} position={[side * size * 0.72, size * 0.34, 0]}><icosahedronGeometry args={[size * 0.22, 0]} /><ClayMaterial color={accent} /></mesh>)}</>;
+  return (
+    <>
+      <mesh castShadow receiveShadow><icosahedronGeometry args={[size * 0.65, 1]} /><ClayMaterial color={color} /></mesh>
+      {[-1, 1].map((side) => (
+        <mesh key={side} position={[side * size * 0.72, size * 0.34, 0]}>
+          <icosahedronGeometry args={[size * 0.22, 0]} /><ClayMaterial color={accent} />
+        </mesh>
+      ))}
+    </>
+  );
 }
 
 function StarField() {
   const geometry = useMemo(() => {
-    const count = 88;
-    const positions = new Float32Array(count * 3);
-    for (let index = 0; index < count; index += 1) {
+    const positions = new Float32Array(SOLAR_STAR_COUNT * 3);
+    for (let index = 0; index < SOLAR_STAR_COUNT; index += 1) {
       const longitude = index * 2.399963;
       const latitude = Math.asin(2 * ((index * 0.618034) % 1) - 1);
       const radius = 13 + (index % 5) * 0.8;
@@ -145,7 +204,15 @@ function SolarObjects({ selected, reducedMotion, onSelect }: SolarSystemScenePro
       {PLANETS.map((planet) => <Orbit key={`${planet.id}-orbit`} radius={planet.orbitalPosition.radius} />)}
       <mesh><sphereGeometry args={[0.37, 12, 8]} /><meshStandardMaterial color="#f6b83e" roughness={0.92} /></mesh>
       <pointLight color="#ffcf70" intensity={2.5} distance={8} />
-      {PLANETS.map((planet) => <Planet key={planet.id} planet={planet} active={planet.id === selected} onSelect={onSelect} />)}
+      {PLANETS.map((planet) => (
+        <Planet
+          key={planet.id}
+          planet={planet}
+          active={planet.id === selected}
+          reducedMotion={reducedMotion}
+          onSelect={onSelect}
+        />
+      ))}
       <LexiAnchor reducedMotion={reducedMotion} />
       <StarField />
     </group>
@@ -155,11 +222,25 @@ function SolarObjects({ selected, reducedMotion, onSelect }: SolarSystemScenePro
 /** The visual primary navigation; adjacent DOM controls provide its keyboard contract. */
 export function SolarSystemScene({ selected, reducedMotion, onSelect }: SolarSystemSceneProps) {
   return (
-    <Canvas aria-hidden="true" dpr={[1, 1.4]} camera={{ position: [0, 3.3, 8.8], fov: 45, near: 0.1, far: 40 }} gl={{ antialias: true, alpha: true, powerPreference: "low-power" }} fallback="Choose a destination using the controls below.">
+    <Canvas
+      aria-hidden="true"
+      dpr={[1, 1.4]}
+      camera={{ position: [0, 3.3, 8.8], fov: 45, near: 0.1, far: 40 }}
+      gl={{ antialias: true, alpha: true, powerPreference: "low-power" }}
+      fallback="Choose a destination using the controls below."
+    >
       <ambientLight intensity={1.05} color="#fff7e1" />
       <directionalLight position={[4, 5, 5]} intensity={1.7} color="#ffffff" />
       <SolarObjects selected={selected} reducedMotion={reducedMotion} onSelect={onSelect} />
-      <OrbitControls enablePan={false} enableDamping={!reducedMotion} dampingFactor={0.08} minDistance={6.8} maxDistance={11.5} minPolarAngle={0.45} maxPolarAngle={1.42} />
+      <OrbitControls
+        enablePan={false}
+        enableDamping={!reducedMotion}
+        dampingFactor={0.08}
+        minDistance={6.8}
+        maxDistance={11.5}
+        minPolarAngle={0.45}
+        maxPolarAngle={1.42}
+      />
     </Canvas>
   );
 }
