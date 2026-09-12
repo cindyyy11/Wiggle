@@ -8,7 +8,7 @@ import { createClient, householdSession } from "../../lib/supabase/server";
 
 vi.mock("../../lib/supabase/config", () => ({ authConfig: vi.fn() }));
 vi.mock("../../lib/supabase/server", () => ({ createClient: vi.fn(), householdSession: vi.fn() }));
-vi.mock("../../components/wiggle/WiggleExperience", () => ({ WiggleExperience: ({ childId, allowLocalFallback }: { childId: string; allowLocalFallback: boolean }) => <div data-testid="mission" data-child={childId} data-demo={String(allowLocalFallback)} /> }));
+vi.mock("../../components/mission/MissionAtlas", () => ({ MissionAtlas: ({ childId, allowLocalFallback }: { childId: string; allowLocalFallback: boolean }) => <div data-testid="mission" data-child={childId} data-demo={String(allowLocalFallback)} /> }));
 const order = vi.fn();
 const eq = vi.fn(() => ({ order }));
 beforeEach(() => {
