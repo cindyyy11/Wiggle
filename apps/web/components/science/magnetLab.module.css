@@ -1,133 +1,150 @@
 .mission {
-  width: min(100%, 52rem);
-  margin: 0 auto;
-  padding: clamp(1.25rem, 4vw, 2.5rem);
-  border: 3px solid #2e5266;
-  border-radius: 1.5rem;
-  background: #f7fcff;
-  color: #183342;
-  box-shadow: 0 1rem 0 #cde7f1;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-height: min(52rem, 90svh);
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(10rem, 1fr) minmax(18rem, 2.7fr) minmax(10rem, 1fr);
+  grid-template-rows: auto 1fr;
+  gap: 1.5rem;
+  padding: clamp(1rem, 2.5vw, 2rem);
+  overflow-x: clip;
+  border-radius: 2rem;
+  background: #211a33;
+  color: #fff0d4;
 }
-
-.header {
+.mission *, .mission *::before, .mission *::after { box-sizing: border-box; }
+.mission ::selection { background: #ffd991; color: #342c43; }
+.mission h1 { margin: 0; font-size: clamp(1.6rem, 2.8vw, 2.5rem); line-height: 1.15; letter-spacing: -.025em; text-wrap: balance; }
+.mission p { line-height: 1.5; }
+.mission button { min-width: 44px; min-height: 44px; padding: .8rem 1rem; font: inherit; font-weight: 700; cursor: pointer; border: 0; border-radius: 1rem; transition: background-color 160ms ease-out; }
+.mission button:focus-visible { outline: 3px solid #ffd991; outline-offset: 5px; }
+.exit { grid-column: 1; grid-row: 1; align-self: start; justify-self: start; background: #f9e7ce; color: #342c43; z-index: 2; }
+.exit:hover, .retry:hover { background: #ffd991; }
+.missionCard { grid-column: 2; grid-row: 1; z-index: 2; text-align: center; padding: 1.4rem 1.5rem 1rem; background: #fff0d4; color: #342c43; border-radius: 1.5rem; box-shadow: 0 .75rem 2rem #100d2040; }
+.missionCard p { margin: .75rem 0; }
+.progress { display: flex; justify-content: center; gap: .55rem; margin-top: 1rem; }
+.progress span { width: .8rem; height: .8rem; border: 2px solid #72576b; border-radius: 50%; }
+.progress span[data-complete="true"] { background: #5b785b; border-color: #5b785b; }
+.missionCard .checkpoint { margin-bottom: 0; font-size: .8rem; font-weight: 700; color: #654d5c; }
+.guide { grid-column: 1; grid-row: 2; z-index: 2; align-self: start; }
+.guideSpeaker {
+  display: grid;
+  place-items: center;
+  margin: 0 auto .35rem;
+  width: fit-content;
+}
+.guideMark { display: block; width: 5rem; max-width: 100%; height: 5rem; object-fit: contain; }
+.guideSpeaker[data-talking="true"] .guideMark {
+  animation: guide-talk 380ms ease-in-out infinite;
+  transform-origin: 50% 80%;
+}
+.speechBubble {
+  position: relative;
+  margin: .55rem 0 0;
+  padding: 1rem 1.05rem;
+  border-radius: 1.25rem;
+  background: #f9e7ce;
+  color: #342c43;
+  box-shadow: 0 .5rem 1.5rem #100d2040;
+  animation: bubble-pop 320ms ease-out;
+}
+.speechBubble::before {
+  content: "";
+  position: absolute;
+  top: -.42rem;
+  left: 50%;
+  width: .75rem;
+  height: .75rem;
+  background: #f9e7ce;
+  transform: translateX(-50%) rotate(45deg);
+  box-shadow: -.2rem -.2rem .35rem #100d2014;
+}
+.speechBubble[data-reduced-motion="true"] { animation: none; }
+.retry { width: 100%; margin-top: 1rem; background: #ef936d; color: #342c43; }
+@keyframes bubble-pop {
+  from { opacity: 0; transform: translateY(.45rem) scale(.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes guide-talk {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-.12rem) rotate(-3deg); }
+}
+.workbench { grid-column: 1 / -1; grid-row: 2; min-width: 0; height: clamp(24rem, 48vw, 38rem); z-index: 1; align-self: end; }
+.cameraBackdrop, .cameraBackdropReady {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+}
+.cameraBackdrop { opacity: 0; }
+.cameraBackdropReady { opacity: 1; }
+.cameraBackdropReady::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(165deg, #211a33a6 0%, #45354f73 48%, #f9e7ce3d 100%);
+}
+.cameraBackdropVideo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+  opacity: .3;
+}
+.cameraCard { grid-column: 3; grid-row: 1; align-self: start; z-index: 2; min-width: 0; padding: .8rem 1rem; background: #f9e7ce; color: #342c43; border-radius: 1.4rem; box-shadow: 0 .75rem 2rem #100d2040; }
+.cameraCard h2 { font-size: 1rem; margin: .15rem 0 .45rem; }
+.cameraCard > p { font-size: .8rem; margin: .55rem 0 0; }
+.cameraStatus { margin: 0; font-weight: 700; color: #654d5c; }
+.objectKey {
+  grid-column: 3;
+  grid-row: 2;
+  align-self: end;
+  z-index: 2;
+  min-width: 0;
+  padding: .75rem .9rem;
+  background: #fff0d4;
+  color: #342c43;
+  border-radius: 1.25rem;
+  box-shadow: 0 .5rem 1.5rem #100d2040;
+}
+.objectKey h2 { margin: 0 0 .55rem; font-size: .95rem; }
+.objectKey ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; }
+.objectKey li {
   display: flex;
-  align-items: start;
   justify-content: space-between;
-  gap: 1rem;
-}
-
-.header h2 {
-  margin: 0.25rem 0;
-  font-size: clamp(1.75rem, 4vw, 2.5rem);
-}
-
-.header p { margin: 0; }
-
-.eyebrow {
-  color: #a04a3e;
-  font-size: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-}
-
-.exit,
-.tryButton,
-.classify button,
-.objectButton {
-  border: 2px solid #2e5266;
-  border-radius: 0.75rem;
-  background: #fff;
-  color: inherit;
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.exit,
-.tryButton,
-.classify button { padding: 0.7rem 1rem; }
-
-.exit { white-space: nowrap; }
-
-.progress {
-  margin: 1.5rem 0 0.75rem;
-  font-weight: 800;
-}
-
-.objectGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-}
-
-.objectButton {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
+  gap: .75rem;
   align-items: center;
-  gap: 0.55rem;
-  min-height: 3.25rem;
-  padding: 0.7rem;
-  text-align: left;
+  padding: .45rem .55rem;
+  border-radius: .7rem;
+  background: #f9e7ce;
+  font-size: .78rem;
 }
-
-.objectButton[aria-pressed="true"] { background: #dceff5; }
-
-.objectSwatch {
-  width: 1.1rem;
-  height: 1.1rem;
-  border: 1px solid #2e5266;
-  border-radius: 50%;
+.objectKey li strong { font-size: .72rem; letter-spacing: .02em; text-transform: uppercase; }
+.objectKey li[data-result="attracted"] strong { color: #8a5a12; }
+.objectKey li[data-result="not-attracted"] strong { color: #355978; }
+.objectKey li[data-result="mystery"] strong { color: #654d5c; }
+@media (max-width: 48rem) {
+  .mission { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto; gap: 1rem; padding: 1rem; border-radius: 1.3rem; }
+  .exit, .missionCard, .guide, .workbench, .cameraCard, .objectKey { grid-column: 1; grid-row: auto; }
+  .missionCard { padding: 1.1rem; }
+  .guide { display: grid; grid-template-columns: 3rem minmax(0, 1fr); align-items: start; gap: .65rem; }
+  .guideSpeaker { margin: 0; }
+  .guideMark { width: 3rem; height: 3rem; margin: 0; }
+  .speechBubble { margin: 0; padding: .75rem; font-size: .9rem; animation-duration: 240ms; }
+  .speechBubble::before { top: .85rem; left: -.28rem; transform: rotate(45deg); }
+  .retry { grid-column: 2; margin-top: 0; }
+  .workbench { height: clamp(20rem, 75vw, 30rem); }
+  .cameraCard { padding: .75rem 1rem; }
+  .objectKey { order: 5; }
 }
-
-.discovered {
-  color: #27644c;
-  font-size: 0.75rem;
-}
-
-.actionPanel {
-  margin-top: 1rem;
-  padding: 1rem;
-  border-radius: 1rem;
-  background: #e4f2f7;
-}
-
-.selection,
-.observation,
-.feedback { margin: 0.7rem 0; }
-
-.tryButton {
-  background: #ef8b78;
-  box-shadow: 0 0.2rem 0 #a04a3e;
-}
-
-.classify {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.classify button:first-child { background: #d9f0e1; }
-.classify button:last-child { background: #fff0b6; }
-
-.exit:focus-visible,
-.tryButton:focus-visible,
-.classify button:focus-visible,
-.objectButton:focus-visible {
-  outline: 3px solid #0d6f99;
-  outline-offset: 3px;
-}
-
-.complete {
-  margin: 1.25rem 0 0;
-  padding: 1rem;
-  border-radius: 0.75rem;
-  background: #d9f0e1;
-  color: #184b35;
-  font-size: 1.2rem;
-  font-weight: 800;
-}
-
-@media (max-width: 38rem) {
-  .header { flex-direction: column; }
-  .objectGrid { grid-template-columns: 1fr; }
+@media (prefers-reduced-motion: reduce) {
+  .mission button { transition: none; }
+  .speechBubble { animation: none; }
+  .guideSpeaker[data-talking="true"] .guideMark { animation: none; }
 }

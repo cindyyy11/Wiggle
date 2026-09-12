@@ -14,6 +14,8 @@ export function Astronaut({ input, reducedMotion }: { input: InputRef; reducedMo
   useFrame((_, rawDelta) => {
     if (!explorer.current) return;
     const delta = Math.min(rawDelta, .05); const state = input.current;
+    if (state.teleport) { motion.normal.set(...surfacePoint(state.teleport, 1)); state.teleport = null; motion.hopTime = -1; state.destination = null; }
+    if (state.paused) { state.keys.clear(); state.horizontal = 0; state.vertical = 0; state.hop = false; state.destination = null; }
     const horizontal = state.horizontal + Number(state.keys.has("arrowright") || state.keys.has("d")) - Number(state.keys.has("arrowleft") || state.keys.has("a"));
     const vertical = state.vertical + Number(state.keys.has("arrowup") || state.keys.has("w")) - Number(state.keys.has("arrowdown") || state.keys.has("s"));
     const speed = state.keys.has("shift") || state.running ? .75 : .42;

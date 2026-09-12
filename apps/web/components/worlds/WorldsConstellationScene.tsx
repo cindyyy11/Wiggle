@@ -1,27 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useRef, type ReactNode } from "react";
+import { useEffect, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Group, MeshStandardMaterial } from "three";
 import type { SubjectWorldId } from "./subjectRoute";
+import { ConstellationDressings } from "./ConstellationDressings";
+import { PlanetCarousel } from "./PlanetCarousel";
+import type { OrbitDecorationCounts } from "./worldOrbit";
 
-type DecorationCounts = { stars: number; debris: number };
-
-type WorldsConstellationSceneProps = {
-  selectedWorld: SubjectWorldId;
+export type WorldsConstellationSceneProps = {
+  selectedWorld?: SubjectWorldId;
+  onChoose?: (world: SubjectWorldId) => void;
+  activeWorld: SubjectWorldId | null;
   quality: "high" | "low";
   reducedMotion: boolean;
-  counts: DecorationCounts;
+  counts: OrbitDecorationCounts;
   onSelect: (world: SubjectWorldId) => void;
+  onActiveWorldChange: (world: SubjectWorldId | null) => void;
   onQualityChange: () => void;
   onContextLost: () => void;
 };
-
-const scienceMatte = new MeshStandardMaterial({ color: "#7fbd9a", roughness: 1, flatShading: true });
-const numeriaMatte = new MeshStandardMaterial({ color: "#9eb9df", roughness: 1, flatShading: true });
-const lockedMatte = new MeshStandardMaterial({ color: "#a7a6ad", roughness: 1, flatShading: true, transparent: true, opacity: .72 });
-const ringMatte = new MeshStandardMaterial({ color: "#f0c86c", roughness: 1, transparent: true, opacity: .58 });
-const debrisMatte = new MeshStandardMaterial({ color: "#d6c7a3", roughness: 1, flatShading: true, transparent: true, opacity: .58 });
 
 function RendererHealth({ onContextLost, onQualityChange, quality }: Pick<WorldsConstellationSceneProps, "onContextLost" | "onQualityChange" | "quality">) {
   const { gl } = useThree();
@@ -46,74 +43,25 @@ function RendererHealth({ onContextLost, onQualityChange, quality }: Pick<Worlds
   return null;
 }
 
-function ConstellationMotion({ children, reducedMotion }: { children: ReactNode; reducedMotion: boolean }) {
-  const group = useRef<Group>(null);
+function OrbitCameraFloat({ reducedMotion }: { reducedMotion: boolean }) {
   const { camera } = useThree();
-  useFrame(({ clock }, delta) => {
+  useFrame(({ clock }) => {
     if (reducedMotion) return;
-    const time = clock.getElapsedTime();
-    if (group.current) group.current.rotation.y += Math.min(delta, .05) * .045;
-    camera.position.y = .2 + Math.sin(time * .22) * .12;
+    camera.position.y = .08 + Math.sin(clock.getElapsedTime() * .22) * .12;
     camera.lookAt(0, 0, 0);
   });
-  return <group ref={group}>{children}</group>;
-}
-
-function Stars({ count }: { count: number }) {
-  const points = useMemo(() => Array.from({ length: count }, (_, index) => ({
-    position: [Math.sin(index * 2.39) * (3.1 + index % 4), Math.cos(index * 1.71) * 2.5, -2.6 - (index % 5)] as [number, number, number],
-    size: .024 + (index % 3) * .012,
-  })), [count]);
-  return <group>{points.map((star, index) => <mesh key={index} position={star.position}>
-    <sphereGeometry args={[star.size, 5, 4]} />
-    <meshBasicMaterial color={index % 3 === 0 ? "#f6e6ad" : "#d5edf0"} transparent opacity={.72} />
-  </mesh>)}</group>;
-}
-
-function Debris({ count }: { count: number }) {
-  return <group>{Array.from({ length: count }, (_, index) => <mesh
-    key={index}
-    position={[Math.sin(index * 1.93) * (2.9 + index % 3 * .18), Math.cos(index * 2.71) * 1.85, -1.5 - index % 4]}
-    rotation={[index * .27, index * .51, index * .19]}
-    material={debrisMatte}
-  >
-    <icosahedronGeometry args={[.025 + index % 3 * .016, 0]} />
-  </mesh>)}</group>;
-}
-
-function Planet({ world, position, scale, selected, material, onSelect, locked = false, detail = 1 }: {
-  world: SubjectWorldId;
-  position: [number, number, number];
-  scale: number;
-  selected: boolean;
-  material: MeshStandardMaterial;
-  onSelect: (world: SubjectWorldId) => void;
-  locked?: boolean;
-  detail?: number;
-}) {
-  return <group position={position} scale={selected ? scale * 1.06 : scale}>
-    <mesh material={material} onClick={locked ? undefined : event => { event.stopPropagation(); onSelect(world); }}>
-      <icosahedronGeometry args={[1, detail]} />
-    </mesh>
-    {world === "math" ? <mesh rotation={[1.22, .16, .34]} material={ringMatte}><torusGeometry args={[1.34, .036, 6, 24]} /></mesh> : null}
-    {locked ? <mesh position={[0, 0, 1.02]}><boxGeometry args={[.26, .2, .08]} /><meshBasicMaterial color="#fff7e7" transparent opacity={.72} /></mesh> : null}
-  </group>;
+  return null;
 }
 
 function Constellation(props: WorldsConstellationSceneProps) {
-  const planetDetail = props.quality === "high" ? 2 : 1;
   return <>
-    <ambientLight intensity={1.3} color="#dce9e2" />
-    <directionalLight position={[-3, 5, 5]} intensity={2.2} color="#fff0ca" />
-    <directionalLight position={[4, -2, 3]} intensity={1.1} color="#9fcfe3" />
-    <ConstellationMotion reducedMotion={props.reducedMotion}><group rotation={[-.13, -.38, .02]}>
-      <Planet world="science" position={[-1.5, .32, 0]} scale={1.16} selected={props.selectedWorld === "science"} material={scienceMatte} onSelect={props.onSelect} detail={planetDetail} />
-      <Planet world="math" position={[1.24, -.55, -.55]} scale={.72} selected={props.selectedWorld === "math"} material={numeriaMatte} onSelect={props.onSelect} detail={planetDetail} />
-      <Planet world="english" position={[2.54, 1.22, -1.22]} scale={.32} selected={false} material={lockedMatte} onSelect={props.onSelect} locked />
-      <Planet world="bm" position={[-2.63, -1.23, -1.1]} scale={.28} selected={false} material={lockedMatte} onSelect={props.onSelect} locked />
-      <Stars count={props.counts.stars} />
-      <Debris count={props.counts.debris} />
-    </group></ConstellationMotion>
+    <ambientLight intensity={1.2} color="#e9f5e9" />
+    <hemisphereLight args={["#fff5dc", "#2d315d", 1.15]} />
+    <directionalLight position={[-4, 5, 6]} intensity={2.35} color="#fff0d0" />
+    <directionalLight position={[4, -1, 3]} intensity={1.05} color="#9ccde1" />
+    <OrbitCameraFloat reducedMotion={props.reducedMotion} />
+    <PlanetCarousel selectedWorld={props.selectedWorld ?? "math"} reducedMotion={props.reducedMotion} onSelect={props.onSelect} onChoose={props.onChoose ?? (() => undefined)} />
+    <ConstellationDressings counts={props.counts} reducedMotion={props.reducedMotion} />
     <RendererHealth onContextLost={props.onContextLost} onQualityChange={props.onQualityChange} quality={props.quality} />
   </>;
 }
@@ -121,10 +69,10 @@ function Constellation(props: WorldsConstellationSceneProps) {
 export default function WorldsConstellationScene(props: WorldsConstellationSceneProps) {
   return <Canvas
     className="worlds-constellation-canvas"
+    aria-hidden="true"
     dpr={props.quality === "low" ? 1 : [1, 1.5]}
-    camera={{ position: [0, .2, 8.1], fov: 46, near: .1, far: 30 }}
+    camera={{ position: [0, .08, 9.4], fov: 46, near: .1, far: 30 }}
     gl={{ antialias: props.quality === "high", alpha: true, powerPreference: "low-power", failIfMajorPerformanceCaveat: true }}
-    fallback="Choose a subject world using the controls."
   >
     <Constellation {...props} />
   </Canvas>;

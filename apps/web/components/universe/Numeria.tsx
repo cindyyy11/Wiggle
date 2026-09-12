@@ -4,22 +4,24 @@ import { useEffect, useMemo, useRef } from "react";
 import { Color, IcosahedronGeometry, InstancedMesh, Object3D, Quaternion, Vector3, Float32BufferAttribute } from "three";
 import type { ThreeEvent } from "@react-three/fiber";
 import { LANDMARKS, RADIUS, surfacePoint, destinationFromPoint, type Destination } from "./world";
+import { ScienceLandScenery } from "../science/ScienceLandScenery";
+import { SCIENCE_LANDS } from "../science/scienceLands";
 
 const UP = new Vector3(0, 1, 0);
 const REGION_COLORS = ["#9dc99a", "#f4c95d", "#a9d9ee", "#ef8b78"];
 
-function createTerrain(detail: number) {
+function createTerrain(detail: number, science = false) {
   const geometry = new IcosahedronGeometry(RADIUS, detail);
   const points = geometry.getAttribute("position");
   const colors = new Float32Array(points.count * 3);
   const normal = new Vector3();
   const color = new Color();
-  const centers = LANDMARKS.slice(0, 4).map(item => new Vector3(...surfacePoint(item.destination, 1)));
+  const centers = (science ? SCIENCE_LANDS : LANDMARKS.slice(0, 4)).map(item => new Vector3(...surfacePoint(item.destination, 1)));
   for (let index = 0; index < points.count; index += 3) {
     normal.fromBufferAttribute(points, index).normalize();
     let nearest = 0; let maximum = -Infinity;
     centers.forEach((center, region) => { const alignment = normal.dot(center); if (alignment > maximum) { maximum = alignment; nearest = region; } });
-    color.set(maximum > .54 ? REGION_COLORS[nearest] : "#78ad91");
+    color.set(science ? SCIENCE_LANDS[nearest].color : maximum > .54 ? REGION_COLORS[nearest] : "#78ad91");
     color.multiplyScalar(.9 + Math.sin(index * 4.79) * .08);
     for (let vertex = index; vertex < index + 3; vertex++) {
       const x = points.getX(vertex); const y = points.getY(vertex); const z = points.getZ(vertex);
@@ -33,10 +35,11 @@ function createTerrain(detail: number) {
   return geometry;
 }
 
-export function Numeria({ quality, dimmed, onDestination }: { quality: "high" | "low"; dimmed: boolean; onDestination: (destination: Destination) => void }) {
-  const geometry = useMemo(() => createTerrain(quality === "high" ? 4 : 3), [quality]);
+export function Numeria({ quality, dimmed, onDestination, theme = "math", preview = false }: { quality: "high" | "low"; dimmed: boolean; onDestination: (destination: Destination) => void; theme?: "math" | "science"; preview?: boolean }) {
+  const geometry = useMemo(() => createTerrain(quality === "high" ? 4 : 3, theme === "science"), [quality, theme]);
   useEffect(() => () => geometry.dispose(), [geometry]);
   const move = (event: ThreeEvent<MouseEvent>) => {
+    if (preview) return;
     if (event.delta > 7) return;
     event.stopPropagation();
     onDestination(destinationFromPoint(event.point.x, event.point.y, event.point.z));
@@ -45,8 +48,7 @@ export function Numeria({ quality, dimmed, onDestination }: { quality: "high" | 
     <mesh geometry={geometry} onClick={move}>
       <meshStandardMaterial vertexColors flatShading roughness={1} color={dimmed ? "#bdd5c4" : "#fff7e7"} />
     </mesh>
-    <Forest count={quality === "high" ? 68 : 36} />
-    <TerrainObjects dimmed={dimmed} />
+    {theme === "science" ? <ScienceLandScenery quality={quality} /> : <><Forest count={quality === "high" ? 68 : 36} /><TerrainObjects dimmed={dimmed} /></>}
     <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, -3.65, 0]} scale={[1, 1, 1]}>
       <torusGeometry args={[4.08, .009, 3, 96]} /><meshBasicMaterial color="#6fa8c2" transparent opacity={.22} />
     </mesh>
