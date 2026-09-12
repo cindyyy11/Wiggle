@@ -22,4 +22,4 @@
 .splashStart:focus-visible{outline:3px solid #173e5e;outline-offset:4px}
 .splashStart:disabled{cursor:default;opacity:.72}
 @media(max-width:600px){.splash{padding:20px}.splashBrand{width:min(90vw,440px)}}
-@media(prefers-reduced-motion:reduce){.splash{transition:none}.splashBrand{animation:none}}
+@media(prefers-reduced-motion:reduce){.splash{transition:none}.splash:not(.splashLeaving) .splashBrand{animation:none}}
