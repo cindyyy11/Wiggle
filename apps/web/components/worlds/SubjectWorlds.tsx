@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MissionAtlas } from "../mission/MissionAtlas";
+import { MATHS_MISSION_BLOCKED_MESSAGE, MissionAtlas } from "../mission/MissionAtlas";
 import { SciencePlanet } from "../science/SciencePlanet";
 import type { ApiClient } from "../../lib/api/client";
 import type { QualityPreference } from "../universe/world";
@@ -61,7 +61,7 @@ export function SubjectWorlds({ childId, allowLocalFallback, client, quality, in
     const ownedNext = routeForChild(next, childId);
     if (route.world === "math" && mathsOverlayOpen && ownedNext.world !== "math") {
       window.history.replaceState({}, "", buildWorldHref(routeForChild(route, childId)));
-      setStatusMessage("Finish or leave your Maths mission before changing worlds.");
+      setStatusMessage(MATHS_MISSION_BLOCKED_MESSAGE);
       return;
     }
     window.history.pushState({}, "", buildWorldHref(ownedNext));
@@ -73,7 +73,7 @@ export function SubjectWorlds({ childId, allowLocalFallback, client, quality, in
       const next = routeForChild(parseSubjectRoute(new URLSearchParams(window.location.search)), childId);
       if (route.world === "math" && mathsOverlayOpen && next.world !== "math") {
         window.history.replaceState({}, "", buildWorldHref(routeForChild(route, childId)));
-        setStatusMessage("Finish or leave your Maths mission before changing worlds.");
+        setStatusMessage(MATHS_MISSION_BLOCKED_MESSAGE);
         return;
       }
       setRoute(next);
@@ -147,7 +147,7 @@ export function SubjectWorlds({ childId, allowLocalFallback, client, quality, in
 
   return <>
     {content}
-    <ParentEntryLink disabled={mathsOverlayOpen} disabledMessage="Finish or leave your Maths mission before changing worlds." />
+    <ParentEntryLink disabled={mathsOverlayOpen} disabledMessage={MATHS_MISSION_BLOCKED_MESSAGE} />
     {!mathsOverlayOpen ? <TwinLauncher childId={currentChild ?? DEMO_CHILD_ID} client={client} context={route.world === "science" ? "science" : null} /> : null}
   </>;
 }
