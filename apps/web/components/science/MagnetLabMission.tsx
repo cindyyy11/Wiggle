@@ -23,6 +23,7 @@ export function MagnetLabMission({ onExit, onComplete, manageFocus = true }: Mag
   const [reducedMotion, setReducedMotion] = useState(false);
   const section = useRef<HTMLElement>(null);
   const notified = useRef(false);
+  const wasReady = useRef(false);
   const exit = useRef(onExit);
   exit.current = onExit;
 
@@ -70,6 +71,12 @@ export function MagnetLabMission({ onExit, onComplete, manageFocus = true }: Mag
 
   const needsHelp = tracking.status === "denied" || tracking.status === "unavailable" || tracking.status === "off";
   const ready = tracking.status === "ready";
+
+  useEffect(() => {
+    if (wasReady.current && !ready && state.held) dispatch({ type: "cancel", id: state.held });
+    wasReady.current = ready;
+  }, [ready, state.held]);
+
   const count = state.checkpoint === "explore" ? state.explored.length : state.checkpoint === "sort" ? state.sorted.length : Number(state.foundHiddenMagnet);
   const total = state.checkpoint === "hidden" ? 1 : MAGNET_OBJECTS.length;
   const announcement = needsHelp ? "This magnet activity needs your camera so your hand can guide the magnet."
