@@ -97,7 +97,7 @@ export function useHandTracking({ enabled, onGestureStart, onGestureHold, onGest
       }
     };
     const onHidden = () => { if (document.hidden) { cancelled = true; stop(); latest.current = createEmptyLatest(); setState(emptyState); } };
-    const onPageHide = () => { cancelled = true; stop(); };
+    const onPageHide = () => { cancelled = true; stop(); latest.current = createEmptyLatest(); setState(emptyState); };
     document.addEventListener("visibilitychange", onHidden);
     window.addEventListener("pagehide", onPageHide);
     setState({ ...emptyState, status: "starting" });
