@@ -10,6 +10,7 @@ export type WorldState = {
   discoveredWonderIds: string[];
   spaceLogOpen: boolean;
   reducedMotion: boolean;
+  enterHub: () => void;
   selectPlanet: (id: PlanetId) => void;
   enterNumeria: () => void;
   recordWonder: (id: string) => void;
@@ -40,6 +41,7 @@ export const useWorldStore = create<WorldState>()(
   persist(
     (set) => ({
       ...initialState,
+      enterHub: () => set({ phase: "hub", selectedPlanetId: null }),
       selectPlanet: (id) => set({ selectedPlanetId: id, phase: "preview" }),
       enterNumeria: () => set({ selectedPlanetId: "numeria", phase: "numeria" }),
       recordWonder: (id) =>

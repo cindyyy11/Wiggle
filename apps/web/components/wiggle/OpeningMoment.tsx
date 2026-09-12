@@ -25,7 +25,7 @@ export function OpeningMoment({ onEnter, reducedMotion = false }: OpeningMomentP
         <h1 id="wiggle-welcome">Hey Maya! Ready to explore?</h1>
         <p className={styles.intro}>Lexi has a whole learning universe waiting for you.</p>
         <button className={styles.primaryAction} type="button" onClick={onEnter}>
-          Let&apos;s Wiggle
+          Let’s Wiggle
         </button>
       </motion.section>
     </main>
