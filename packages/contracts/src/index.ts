@@ -3,3 +3,6 @@ export * from "./api.js";
 export * from "./events.js";
 export * from "./simulation.js";
 export * from "./twin.js";
+export * from "./twinVisualState.js";
+export * from "./constellation.js";
+export * from "./patterns.js";

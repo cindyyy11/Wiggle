@@ -1,4 +1,10 @@
-from app.providers.base import ActivityContent, LexiContent, ProviderContext, TextContent
+from app.providers.base import (
+    ActivityContent,
+    LexiContent,
+    ProviderContext,
+    TextContent,
+    WeeklyNarrative,
+)
 
 
 class LocalAIProvider:
@@ -27,3 +33,17 @@ class LocalAIProvider:
         return LexiContent(
             text="Let's count three pizza slices together.", suggested_tool="request_hint"
         )
+
+    def generate_weekly_summary(self, context: ProviderContext) -> WeeklyNarrative:
+        noticed = (
+            f"{context.child_name} started short activities more independently this week."
+            if (context.independence_delta or 0) > 0
+            else f"{context.child_name} kept exploring missions this week."
+        )
+        strategy = context.most_effective_strategy
+        suggestion = (
+            f"Try offering {strategy} for the next tricky task."
+            if strategy
+            else "Try breaking the next task into three small steps."
+        )
+        return WeeklyNarrative(wiggle_noticed=noticed, parent_suggestion=suggestion)
