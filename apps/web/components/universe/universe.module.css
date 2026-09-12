@@ -11,6 +11,7 @@
 @media(max-width:600px){.universe[data-camera-mode=mission] .scene{transform:translateY(-120px)}.mapPizza{top:275px;left:50%;width:155px;height:155px;border-width:4px;padding:7px;box-shadow:0 10px 0 #8d653e,0 18px 35px #0005}.mapPizza>div{gap:5px}}
 .run{min-width:44px;height:44px;padding:0 10px;border-radius:50%;font-size:11px!important}.universe .run[aria-pressed=true]{background:#d9edc8;color:#1b352e}
 .cameraControls .parentLink{display:grid;place-items:center;width:44px;min-height:44px;border:1px solid #ffffff22;border-radius:50%;font-size:10px;color:inherit;text-decoration:none;background:#0e1a30e8}.cameraControls .parentLink:hover{background:#283853}
+.cameraControls .parentLink:disabled{cursor:not-allowed;opacity:.6}.cameraControls .parentLink:disabled:hover{background:#0e1a30e8}
 @media(max-width:900px){.zoom{display:flex;position:absolute;left:0;bottom:110px}.zoom button{width:44px;height:44px}}
 @media(max-width:600px){.cameraControls button{width:44px}.destinations{bottom:206px}.destinations button{font-size:11px}.destinations button:last-child{display:flex;grid-column:1 / 3;justify-self:center;min-width:180px}.destinationCard p{font-size:11px}.universe .missionButton{font-size:11px}.zoom{left:auto;right:0;bottom:350px;margin:0;gap:4px}.zoom button{background:#112037ee}.sliceControls{bottom:356px}.map{top:41%;width:67vw}}
 .wordmarkImage{width:48px;height:48px;object-fit:contain;display:block}
@@ -27,7 +28,6 @@
 .universe .run[aria-pressed=true],.sliceControls button[aria-pressed=true]{background:var(--wiggle-green);color:#1b352e;border-color:var(--wiggle-green)}
 @media (prefers-reduced-motion: reduce){.wordmarkImage{animation:none}.universe button:active{transform:none}}
 .handOverlay{position:absolute;inset:0;z-index:3;pointer-events:none}.handCursor{position:absolute;left:var(--hand-x);top:var(--hand-y);display:grid;place-items:center;width:32px;height:32px;transform:translate(-50%,-50%);border:2px solid #fff7e7;border-radius:50%;background:#285c85d9;color:#f4c95d;font-size:16px;box-shadow:0 0 0 5px #f4c95d33}.handStatus{position:absolute;left:50%;top:18px;transform:translateX(-50%);margin:0;padding:7px 11px;border:1px solid #ffffff38;border-radius:999px;background:#0b1225d9;color:#fff7e7;font-size:11px}.handDebug{position:absolute;left:16px;bottom:16px;max-width:calc(100% - 32px);padding:7px 9px;border:1px solid #f4c95d88;border-radius:8px;background:#0b1225eb;color:#fff7e7;font:11px ui-monospace,SFMono-Regular,Menlo,monospace}
-
 /* Daytime-cosmos surface layer: opaque, calm controls over the transparent 3D canvas. */
 .universe ::selection{background:var(--mustard);color:var(--navy)}
 .worldTitle::before,.orbitCaption::before{background:var(--cream);border:1px solid color-mix(in srgb,var(--navy) 38%,var(--pale-blue));box-shadow:0 8px 22px #285c8524}

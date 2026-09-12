@@ -1,0 +1,58 @@
+.planet {
+  position: relative;
+  box-sizing: border-box;
+  min-height: 100svh;
+  overflow: hidden;
+  padding: clamp(1rem, 4vw, 2.75rem);
+  background: radial-gradient(circle at 75% 20%, #d6f3ff 0, #d6f3ff 15%, transparent 36%), linear-gradient(135deg, #fff3d8, #e5f8f2 56%, #d4ecfb);
+  color: #173e5e;
+  font-family: "Trebuchet MS", Arial, sans-serif;
+}
+
+.canvasBackdrop { position: absolute; z-index: 0; inset: 0; min-height: 44rem; overflow: hidden; }
+.canvasBackdrop :global(.science-planet-canvas) { display: block; width: 100%; height: 100%; }
+.hud, .canvasHint, .graphicsAnnouncement { position: relative; z-index: 1; }
+.hud { max-width: 72rem; margin: 0 auto; }
+.canvasHint { max-width: 34rem; margin: clamp(2.5rem, 17vw, 12rem) auto 0; padding: .6rem .85rem; border: 2px solid #173e5e; border-radius: 999px; background: #fffdf7d9; color: #173e5e; font-weight: 800; text-align: center; }
+.graphicsAnnouncement { min-height: 1px; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.graphicsFallbackAnnouncement { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.loading { position: absolute; z-index: 2; top: 50%; left: 50%; width: max-content; margin: 0; padding: .55rem .75rem; border: 2px solid #173e5e; border-radius: 999px; background: #fff9ed; color: #173e5e; font-weight: 800; transform: translate(-50%, -50%); }
+.hudTopline { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.eyebrow, .zoneKicker { margin: 0; font-size: .74rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.eyebrow { color: #8b473d; }
+.backButton, .topicButton, .startButton, .mapZone {
+  min-height: 44px;
+  border: 2px solid #173e5e;
+  color: #173e5e;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+.backButton { padding: .65rem 1rem; border-radius: 999px; background: #fff9ed; }
+.topicControls { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: 1.2rem; }
+.topicButton { display: inline-flex; align-items: center; gap: .45rem; padding: .55rem .75rem; border-radius: .75rem; background: #ffffffc7; text-align: left; }
+.topicButton[aria-pressed="true"], .mapZone[aria-pressed="true"] { box-shadow: 0 0 0 3px #173e5e, 0 .4rem 0 #173e5e; transform: translateY(-.18rem); }
+.topicDot { width: .75rem; height: .75rem; border: 1px solid #173e5e; border-radius: 50%; flex: 0 0 auto; }
+.zoneCard { max-width: 34rem; margin-top: 1.25rem; padding: clamp(1rem, 3vw, 1.6rem); border: 3px solid #173e5e; border-radius: 1.25rem; background: #fffdf7e8; box-shadow: .7rem .7rem 0 #ef8b7899; }
+.zoneKicker { color: #8b473d; }
+.zoneCard h1 { margin: .25rem 0 .45rem; font: 400 clamp(2rem, 6vw, 3.75rem)/.95 Georgia, serif; letter-spacing: -.05em; }
+.zoneCard p { line-height: 1.45; }
+.startButton { padding: .75rem 1rem; border-radius: .8rem; background: #ef8b78; box-shadow: 0 .23rem 0 #a04a3e; }
+.comingSoon { margin-bottom: 0; padding: .65rem .8rem; border: 2px dashed #705c8c; border-radius: .7rem; background: #eee7f7; color: #3f3153; font-weight: 700; }
+.completionStatus { margin: .85rem 0 0; padding: .65rem .8rem; border: 2px solid #27644c; border-radius: .7rem; background: #d9f0e1; color: #184b35; font-weight: 800; }
+.map { position: relative; width: min(100%, 66rem); min-height: clamp(21rem, 48vw, 31rem); margin: clamp(1.75rem, 5vw, 4rem) auto 0; border: 3px solid #173e5e; border-radius: 2rem; background: linear-gradient(120deg, #73c6e8, #d2f4e8 52%, #f9d986); isolation: isolate; overflow: hidden; }
+.mapVisual { position: absolute; inset: 0; }
+.map::before, .map::after { position: absolute; z-index: -1; border-radius: 50%; background: #fff8e699; content: ""; }
+.map::before { width: 13rem; height: 13rem; top: -4rem; right: 11%; }
+.map::after { width: 9rem; height: 9rem; bottom: -3rem; left: 8%; }
+.mapOrbit { position: absolute; inset: 15% 17%; border: 2px dashed #173e5e99; border-radius: 50%; transform: rotate(-18deg); }
+.mapCore { position: absolute; top: 50%; left: 50%; display: grid; width: clamp(7rem, 18vw, 11rem); aspect-ratio: 1; place-items: center; border: 3px solid #173e5e; border-radius: 48% 52% 46% 54%; background: #9dc99a; box-shadow: inset -1rem -.8rem 0 #70a573, .45rem .45rem 0 #173e5e; color: #173e5e; font: 800 clamp(1rem, 2.5vw, 1.5rem)/.9 Georgia, serif; text-align: center; transform: translate(-50%, -50%) rotate(-8deg); }
+.mapZones { position: relative; z-index: 1; min-height: inherit; }
+.mapZone { position: absolute; display: inline-flex; align-items: center; gap: .45rem; max-width: min(42%, 15rem); padding: .55rem .7rem; border-radius: 999px; background: var(--zone-color); box-shadow: 0 .22rem 0 #173e5e; }
+.mapZone:nth-child(1) { top: 12%; left: 8%; }.mapZone:nth-child(2) { top: 13%; right: 7%; }.mapZone:nth-child(3) { top: 47%; left: 3%; }.mapZone:nth-child(4) { top: 47%; right: 3%; }.mapZone:nth-child(5) { bottom: 11%; left: 11%; }.mapZone:nth-child(6) { bottom: 11%; right: 8%; }
+.mapZoneMarker { display: grid; width: 1.45rem; height: 1.45rem; place-items: center; border: 1px solid #173e5e; border-radius: 50%; background: #fff9ed; flex: 0 0 auto; }
+.mapHint { max-width: 66rem; margin: .8rem auto 0; color: #173e5e; font-weight: 700; text-align: center; }
+.backButton:focus-visible, .topicButton:focus-visible, .startButton:focus-visible, .mapZone:focus-visible { outline: 4px solid #173e5e; outline-offset: 4px; }
+@media (max-width: 42rem) { .canvasBackdrop { min-height: 38rem; }.canvasHint { max-width: 20rem; margin-top: clamp(2rem, 19vw, 5rem); border-radius: 1rem; font-size: .9rem; }.hudTopline { align-items: flex-start; flex-direction: column-reverse; }.map { min-height: 31rem; border-radius: 1.25rem; }.mapOrbit { inset: 20% 9%; }.mapZone { max-width: 44%; font-size: .82rem; }.mapZone:nth-child(1) { top: 6%; left: 4%; }.mapZone:nth-child(2) { top: 6%; right: 4%; }.mapZone:nth-child(3) { top: 38%; left: 3%; }.mapZone:nth-child(4) { top: 38%; right: 3%; }.mapZone:nth-child(5) { bottom: 7%; left: 5%; }.mapZone:nth-child(6) { bottom: 7%; right: 5%; } }
+@media (max-width: 24rem) { .mapZone { max-width: 46%; padding: .45rem; font-size: .72rem; }.mapZoneMarker { width: 1.2rem; height: 1.2rem; }.topicButton { width: 100%; }.mapCore { width: 6.5rem; } }
+@media (prefers-reduced-motion: reduce) { .topicButton[aria-pressed="true"], .mapZone[aria-pressed="true"] { transform: none; } }

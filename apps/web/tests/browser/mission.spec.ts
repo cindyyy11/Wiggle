@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { launchWiggle } from "./helpers";
+import { launchNumeria } from "./helpers";
 
 test("the splash keeps the Wiggle logo moving while its button stays still", async ({ page }) => {
   await page.goto("/");
@@ -43,7 +43,7 @@ for (const fallback of [false, true]) {
       });
     }
     await page.goto("/");
-    await launchWiggle(page);
+    await launchNumeria(page);
     if (!fallback) await expect(page.locator("canvas")).toBeVisible({ timeout: 20000 });
     await page.getByRole("button", { name: "Start fractions mission", exact: true }).click();
     await page.getByRole("button", { name: "2 of 4", exact: true }).click();
