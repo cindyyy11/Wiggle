@@ -3,7 +3,8 @@ import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
   title: "Wiggle",
-  description: "An adaptive learning universe for curious minds."
+  description: "An adaptive learning universe for curious minds.",
+  icons: { icon: "/icon.png" }
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
