@@ -67,7 +67,7 @@ export function WorldsConstellation({ activeWorld: activeWorldProp, selectedWorl
   }, [preference]);
 
   const displayQuality = quality === "high" ? "high" : "low";
-  return <section className={styles.constellation} data-quality={quality} data-reduced-motion={String(reducedMotion)}>
+  return <section className={styles.constellation} data-testid="subject-orbit" data-quality={quality} data-reduced-motion={String(reducedMotion)}>
     {quality === "fallback" ? null : <GraphicsBoundary onFailure={() => setQuality("fallback")}><Scene
       activeWorld={activeWorld}
       reducedMotion={reducedMotion}
