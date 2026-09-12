@@ -3,24 +3,29 @@ import React from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { SciencePlanetCanvas, scienceDecorationCounts } from "./SciencePlanetCanvas";
-import SciencePlanetScene from "./SciencePlanetScene";
 
 const webgl = vi.hoisted(() => ({ supported: true, probeCalls: 0 }));
-const sceneState = vi.hoisted(() => ({ throwOnRender: false }));
-const rendererState = vi.hoisted(() => ({ canvasFallback: false, domElement: null as HTMLCanvasElement | null }));
+const sceneState = vi.hoisted(() => ({ throwOnRender: false, useActualScene: false }));
+const rendererState = vi.hoisted(() => ({ canvasFallback: false, canvasRenders: 0, fallbackRenders: 0, domElement: null as HTMLCanvasElement | null }));
 
-vi.mock("next/dynamic", () => ({
-  default: () => function Scene(props: { onZoneSelect: (zone: "ph-lab") => void; onContextLost: () => void }) {
+vi.mock("next/dynamic", async () => {
+  const { default: ActualSciencePlanetScene } = await vi.importActual<typeof import("./SciencePlanetScene")>("./SciencePlanetScene");
+  return { default: () => function Scene(props: { onZoneSelect: (zone: "ph-lab") => void; onContextLost: () => void }) {
     if (sceneState.throwOnRender) throw new Error("Science scene failed to render");
+    if (sceneState.useActualScene) return <ActualSciencePlanetScene {...props as React.ComponentProps<typeof ActualSciencePlanetScene>} />;
     return <div data-testid="science-scene">
       <button type="button" data-testid="science-model-ph-lab" onClick={() => props.onZoneSelect("ph-lab")}>Select pH Lab</button>
       <button type="button" onClick={props.onContextLost}>Simulate Science graphics loss</button>
     </div>;
-  },
-}));
+  } };
+});
 
 vi.mock("@react-three/fiber", () => ({
-  Canvas: ({ children, fallback }: { children: React.ReactNode; fallback: React.ReactNode }) => rendererState.canvasFallback ? <>{fallback}</> : <div data-testid="mock-science-canvas">{children}</div>,
+  Canvas: ({ children, fallback }: { children: React.ReactNode; fallback: React.ReactNode }) => {
+    rendererState.canvasRenders++;
+    if (rendererState.canvasFallback) { rendererState.fallbackRenders++; return <><span data-testid="mock-canvas-internal-fallback" />{fallback}</>; }
+    return <div data-testid="mock-science-canvas">{children}</div>;
+  },
   useFrame: () => undefined,
   useThree: () => ({
     gl: { domElement: rendererState.domElement ?? (rendererState.domElement = document.createElement("canvas")) },
@@ -37,23 +42,14 @@ function expectCompleteScienceFallback() {
   });
 }
 
-function sceneProps(onContextLost = vi.fn()) {
-  return {
-    quality: "high" as const,
-    reducedMotion: false,
-    selectedZone: "magnet-lab" as const,
-    onZoneSelect: vi.fn(),
-    onContextLost,
-    onQualityChange: vi.fn(),
-    counts: { clouds: 3, stars: 36, magneticFragments: 5 },
-  };
-}
-
 beforeEach(() => {
   webgl.supported = true;
   webgl.probeCalls = 0;
   sceneState.throwOnRender = false;
+  sceneState.useActualScene = false;
   rendererState.canvasFallback = false;
+  rendererState.canvasRenders = 0;
+  rendererState.fallbackRenders = 0;
   rendererState.domElement = document.createElement("canvas");
   Object.defineProperty(window, "matchMedia", { writable: true, value: vi.fn().mockReturnValue({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }) });
   vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(() => {
@@ -112,23 +108,40 @@ it("uses the complete map after a scene boundary error", async () => {
   consoleError.mockRestore();
 });
 
-it("listens for an actual WebGL context loss and prevents its default", async () => {
-  const onContextLost = vi.fn();
-  render(<SciencePlanetScene {...sceneProps(onContextLost)} />);
+it("turns an actual WebGL context loss into a complete, usable Science map", async () => {
+  sceneState.useActualScene = true;
+  const onZoneSelect = vi.fn();
+  const start = vi.fn();
+  render(<SciencePlanetCanvas selectedZone="magnet-lab" onZoneSelect={onZoneSelect} onBackToWorlds={vi.fn()} onStartMagnetLab={start} />);
+  await screen.findByTestId("mock-science-canvas");
+  await waitFor(() => expect(rendererState.domElement?.getAttribute("aria-hidden")).toBe("true"));
   const loss = new Event("webglcontextlost", { cancelable: true });
   rendererState.domElement?.dispatchEvent(loss);
 
-  await waitFor(() => expect(onContextLost).toHaveBeenCalledOnce());
+  await waitFor(expectCompleteScienceFallback);
   expect(loss.defaultPrevented).toBe(true);
+  expect(screen.queryByTestId("mock-science-canvas")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Start Magnet Lab" }));
+  expect(start).toHaveBeenCalledOnce();
+  fireEvent.click(screen.getByRole("button", { name: "Visit pH Lab" }));
+  expect(onZoneSelect).toHaveBeenCalledWith("ph-lab");
 });
 
-it("reports the Canvas internal fallback once so the outer boundary can show the complete map", async () => {
+it("turns the Canvas internal fallback into a complete, usable Science map", async () => {
+  sceneState.useActualScene = true;
   rendererState.canvasFallback = true;
-  const onContextLost = vi.fn();
-  render(<SciencePlanetScene {...sceneProps(onContextLost)} />);
+  const onZoneSelect = vi.fn();
+  const start = vi.fn();
+  render(<SciencePlanetCanvas selectedZone="magnet-lab" onZoneSelect={onZoneSelect} onBackToWorlds={vi.fn()} onStartMagnetLab={start} />);
 
-  await waitFor(() => expect(onContextLost).toHaveBeenCalledOnce());
-  expect(screen.queryByText("Choose a discovery spot using the Science topic buttons.")).toBeNull();
+  await waitFor(() => expect(rendererState.fallbackRenders).toBeGreaterThan(0));
+  await waitFor(expectCompleteScienceFallback);
+  expect(screen.queryByTestId("mock-science-canvas")).toBeNull();
+  expect(screen.queryByTestId("mock-canvas-internal-fallback")).toBeNull();
+  fireEvent.click(screen.getByRole("button", { name: "Start Magnet Lab" }));
+  expect(start).toHaveBeenCalledOnce();
+  fireEvent.click(screen.getByRole("button", { name: "Visit pH Lab" }));
+  expect(onZoneSelect).toHaveBeenCalledWith("ph-lab");
 });
 
 it("reduces only decoration density on low quality", () => {
