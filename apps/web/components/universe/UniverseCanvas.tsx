@@ -47,6 +47,8 @@ export function UniverseCanvas({ mode: controlledMode, onModeChange, quality: pr
   const landmark = LANDMARKS.find(item => item.id === selectedLandmark) ?? LANDMARKS[0];
   const reducedMotion = reducedMotionOverride ?? systemReducedMotion;
   const mapVisible = quality === "fallback" || userMap || failed;
+  const hand = pizza?.hand;
+  const handDebug = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("handDebug") === "1";
 
   useEffect(() => {
     const media = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -101,6 +103,11 @@ export function UniverseCanvas({ mode: controlledMode, onModeChange, quality: pr
     <div className={styles.scene}>
       {mapVisible ? <NumeriaMap /> : <GraphicsBoundary onFailure={graphicsFailed}><Scene mode={mode} quality={quality === "high" ? "high" : "low"} reducedMotion={reducedMotion} input={input} selectedLandmark={selectedLandmark} onLandmarkSelect={selectLandmark} onDestinationChange={onDestinationChange} onContextLost={graphicsFailed} onQualityChange={lowerQuality} pizza={pizza} /></GraphicsBoundary>}
     </div>
+    {!mapVisible && hand?.enabled ? <div className={styles.handOverlay} aria-live="polite">
+      {hand.pointer && hand.isTracking ? <span className={styles.handCursor} data-testid="hand-cursor" style={{ "--hand-x": `${(hand.pointer.x + 1) * 50}%`, "--hand-y": `${(1 - hand.pointer.y) * 50}%` } as CSSProperties} aria-hidden="true">✦</span> : null}
+      <p className={styles.handStatus}>{hand.status === "starting" ? "Opening camera…" : hand.status === "unavailable" ? "Camera unavailable. You can still use the slice buttons." : hand.isTracking ? "Hand ready" : "Show me your hand 👋"}</p>
+      {handDebug ? <output className={styles.handDebug} aria-label="Hand tracking debug">gesture: {hand.gesture ?? "none"} · pointer: {hand.pointer ? `${hand.pointer.x.toFixed(2)}, ${hand.pointer.y.toFixed(2)}` : "none"} · tracking: {String(hand.isTracking)}</output> : null}
+    </div> : null}
     {mapVisible && pizza?.visible ? <div className={styles.mapPizza} role="img" aria-label={`Pizza with ${pizza.selectedSlices.length} of four equal slices selected`}><div>{[0, 1, 2, 3].map(index => <span key={index} data-selected={pizza.selectedSlices.includes(index)} />)}</div></div> : null}
     <div className={styles.cameraControls} role="group" aria-label="View controls">
       <button type="button" aria-label="Globe view" aria-pressed={mode === "globe"} onClick={() => changeMode("globe")} title="Globe view">◎<span>Globe view</span></button>
