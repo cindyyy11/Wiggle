@@ -12,11 +12,22 @@ The browser defaults to `/api/backend`. Set server-only `WIGGLE_API_URL` to the 
 
 The queue preserves event delivery through reload, not the active mission UI or Energy display. This slice does not add account/session authentication UI. Existing FastAPI authorization boundaries remain responsible for household access.
 
-## Optional local gestures
+## 3D hand interaction and access flow
+
+To reach the gesture mission from the running app, start the web app (`npm run dev`), open `http://localhost:3000`, choose **Let's Wiggle**, select **Numeria**, then enter **Fraction Forest**. Choose **Start fractions mission**, select **Gesture** (or **Gesture + Visual**), and allow camera access when the browser asks. The camera status and fallback slice buttons are shown beside the 3D scene. On a device without camera/WebGL, the same mission remains playable with the accessible 2D map and buttons.
+
+Inside Fraction Forest the hand cursor is mapped into the 3D scene, not to screen zones:
+
+- **Point** focuses the actual slice, plate, or Lexi beacon under the ray.
+- **Pinch** grabs a focused slice, moves it across a depth-locked interaction plane, and releases it onto the plate.
+- **Fist** provides the alternate grab/drag/release gesture for the same physical slice placement.
+- **Open palm** opens Lexi only when the ray is over the real 3D beacon.
+
+The third successfully placed slice completes the pizza task. Every gesture event is semantic (object id, gesture, and outcome); camera frames, landmarks, and coordinates never leave the browser.
 
 Explicitly selecting Gesture / Gesture + Visual or Use camera gestures requests video permission. Automatic stuck adaptation never requests it. MediaPipe 0.10.17 is dynamically imported after the camera grant; only pinned static WASM (jsDelivr) and the version-1 Google hand model are downloaded. Inference is local at at most 12 FPS, without frame serialization, uploads, recording, or microphone access. The optional mirrored preview starts hidden. Tracks and the inference task close on mode exit, support entry, completion, unmount, hidden tab, and errors; late async grants/tasks are closed as well. Returning from a hidden tab requires explicitly toggling the camera again. A secure context and access to those static asset hosts are required; denial/offline/unsupported devices retain full button play.
 
-`GestureClassifier` uses palm-relative distances, an EMA confidence threshold of .8, three activation frames, three release frames, one event per hold, and a 600 ms cooldown. It emits `pinch`, `point`, `open_palm`, and `fist`. Four equal horizontal mirrored-camera zones target slices 1–4. `dispatchGesture` calls the same `selectSlice`, `grabSlice`, and `summonLexi` commands as the DOM/3D controls. Grab is idempotent selection; pinch/point toggle. Native buttons and the labeled grab selector support pointer, touch, keyboard, and screen readers.
+`GestureClassifier` uses palm-relative distances, an EMA confidence threshold of .8, three activation frames, three release frames, one event per hold, and a 600 ms cooldown. It emits `pinch`, `point`, `open_palm`, and `fist`. The 3D interaction layer raycasts the smoothed pointer against tagged scene objects and keeps held slices on a stable depth plane. Native buttons and the labeled slice controls remain a parity fallback for pointer, touch, keyboard, screen readers, denied camera permission, and unavailable WebGL.
 
 ## Learning supports
 
