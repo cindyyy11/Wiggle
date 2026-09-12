@@ -8,6 +8,8 @@ export type MagnetObject = {
   name: string;
   result: MagnetResult;
   color: string;
+  scenePosition: readonly [number, number];
+  sceneKind: "clip" | "nail" | "block" | "button";
 };
 
 export type ScienceZone = {
@@ -29,10 +31,10 @@ export const SCIENCE_ZONES = [
 ] as const satisfies readonly ScienceZone[];
 
 export const MAGNET_OBJECTS = [
-  { id: "paper-clip", name: "paper clip", result: "attracted", color: "#9aa7b4" },
-  { id: "iron-nail", name: "iron nail", result: "attracted", color: "#6f7882" },
-  { id: "wooden-block", name: "wooden block", result: "not-attracted", color: "#bd8556" },
-  { id: "plastic-button", name: "plastic button", result: "not-attracted", color: "#6aa6cf" },
+  { id: "paper-clip", name: "paper clip", result: "attracted", color: "#9aa7b4", scenePosition: [.22, .28], sceneKind: "clip" },
+  { id: "iron-nail", name: "iron nail", result: "attracted", color: "#6f7882", scenePosition: [.73, .3], sceneKind: "nail" },
+  { id: "wooden-block", name: "wooden block", result: "not-attracted", color: "#bd8556", scenePosition: [.3, .72], sceneKind: "block" },
+  { id: "plastic-button", name: "plastic button", result: "not-attracted", color: "#6aa6cf", scenePosition: [.7, .7], sceneKind: "button" },
 ] as const satisfies readonly MagnetObject[];
 
 export function resultForMagnetObject(id: MagnetObjectId): MagnetResult {
