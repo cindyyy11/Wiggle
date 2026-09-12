@@ -42,6 +42,7 @@ describe("Numeria quality and accessible controls", () => {
     expect(screen.getByRole("img", { name: /Numeria map/ })).toBeTruthy();
     fireEvent.click(screen.getByRole("button", { name: /Visit Fraction Forest/ }));
     expect(select).toHaveBeenCalledWith("fraction-forest");
+    expect(screen.getByRole("button", { name: /Visit Fraction Forest/ }).getAttribute("aria-pressed")).toBe("true");
     fireEvent.click(screen.getByRole("button", { name: "Start fractions mission" }));
     expect(start).toHaveBeenCalledOnce();
     expect(screen.getByRole("button", { name: /Visit Geometry Ridge/ })).toBeTruthy();
