@@ -17,7 +17,8 @@ test("parent PIN, responsive dashboard, settings, check-in and relock", async ({
   await expect(page.getByRole("heading", { name: "Growing independence" })).toBeVisible();
   const cookies = await page.context().cookies();
   expect(cookies.find(cookie => cookie.name === "wiggle-parent-pin")?.httpOnly).toBe(true);
-  await page.getByLabel("Minutes between reminders").fill("25");
+  await expect(page.getByText("Save your preferred time between breaks. Automatic reminders are not available yet.")).toBeVisible();
+  await page.getByLabel("Preferred minutes between breaks").fill("25");
   await page.getByRole("button", { name: "Save break preference" }).click();
   await expect(page.getByText("Break preference saved.")).toBeVisible();
   await page.getByLabel("Anything helpful to know?").fill("We used paper pizza slices today.");

@@ -2,6 +2,7 @@
 
 from collections.abc import Mapping
 from datetime import UTC, datetime, timedelta
+from decimal import ROUND_HALF_UP, Decimal
 from enum import StrEnum
 from re import compile as re_compile
 from types import MappingProxyType
@@ -20,6 +21,11 @@ from pydantic.alias_generators import to_camel
 
 Probability = Annotated[float, Field(ge=0, le=1)]
 _ZULU_TIMESTAMP = re_compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?Z$")
+
+
+def canonical_probability(value: float) -> float:
+    """Match Postgres numeric(4,3) before returning or persisting a probability."""
+    return float(Decimal(str(value)).quantize(Decimal(".001"), rounding=ROUND_HALF_UP))
 
 
 class DomainModel(BaseModel):
@@ -52,6 +58,12 @@ class EventType(StrEnum):
 LearningMode = Literal[
     "standard", "visual", "gesture", "visual_gesture", "chunk", "voice", "movement", "story"
 ]
+CompletionInput = Literal["buttons", "gesture"]
+
+
+def observed_completion_mode(mode: LearningMode, input_method: CompletionInput) -> LearningMode:
+    """Gesture strategy selection alone is not evidence of recognized hand input."""
+    return "visual" if mode in {"gesture", "visual_gesture"} and input_method == "buttons" else mode
 
 
 class StuckRequestedPayload(DomainModel):
@@ -64,6 +76,8 @@ class MissionCompletedPayload(DomainModel):
     objective: str = Field(min_length=1)
     correctness: Probability
     mode: LearningMode
+    intended_mode: LearningMode | None = None
+    input_method: CompletionInput = "buttons"
     strategy: (
         Literal["chunking", "movement_break", "visual_hint", "voice_hint", "choice"] | None
     ) = None

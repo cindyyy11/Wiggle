@@ -1,17 +1,18 @@
 """Camel-case HTTP contracts, independent of persistence row shapes."""
 
-from decimal import ROUND_HALF_UP, Decimal
 from typing import Annotated
 
 from pydantic import ConfigDict, Field, field_validator
 
 from app.domain.models import (
+    CompletionInput,
     DomainModel,
     LearnerTwin,
     LearningEvent,
     LearningMode,
     Probability,
     TwinUpdate,
+    canonical_probability,
 )
 from app.domain.strategies import StrategyName
 from app.providers.base import ActivityContent, LexiContent, LexiTool, TextContent
@@ -63,9 +64,15 @@ class SelectAdaptationResponse(DomainModel):
     predicted_success: Probability
     activity: ActivityContent
 
+    @field_validator("predicted_success")
+    @classmethod
+    def canonical_prediction(cls, value: float) -> float:
+        return canonical_probability(value)
+
 
 class CompleteSessionRequest(SimulateRequest):
     correctness: Probability
+    input_method: CompletionInput = "buttons"
 
 
 class CompleteSessionResponse(DomainModel):
@@ -104,7 +111,7 @@ class CheckInRequest(RequestModel):
     @classmethod
     def canonical_difficulty(cls, value: float) -> float:
         """Match the persisted numeric(4,3) precision before storing or comparing requests."""
-        return float(Decimal(str(value)).quantize(Decimal(".001"), rounding=ROUND_HALF_UP))
+        return canonical_probability(value)
 
 
 class CheckInResponse(DomainModel):

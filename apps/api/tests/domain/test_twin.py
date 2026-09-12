@@ -55,7 +55,9 @@ def test_stuck_and_success_update_relevant_fields(default_twin, event_factory) -
         default_twin,
         [
             event_factory("stuck_requested"),
-            event_factory("mission_completed", correctness=0.92, mode="visual_gesture"),
+            event_factory(
+                "mission_completed", correctness=0.92, mode="visual_gesture", input_method="gesture"
+            ),
         ],
     )
 
@@ -67,6 +69,17 @@ def test_stuck_and_success_update_relevant_fields(default_twin, event_factory) -
     }
     assert default_twin.persistence_friction == 0.5
     assert default_twin.modality_effectiveness.gesture == 0.5
+
+
+@pytest.mark.parametrize("mode", ["gesture", "visual_gesture"])
+def test_legacy_completion_without_observed_input_does_not_credit_gestures(
+    default_twin, event_factory, mode
+) -> None:
+    result = update_twin(
+        default_twin, [event_factory("mission_completed", correctness=0.92, mode=mode)]
+    )
+    assert result.twin.modality_effectiveness.gesture == default_twin.modality_effectiveness.gesture
+    assert result.twin.modality_effectiveness.visual > default_twin.modality_effectiveness.visual
 
 
 def test_event_payloads_are_discriminated_and_timestamps_must_be_utc() -> None:
@@ -170,7 +183,11 @@ def test_updates_are_clamped_and_include_explainable_audit_values(
 ) -> None:
     result = update_twin(
         default_twin,
-        [event_factory("mission_completed", correctness=1.0, mode="visual_gesture")],
+        [
+            event_factory(
+                "mission_completed", correctness=1.0, mode="visual_gesture", input_method="gesture"
+            )
+        ],
     )
 
     assert result.twin.mastery["fractions.three_quarters"] == pytest.approx(0.6)

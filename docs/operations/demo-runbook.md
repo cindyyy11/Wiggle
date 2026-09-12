@@ -14,12 +14,14 @@ For a production-mode local demo, run `pnpm build`, then start `python -m uvicor
 | --- | --- |
 | 0:00–0:15 | Show Numeria in globe view. “One learning universe, with a complete fraction mission on this planet.” Briefly switch to Follow explorer and back. |
 | 0:15–0:35 | Start fractions. Choose “2 of 4”, then “I'm stuck”. “A help request is useful evidence; the task becomes three concrete slices immediately.” |
-| 0:35–0:55 | Open “See my learning paths”. “These predictions come from explicit weighted rules and the current learner state.” In a fresh browser-local fixture the authored values are 43%, 68%, 87%; connected values respond to recorded interactions and timing. Do not promise fixed live percentages. |
+| 0:35–0:55 | Open “See my learning paths”. “These predictions come from explicit weighted rules and the current learner state.” In a fresh browser-local fixture the authored values are 43%, 68%, 87%; connected values respond to recorded stuck requests and mission completions. Do not promise fixed live percentages. |
 | 0:55–1:20 | Choose “Try Gesture + Visual”, deny/disable the camera if needed, and select slices 1, 2 and 3 with the large buttons. Check the pizza and show the completion/reward. “The objective stays the same while the way of doing it changes.” |
 | 1:20–1:35 | Return to the universe. “This sample uses a 92% outcome to demonstrate the prediction comparison. Real household play records the answer to this question.” |
 | 1:35–2:00 | Open the parent tab, enter the PIN and refresh if it was already open. Show completed missions, mastery history and “One thing to try together”. “This summary comes from the completed intervention. It describes learning activity, not a diagnosis.” |
 
-Optional extension: Ask Lexi for a hint, try the Reset Station, or complete the short Reality Mission. They are not necessary to finish the two-minute path.
+Optional extension: Ask Lexi for a hint, try the Reset Station, or choose the optional Reality Mission on the completion screen. These supports are not necessary to finish the two-minute path. Finishing a Reality Mission records context without awarding another fraction completion or changing the twin.
+
+The numerical model currently updates from stuck requests and mission completions only. Timing, retries, resets, self-reports and parent check-ins are recorded context, not numerical contributors. Gesture effectiveness updates only when recognized hand input contributed a selected slice to the completed answer; button-only fallback records visual input while preserving the intended strategy. Predictions use three-decimal precision consistently in simulation, selection, storage and completion.
 
 ## Fallbacks and rollback
 

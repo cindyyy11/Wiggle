@@ -21,8 +21,8 @@ it("maps point/pinch, fist and open palm to the same accessible domain commands"
   dispatchGesture({ gesture: "point", x: .7, y: .5 }, commands);
   dispatchGesture({ gesture: "fist", x: 1, y: .5 }, commands);
   dispatchGesture({ gesture: "open_palm", x: .5, y: .5 }, commands);
-  expect(commands.selectSlice.mock.calls).toEqual([[0], [2]]);
-  expect(commands.grabSlice).toHaveBeenCalledWith(3);
+  expect(commands.selectSlice.mock.calls).toEqual([[0, "gesture"], [2, "gesture"]]);
+  expect(commands.grabSlice).toHaveBeenCalledWith(3, "gesture");
   expect(commands.summonLexi).toHaveBeenCalledOnce();
 });
 

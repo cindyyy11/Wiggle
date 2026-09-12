@@ -6,7 +6,7 @@ from typing import Annotated, Literal
 
 from pydantic import Field, field_serializer, field_validator
 
-from .models import DomainModel, LearnerTwin, Probability
+from .models import DomainModel, LearnerTwin, Probability, canonical_probability
 from .strategies import STRATEGIES, STRATEGY_NAMES, StrategyDefinition, StrategyName
 
 FactorName = Literal[
@@ -199,7 +199,9 @@ def _predict(
     definition: StrategyDefinition,
 ) -> StrategyPrediction:
     factors = _factors(twin, activity, definition)
-    predicted_success = _clamp(BASE_SUCCESS + sum(factor.contribution for factor in factors))
+    predicted_success = canonical_probability(
+        _clamp(BASE_SUCCESS + sum(factor.contribution for factor in factors))
+    )
     factor_values = {factor.name: factor.value for factor in factors}
     friction_inputs: Mapping[FrictionFactorName, float] = {
         "current_friction": factor_values["current_friction"],

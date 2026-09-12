@@ -2,7 +2,12 @@ import json
 
 import pytest
 
-from app.domain.models import LearnerTwin, ModalityEffectiveness, StrategyEffectiveness
+from app.domain.models import (
+    LearnerTwin,
+    ModalityEffectiveness,
+    StrategyEffectiveness,
+    canonical_probability,
+)
 from app.domain.simulation import (
     BASE_SUCCESS,
     FRICTION_WEIGHTS,
@@ -162,7 +167,9 @@ def test_all_advertised_outputs_reconstruct_from_named_configuration(
     factor_values = {factor.name: factor.value for factor in prediction.factors}
     definition = next(item for item in STRATEGIES if item.name == prediction.strategy)
 
-    expected_success = BASE_SUCCESS + sum(factor.contribution for factor in prediction.factors)
+    expected_success = canonical_probability(
+        BASE_SUCCESS + sum(factor.contribution for factor in prediction.factors)
+    )
     friction_inputs = {
         "current_friction": factor_values["current_friction"],
         "cognitive_load": factor_values["cognitive_load"],

@@ -27,6 +27,8 @@ class AdaptationService:
 
     def select(self, request: SelectAdaptationRequest, key: str) -> SelectAdaptationResponse:
         session = self.sessions.session(request.session_id)
+        if session["status"] == "abandoned":
+            raise WorkflowError("session_closed", "Cannot adapt an abandoned session")
         identifier = stable_id(request.session_id, "select", key)
         for row in self.sessions.interventions(session):
             if row["id"] == identifier:
@@ -62,7 +64,7 @@ class AdaptationService:
                 "child_id": session["child_id"],
                 "session_id": request.session_id,
                 "selected_strategy": request.strategy,
-                "predicted_success": prediction.predicted_success,
+                "predicted_success": response.predicted_success,
                 "status": "selected",
                 "simulation_snapshot": {
                     "report": report.model_dump(mode="json"),

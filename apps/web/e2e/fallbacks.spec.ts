@@ -51,7 +51,8 @@ test("camera denial and WebGL loss keep the connected pizza playable", async ({ 
     } as typeof original;
   });
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await startMission(page);
+  const session = await startMission(page);
+  const before = await (await page.request.get(`http://127.0.0.1:8101/twin/${session.childId}`)).json();
   await expect(page.getByRole("img", { name: /Numeria map/ })).toBeVisible();
   await page.getByRole("button", { name: "Gesture", exact: true }).click();
   await expect(page.getByText(/Camera unavailable/)).toBeVisible();
@@ -59,6 +60,11 @@ test("camera denial and WebGL loss keep the connected pizza playable", async ({ 
   await page.screenshot({ path: info.outputPath("connected-camera-webgl-fallback.png") });
   const completed = page.waitForResponse(response => response.url().endsWith("/session/complete") && response.ok());
   await page.getByRole("button", { name: "Check my pizza", exact: true }).click();
-  await completed;
+  const response = await completed;
+  expect(response.request().postDataJSON().inputMethod).toBe("buttons");
+  const outcome = await response.json();
+  expect(outcome.update.twin.modalityEffectiveness.gesture).toBe(before.twin.modalityEffectiveness.gesture);
+  expect(outcome.update.changes.some((change: { field: string }) => change.field === "modality_effectiveness.gesture")).toBe(false);
+  expect(outcome.update.changes.find((change: { field: string }) => change.field === "modality_effectiveness.visual").evidence).toContain("intended=gesture input=buttons");
   await expect(page.getByText("+20 Wiggle Energy", { exact: true })).toBeVisible();
 });

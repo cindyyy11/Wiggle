@@ -9,6 +9,8 @@ from app.domain.models import (
     LearningEvent,
     MissionCompletedPayload,
     TwinUpdate,
+    canonical_probability,
+    observed_completion_mode,
 )
 from app.domain.simulation import ActivityCharacteristics, SimulationReport, simulate
 from app.domain.twin import update_twin
@@ -57,6 +59,15 @@ class SessionService:
         session = self.repository.get_session(session_id)
         if session is None:
             raise WorkflowError("not_found", "Session is not available to this household", 404)
+        # The accepted event is durable even if the status write failed. Reconcile it
+        # before any later workflow can mutate or revive an abandoned session.
+        if session["status"] == "active" and any(
+            event.event_type == EventType.MISSION_ABANDONED
+            for event in self.repository.list_events(
+                str(session["child_id"]), session_id=session_id
+            )
+        ):
+            session = self.repository.update_session(session_id, {"status": "abandoned"})
         return session
 
     def mission(self, session: Record) -> Record:
@@ -172,7 +183,7 @@ class SessionService:
                 "child_id": request.child_id,
                 "session_id": session["id"],
                 "selected_strategy": "standard",
-                "predicted_success": prediction.predicted_success,
+                "predicted_success": canonical_probability(prediction.predicted_success),
                 "status": "selected",
                 "simulation_snapshot": {
                     "initial_twin": twin.model_dump(mode="json"),
@@ -203,24 +214,66 @@ class SessionService:
         # Validate the entire batch before writing any row. Event IDs are stable per-event
         # idempotency keys, so retries work even when batches are split or regrouped.
         batch: dict[str, LearningEvent] = {}
+        session_status: dict[str, object] = {}
+        evidence: dict[str, list[LearningEvent]] = {}
         for event in request.events:
             if event.id in batch and batch[event.id] != event:
                 raise WorkflowError("idempotency_conflict", "Batch repeats an ID with new content")
+            if event.id in batch:
+                continue
             batch[event.id] = event
             session = self.session(event.session_id)
             if session["child_id"] != event.child_id:
                 raise WorkflowError("not_found", "Event child/session pair is unavailable", 404)
             if event.event_type == EventType.MISSION_COMPLETED:
                 raise WorkflowError("use_completion_endpoint", "Use /session/complete for outcomes")
-            existing = self.repository.list_events(event.child_id, session_id=event.session_id)
+            if event.session_id not in evidence:
+                evidence[event.session_id] = self.repository.list_events(
+                    event.child_id, session_id=event.session_id
+                )
+                session_status[event.session_id] = session["status"]
+            existing = evidence[event.session_id]
             same = next((row for row in existing if row.id == event.id), None)
             if same is not None and same != event:
                 raise WorkflowError("idempotency_conflict", "Event ID was reused with new content")
-            if session["status"] != "active" and same is None:
+            if same is not None:
+                continue
+            status = session_status[event.session_id]
+            reality_event = event.event_type in {
+                EventType.REALITY_MISSION_STARTED,
+                EventType.REALITY_MISSION_COMPLETED,
+            }
+            if status != "active" and not (status == "completed" and reality_event):
                 raise WorkflowError("session_closed", "New events cannot modify a closed session")
+            if (
+                any(row.event_type == EventType.MISSION_COMPLETED for row in existing)
+                and status == "active"
+            ):
+                raise WorkflowError("session_closed", "Finish the pending completion first")
+            if reality_event:
+                starts = sum(
+                    row.event_type == EventType.REALITY_MISSION_STARTED for row in existing
+                )
+                finishes = sum(
+                    row.event_type == EventType.REALITY_MISSION_COMPLETED for row in existing
+                )
+                if (
+                    event.event_type == EventType.REALITY_MISSION_STARTED and starts != finishes
+                ) or (
+                    event.event_type == EventType.REALITY_MISSION_COMPLETED
+                    and starts != finishes + 1
+                ):
+                    raise WorkflowError(
+                        "invalid_reality_lifecycle", "Reality Mission must start before finishing"
+                    )
+            if event.event_type == EventType.MISSION_ABANDONED:
+                session_status[event.session_id] = "abandoned"
+            existing.append(event)
             self.active_intervention(session)
         for event in request.events:
             self.repository.append_event(event, idempotency_key=event.id)
+            if event.event_type == EventType.MISSION_ABANDONED:
+                self.repository.update_session(event.session_id, {"status": "abandoned"})
         for child_id in {event.child_id for event in request.events}:
             self.current_twin(child_id)
         return AppendEventsResponse(accepted_event_ids=tuple(event.id for event in request.events))
@@ -229,13 +282,16 @@ class SessionService:
         from app.services.adaptation import mode_for_strategy
 
         session = self.session(request.session_id)
+        if session["status"] == "abandoned":
+            raise WorkflowError("session_closed", "Cannot complete an abandoned session")
         intervention = self.active_intervention(session)
         child_id = str(session["child_id"])
         outcome = intervention.get("outcome")
         if outcome is not None:
             saved = as_record(outcome)
-            if saved["idempotency_key"] != key or saved["request"] != request.model_dump(
-                mode="json"
+            if (
+                saved["idempotency_key"] != key
+                or CompleteSessionRequest.model_validate(saved["request"]) != request
             ):
                 raise WorkflowError(
                     "idempotency_conflict", "Completion already recorded differently"
@@ -249,7 +305,8 @@ class SessionService:
         if session["status"] != "active":
             raise WorkflowError("session_closed", "Session is already closed")
         mission = self.mission(session)
-        mode, strategy = mode_for_strategy(str(intervention["selected_strategy"]))
+        intended_mode, strategy = mode_for_strategy(str(intervention["selected_strategy"]))
+        mode = observed_completion_mode(intended_mode, request.input_method)
         event_id = stable_id(request.session_id, "complete", key)
         events = self.repository.list_events(child_id, session_id=request.session_id)
         completions = [event for event in events if event.event_type == EventType.MISSION_COMPLETED]
@@ -258,6 +315,7 @@ class SessionService:
             existing is None
             or not isinstance(existing.payload, MissionCompletedPayload)
             or existing.payload.correctness != request.correctness
+            or existing.payload.input_method != request.input_method
         ):
             raise WorkflowError(
                 "idempotency_conflict", "Completion event already recorded differently"
@@ -272,6 +330,8 @@ class SessionService:
                 objective=str(mission["objective"]),
                 correctness=request.correctness,
                 mode=mode,
+                intended_mode=intended_mode,
+                input_method=request.input_method,
                 strategy=strategy,
             ),
         )

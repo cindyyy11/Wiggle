@@ -32,6 +32,21 @@ const twin: LearnerTwin = {
 };
 
 describe("Wiggle contracts", () => {
+  it("preserves bounded observed completion input separately from the intended mode", () => {
+    const event = {
+      id: "completed", childId: "child-1", sessionId: "session-1",
+      occurredAt: "2026-09-12T00:00:00Z", type: "mission_completed",
+      payload: { kind: "mission_completed", objective: "fractions.three_quarters", correctness: .92, mode: "visual" },
+    };
+    expect(validateLearningEvent(event)).toEqual(event);
+    for (const inputMethod of ["buttons", "gesture"]) {
+      const observed = { ...event, payload: { ...event.payload, intendedMode: "visual_gesture", inputMethod } };
+      expect(validateLearningEvent(observed)).toEqual(observed);
+    }
+    expect(() => validateLearningEvent({ ...event, payload: { ...event.payload, inputMethod: "camera-enabled" } })).toThrow("inputMethod");
+    expect(() => validateLearningEvent({ ...event, payload: { ...event.payload, intendedMode: "unknown" } })).toThrow("intendedMode");
+  });
+
   it("validates optional bounded telemetry and self reports", () => {
     const event = {
       id: "timing-1", childId: "child-1", sessionId: "session-1",

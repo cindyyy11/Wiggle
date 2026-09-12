@@ -10,6 +10,7 @@ from .models import (
     MissionCompletedPayload,
     StuckRequestedPayload,
     TwinUpdate,
+    observed_completion_mode,
 )
 
 _COMPLETION_RATE = 0.2
@@ -128,8 +129,10 @@ def update_twin(twin: LearnerTwin, events: Iterable[LearningEvent]) -> TwinUpdat
             )
         elif isinstance(event.payload, MissionCompletedPayload):
             payload = event.payload
+            mode = observed_completion_mode(payload.mode, payload.input_method)
             evidence = (
-                f"mission_completed correctness={payload.correctness:.2f} mode={payload.mode}"
+                f"mission_completed correctness={payload.correctness:.2f} mode={mode} "
+                f"intended={payload.intended_mode or payload.mode} input={payload.input_method}"
             )
             updated = _update_mastery(
                 updated, changes, payload.objective, payload.correctness, evidence
@@ -142,14 +145,14 @@ def update_twin(twin: LearnerTwin, events: Iterable[LearningEvent]) -> TwinUpdat
                 rate=_FRICTION_RATE,
                 evidence=evidence,
             )
-            for modality in _MODE_MODALITIES[payload.mode]:
+            for modality in _MODE_MODALITIES[mode]:
                 updated = _update_modality(
                     updated, changes, modality, payload.correctness, evidence
                 )
             strategy_names = (
                 (payload.strategy,)
                 if payload.strategy is not None
-                else _MODE_STRATEGIES.get(payload.mode, ())
+                else _MODE_STRATEGIES.get(mode, ())
             )
             for strategy in strategy_names:
                 updated = _update_strategy(
