@@ -4,8 +4,8 @@ import type { ApiClient } from "../../lib/api/client";
 import { MissionAtlas } from "../mission/MissionAtlas";
 import type { QualityPreference } from "../universe/world";
 import { OpeningMoment } from "./OpeningMoment";
+import { SolarSystemHub } from "./SolarSystemHub";
 import { useWorldStore } from "./worldStore";
-import styles from "./wiggle.module.css";
 
 type WiggleExperienceProps = {
   quality?: QualityPreference;
@@ -29,15 +29,5 @@ export function WiggleExperience({ quality, client, childId, allowLocalFallback 
     return <OpeningMoment reducedMotion={reducedMotion} onEnter={enterHub} />;
   }
 
-  return (
-    <main className={styles.hub} aria-labelledby="world-hub-title">
-      <section className={styles.hubCard}>
-        <img className={styles.hubMark} src="/brand/wiggle-mark.png" alt="Wiggle character mark" />
-        <p className={styles.tagline}>Wiggle. Wonder. Wow!</p>
-        <h1 id="world-hub-title">Your learning universe is ready.</h1>
-        <p>Numeria is shining bright today. Let&apos;s start there.</p>
-        <button className={styles.primaryAction} type="button" onClick={enterNumeria}>Explore Numeria</button>
-      </section>
-    </main>
-  );
+  return <SolarSystemHub onEnterNumeria={enterNumeria} />;
 }

@@ -32,7 +32,7 @@ describe("WiggleExperience", () => {
     render(<WiggleExperience />);
     fireEvent.click(screen.getByRole("button", { name: "Let’s Wiggle" }));
     expect(useWorldStore.getState().phase).toBe("hub");
-    expect(screen.getByRole("heading", { name: "Your learning universe is ready." })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Pick a bright place to wonder." })).toBeTruthy();
   });
 
   it("renders reduced-motion opening state without waiting for animation completion", () => {
@@ -41,6 +41,6 @@ describe("WiggleExperience", () => {
     const entryAction = screen.getByRole("button", { name: "Let’s Wiggle" });
     expect(entryAction).toBeTruthy();
     fireEvent.click(entryAction);
-    expect(screen.getByRole("heading", { name: "Your learning universe is ready." })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Pick a bright place to wonder." })).toBeTruthy();
   });
 });
