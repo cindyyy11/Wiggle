@@ -16,8 +16,10 @@
 .splash{position:fixed;inset:0;z-index:20;display:grid;place-items:center;align-content:center;gap:clamp(22px,4vw,42px);min-height:100svh;padding:24px;background:#fff7e7;color:#173e5e;opacity:1;transition:opacity 320ms ease,transform 320ms ease}
 .splashLeaving{opacity:0;transform:scale(1.01);pointer-events:none}
 .splashBrand{display:block;width:min(78vw,560px);height:auto;object-fit:contain}
+.splash:not(.splashLeaving) .splashBrand{animation:splash-wiggle 1.6s ease-in-out infinite}
+@keyframes splash-wiggle{0%,100%{transform:translateX(0) rotate(0)}20%{transform:translateX(-2px) rotate(-1.2deg)}45%{transform:translateX(2px) rotate(1.2deg)}70%{transform:translateX(-1px) rotate(-.7deg)}}
 .splashStart{min-height:48px;padding:12px 24px;border:1px solid #173e5e;border-radius:999px;background:#9dc99a;color:#173e5e;font:700 16px/1 "Trebuchet MS",Arial,sans-serif;cursor:pointer}
 .splashStart:focus-visible{outline:3px solid #173e5e;outline-offset:4px}
 .splashStart:disabled{cursor:default;opacity:.72}
 @media(max-width:600px){.splash{padding:20px}.splashBrand{width:min(90vw,440px)}}
-@media(prefers-reduced-motion:reduce){.splash{transition:none}}
+@media(prefers-reduced-motion:reduce){.splash{transition:none}.splashBrand{animation:none}}
