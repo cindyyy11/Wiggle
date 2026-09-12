@@ -4,16 +4,16 @@ This repository is configured for Vercel (web), Render (API), and Supabase (Auth
 
 ## Local production check
 
-Use Node 22+, pnpm 11+, Python 3.12+, and Chrome. From the repository root:
+Use Node 24.21+, npm 11.6+, Python 3.12+, and Chrome. From the repository root:
 
 ```sh
-pnpm install --frozen-lockfile
+npm ci
 python -m pip install -e "apps/api[dev]"
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm build
-pnpm test:e2e
+npm run lint
+npm run typecheck
+npm run test
+npm run build
+npm run test:e2e
 ```
 
 The browser command starts and stops three fresh local processes: Next production builds on ports 3100 (browser-local demo) and 3101 (connected demo), plus the test-only API on 8101. It does not use provider credentials. The test API injects a Gemini transport timeout into the real provider class, while using the real routes, event replay, twin updates, and parent PIN service. Its diagnostic route lives under `tests/` and is excluded from the Docker image. Close conflicting local listeners before running. `PLAYWRIGHT_EXTERNAL_SERVERS=1` is only for an operator supplying those same test servers.
@@ -55,7 +55,7 @@ When Docker is available, build with `docker build -t wiggle-api -f apps/api/Doc
 
 ## Vercel web
 
-Import the repository with **Root Directory `apps/web`**, Next.js framework, and include source files outside the root directory so `packages/contracts` is available. Set Node 22. `apps/web/vercel.json` is the active project configuration; the root `vercel.json` is its identical review copy. Keep them in sync. Install/build commands deliberately return to the workspace root and use the frozen pnpm lockfile.
+Import the repository with **Root Directory `apps/web`**, Next.js framework, and include source files outside the root directory so `packages/contracts` is available. Set Node 24. `apps/web/vercel.json` is the active project configuration; the root `vercel.json` is its identical review copy. Keep them in sync. Install/build commands deliberately return to the workspace root and use `npm ci` with the committed npm lockfile.
 
 | Vercel value | Setting |
 | --- | --- |
