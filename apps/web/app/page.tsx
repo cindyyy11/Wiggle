@@ -1,21 +1,28 @@
-import { MissionAtlas } from "../components/mission/MissionAtlas";
+import { SubjectWorlds } from "../components/worlds/SubjectWorlds";
+import { parseSubjectRoute } from "../components/worlds/subjectRoute";
 import { authConfig } from "../lib/supabase/config";
 import { createClient, householdSession } from "../lib/supabase/server";
 import styles from "../components/parent/parent.module.css";
 
 export const dynamic = "force-dynamic";
 
-export default async function HomePage({ searchParams }: { searchParams: Promise<{ child?: string }> }) {
+export default async function HomePage({ searchParams }: { searchParams: Promise<{ child?: string; world?: string; zone?: string }> }) {
   try {
-    if (!authConfig()) return <main><MissionAtlas /></main>;
+    const params = await searchParams;
+    const query = new URLSearchParams();
+    if (params.child) query.set("child", params.child);
+    if (params.world) query.set("world", params.world);
+    if (params.zone) query.set("zone", params.zone);
+    const route = parseSubjectRoute(query);
+    if (!authConfig()) return <main><SubjectWorlds initialRoute={route} /></main>;
     const session = await householdSession();
     if (!session) return <main className={styles.shell}><section className={styles.gate}><h1>Your learning universe</h1><p>Sign in to choose your explorer.</p><a href="/parent/sign-in?next=/">Household sign-in</a></section></main>;
     const client = await createClient();
     const result = await client!.from("children").select("id, display_name").eq("parent_id", session.userId).order("created_at");
     if (result.error || !result.data) throw new Error("Explorers unavailable");
-    const requested = (await searchParams).child;
+    const requested = params.child;
     const child = requested ? result.data.find(row => row.id === requested) : result.data.length === 1 ? result.data[0] : undefined;
-    if (child) return <main><MissionAtlas key={child.id} childId={child.id} allowLocalFallback={false} /></main>;
+    if (child) return <main><SubjectWorlds key={child.id} childId={child.id} allowLocalFallback={false} initialRoute={route} /></main>;
     return <main className={styles.shell}><section className={styles.gate}><h1>Choose your explorer</h1>
       {result.data.length ? <ul>{result.data.map(row => <li key={row.id}><a href={`/?child=${encodeURIComponent(row.id)}`}>{row.display_name}</a></li>)}</ul> : <p>Your household needs an explorer and a fraction mission before play. Ask the person setting up your household.</p>}
       <a href="/parent">Parent mission control</a>
