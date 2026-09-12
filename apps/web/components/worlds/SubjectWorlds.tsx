@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { MissionAtlas } from "../mission/MissionAtlas";
+import { SciencePlanet } from "../science/SciencePlanet";
 import type { ApiClient } from "../../lib/api/client";
 import type { QualityPreference } from "../universe/world";
 import {
@@ -91,14 +92,12 @@ export function SubjectWorlds({ childId, allowLocalFallback, client, quality, in
     <p className={styles.routeStatus} role="status" aria-live="polite">{statusMessage}</p>
   </section>;
 
-  if (route.world === "science") return <section className={styles.scienceStaging} aria-label="Science Planet">
-    <img src="/brand/wiggle-mark.png" alt="Wiggle" />
-    <p>SCIENCE PLANET</p>
-    <h1>Science is coming into view</h1>
-    <p>Magnet Lab is getting ready for your first discovery.</p>
-    <button type="button" onClick={() => navigate({ world: null, child: currentChild })}>Back to Worlds</button>
-    <p className={styles.routeStatus} role="status" aria-live="polite">{statusMessage}</p>
-  </section>;
+  if (route.world === "science") return <SciencePlanet
+    selectedZone={route.zone}
+    quality={quality}
+    onZoneSelect={(zone) => navigate({ world: "science", zone, child: currentChild })}
+    onBackToWorlds={() => navigate({ world: null, child: currentChild })}
+  />;
 
   return <section className={styles.worldsView} aria-label="Subject worlds">
     <div className={styles.constellationLayer}>
