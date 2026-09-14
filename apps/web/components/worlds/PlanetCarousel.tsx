@@ -31,7 +31,7 @@ function Planet({ world, offset, reducedMotion, onSelect, onChoose }: {
   return <group ref={group} position={initialPosition} scale={initialScale}
     onClick={event => { event.stopPropagation(); if (event.delta > 7) return; if (offset === 0) onSelect(world); else onChoose(world); }}>
     <group rotation={[.2, -.45, -.12]}>
-      <Numeria quality="low" dimmed={false} theme={world === "math" ? "math" : "science"} preview onDestination={noop} />
+      <Numeria quality="low" dimmed={false} theme={world} preview onDestination={noop} />
       {world === "math" ? <group onClick={event => { event.stopPropagation(); if (event.delta <= 7) { if (offset === 0) onSelect(world); else onChoose(world); } }}>
         <Landmarks selected="fraction-forest" onSelect={() => { if (offset === 0) onSelect(world); else onChoose(world); }} reducedMotion={reducedMotion} mission={false} />
       </group> : null}
