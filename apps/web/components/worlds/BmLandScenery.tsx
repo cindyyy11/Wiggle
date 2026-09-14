@@ -3,13 +3,14 @@ import { useMemo } from "react";
 import { Quaternion, Vector3 } from "three";
 import { surfacePoint, RADIUS } from "../universe/world";
 import { BM_LANDS } from "./bmLands";
+import { fibonacciSphereRegions } from "./planetScatter";
 
 const UP = new Vector3(0, 1, 0);
 const BATIK_BANDS = ["#d81159", "#f2a71b", "#0f9b8e", "#5b2a86"];
 
-function placement(latitude: number, longitude: number) {
+function placement(latitude: number, longitude: number, radius = RADIUS + .03) {
   const normal = new Vector3(...surfacePoint({ latitude, longitude }, 1));
-  return { position: normal.clone().multiplyScalar(RADIUS + .03), quaternion: new Quaternion().setFromUnitVectors(UP, normal) };
+  return { position: normal.clone().multiplyScalar(radius), quaternion: new Quaternion().setFromUnitVectors(UP, normal) };
 }
 
 function Hibiscus({ color }: { color: string }) {
@@ -49,24 +50,51 @@ function BatikTotem() {
   </mesh>)}</group>;
 }
 
+function Ketupat({ color }: { color: string }) {
+  return <group>
+    <mesh position={[0, .18, 0]} rotation={[0, Math.PI / 4, 0]} scale={[1, 1.15, .7]}><octahedronGeometry args={[.16, 0]} /><meshStandardMaterial color={color} flatShading /></mesh>
+    <mesh position={[0, .34, 0]}><cylinderGeometry args={[.01, .01, .1, 4]} /><meshStandardMaterial color="#6f9c56" /></mesh>
+  </group>;
+}
+
+function Pelita({ color }: { color: string }) {
+  return <group>
+    <mesh position={[0, .07, 0]}><cylinderGeometry args={[.05, .1, .14, 8]} /><meshStandardMaterial color="#c98a3c" flatShading /></mesh>
+    <mesh position={[0, .155, 0]}><cylinderGeometry args={[.11, .09, .04, 8]} /><meshStandardMaterial color="#8a5a24" /></mesh>
+    <mesh position={[0, .23, 0]}><coneGeometry args={[.05, .12, 6]} /><meshStandardMaterial color="#ffcf5c" emissive={color} emissiveIntensity={.5} /></mesh>
+  </group>;
+}
+
+const CLUSTER_PROPS = [Hibiscus, PalmTree, WauBulan, BatikTotem, Ketupat];
+
 export function BmLandScenery({ quality = "high" }: { quality?: "high" | "low" }) {
-  const decorations = useMemo(() => {
-    const count = quality === "high" ? 5 : 3;
+  const clusters = useMemo(() => {
+    const count = quality === "high" ? 9 : 6;
     return BM_LANDS.flatMap((land, region) => Array.from({ length: count }, (_, i) => {
       const angle = i * 2.4 + region;
-      const distance = .1 + Math.sqrt((i + .5) / count) * .3;
+      const distance = .1 + Math.sqrt((i + .5) / count) * .32;
       return {
         latitude: land.destination.latitude + Math.sin(angle) * distance,
         longitude: land.destination.longitude + Math.cos(angle) * distance,
         color: land.color,
-        content: (region * count + i) % 4,
+        content: (region * count + i) % CLUSTER_PROPS.length,
       };
     }));
   }, [quality]);
-  return <group>{decorations.map((item, index) => {
-    const { position, quaternion } = placement(item.latitude, item.longitude);
-    return <group key={index} position={position} quaternion={quaternion} scale={.85 + (index % 3) * .1}>
-      {item.content === 0 ? <Hibiscus color={item.color} /> : item.content === 1 ? <PalmTree /> : item.content === 2 ? <WauBulan color={item.color} /> : <BatikTotem />}
-    </group>;
-  })}</group>;
+  const lanterns = useMemo(() => fibonacciSphereRegions(quality === "high" ? 46 : 28, BM_LANDS), [quality]);
+  return <group>
+    {clusters.map((item, index) => {
+      const { position, quaternion } = placement(item.latitude, item.longitude);
+      const Prop = CLUSTER_PROPS[item.content];
+      return <group key={index} position={position} quaternion={quaternion} scale={.85 + (index % 3) * .1}>
+        <Prop color={item.color} />
+      </group>;
+    })}
+    {lanterns.map(item => {
+      const { position, quaternion } = placement(item.destination.latitude, item.destination.longitude, RADIUS + .015);
+      return <group key={item.index} position={position} quaternion={quaternion} rotation={[0, 0, item.index]} scale={.6 + (item.index % 4) * .18}>
+        <Pelita color={item.color} />
+      </group>;
+    })}
+  </group>;
 }
