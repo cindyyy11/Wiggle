@@ -10,6 +10,7 @@ import { EnglishLandScenery } from "../worlds/EnglishLandScenery";
 import { ENGLISH_LANDS } from "../worlds/englishLands";
 import { BmLandScenery } from "../worlds/BmLandScenery";
 import { BM_LANDS } from "../worlds/bmLands";
+import { fibonacciSphereRegions } from "../worlds/planetScatter";
 
 const UP = new Vector3(0, 1, 0);
 const REGION_COLORS = ["#9dc99a", "#f4c95d", "#a9d9ee", "#ef8b78"];
@@ -62,7 +63,7 @@ export function Numeria({ quality, dimmed, onDestination, theme = "math", previe
     {theme === "science" ? <ScienceLandScenery quality={quality} />
       : theme === "english" ? <EnglishLandScenery quality={quality} />
       : theme === "bm" ? <BmLandScenery quality={quality} />
-      : <><Forest count={quality === "high" ? 68 : 36} /><TerrainObjects dimmed={dimmed} /></>}
+      : <><Forest count={quality === "high" ? 104 : 58} /><TerrainObjects dimmed={dimmed} /><ShapeSparkles quality={quality} /></>}
     <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, -3.65, 0]} scale={[1, 1, 1]}>
       <torusGeometry args={[4.08, .009, 3, 96]} /><meshBasicMaterial color="#6fa8c2" transparent opacity={.22} />
     </mesh>
@@ -92,13 +93,13 @@ function Forest({ count }: { count: number }) {
 }
 
 function TerrainObjects({ dimmed }: { dimmed: boolean }) {
-  const peaks = useMemo(() => Array.from({ length: 13 }, (_, index) => {
-    const angle = index * 2.39996; const distance = .12 + Math.sqrt(index / 13) * .4;
+  const peaks = useMemo(() => Array.from({ length: 20 }, (_, index) => {
+    const angle = index * 2.39996; const distance = .12 + Math.sqrt(index / 20) * .4;
     const normal = new Vector3(...surfacePoint({ latitude: .71 + Math.sin(angle) * distance, longitude: .72 + Math.cos(angle) * distance }, 1));
     return { position: normal.clone().multiplyScalar(RADIUS), quaternion: new Quaternion().setFromUnitVectors(UP, normal), height: .35 + ((index * 7) % 5) * .11 };
   }), []);
-  const crystals = useMemo(() => Array.from({ length: 19 }, (_, index) => {
-    const angle = index * 2.4; const distance = .16 + Math.sqrt(index / 19) * .34;
+  const crystals = useMemo(() => Array.from({ length: 28 }, (_, index) => {
+    const angle = index * 2.4; const distance = .16 + Math.sqrt(index / 28) * .34;
     const normal = new Vector3(...surfacePoint({ latitude: -.25 + Math.sin(angle) * distance, longitude: -.73 + Math.cos(angle) * distance }, 1));
     return { position: normal.clone().multiplyScalar(RADIUS + .04), quaternion: new Quaternion().setFromUnitVectors(UP, normal), scale: .8 + (index % 4) * .25 };
   }), []);
@@ -110,9 +111,26 @@ function TerrainObjects({ dimmed }: { dimmed: boolean }) {
 }
 
 function NumberGarden() {
-  return <group>{Array.from({ length: 16 }, (_, index) => {
-    const angle = index * 2.4; const distance = .16 + Math.sqrt(index / 16) * .32;
+  return <group>{Array.from({ length: 24 }, (_, index) => {
+    const angle = index * 2.4; const distance = .16 + Math.sqrt(index / 24) * .32;
     const normal = new Vector3(...surfacePoint({ latitude: -.16 + Math.sin(angle) * distance, longitude: .43 + Math.cos(angle) * distance }, 1));
     return <group key={index} position={normal.clone().multiplyScalar(RADIUS + .07)} quaternion={new Quaternion().setFromUnitVectors(UP, normal)}><mesh position={[0, .035 * (1 + index % 3), 0]} rotation={[0, angle, 0]}><boxGeometry args={[.2, .12 * (1 + index % 3), .2]} /><meshStandardMaterial color={index % 3 === 0 ? "#f4c95d" : "#e8ad67"} flatShading roughness={1} /></mesh></group>;
+  })}</group>;
+}
+
+/** A scattered layer of small shape confetti across the whole globe, echoing Numeria's math motifs (matches the density added to the BM and English planets). */
+function ShapeSparkles({ quality }: { quality: "high" | "low" }) {
+  const sparkles = useMemo(() => fibonacciSphereRegions(quality === "high" ? 46 : 28, LANDMARKS.slice(0, 4)), [quality]);
+  return <group>{sparkles.map(item => {
+    const normal = new Vector3(...surfacePoint(item.destination, 1));
+    const quaternion = new Quaternion().setFromUnitVectors(UP, normal);
+    const scale = .5 + (item.index % 4) * .14;
+    return <group key={item.index} position={normal.clone().multiplyScalar(RADIUS + .02)} quaternion={quaternion} rotation={[0, 0, item.index]} scale={scale}>
+      {item.index % 3 === 0
+        ? <mesh rotation={[Math.PI / 2, 0, 0]}><octahedronGeometry args={[.13, 0]} /><meshStandardMaterial color={item.color} flatShading emissive={item.color} emissiveIntensity={.15} /></mesh>
+        : item.index % 3 === 1
+          ? <mesh rotation={[Math.PI / 2, 0, 0]}><tetrahedronGeometry args={[.14, 0]} /><meshStandardMaterial color={item.color} flatShading /></mesh>
+          : <mesh rotation={[Math.PI / 2, 0, 0]}><boxGeometry args={[.14, .14, .05]} /><meshStandardMaterial color={item.color} flatShading /></mesh>}
+    </group>;
   })}</group>;
 }
