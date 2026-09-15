@@ -9,6 +9,7 @@ import { demoParent } from "../../lib/demo/parent";
 import { speakIfUnmuted } from "../../features/voice/voicePreference";
 import { getLastSeenTwin, saveSeenTwin } from "./twinMemory";
 import { getNextStep, type NextStep } from "./nextStep";
+import { getLastSuggestedMission, saveSuggestedMission } from "./nextStepMemory";
 import { WiggleTwinAvatar } from "./WiggleTwinAvatar";
 import styles from "./twinLauncher.module.css";
 
@@ -43,8 +44,14 @@ export function TwinLauncher({ childId, client: suppliedClient, context = null }
     const nextState = getTwinVisualState(twin, previous);
     setState(nextState);
     setMessage(twinVisualCopy[nextState]);
-    setNextStep(getNextStep(twin, childId));
-    if (persist) saveSeenTwin(childId, twin);
+    // Only avoid repeating a suggestion the child actually saw last time they opened
+    // the panel — the silent background fetch on mount never shows one.
+    const step = getNextStep(twin, childId, persist ? getLastSuggestedMission(childId) : null);
+    setNextStep(step);
+    if (persist) {
+      saveSeenTwin(childId, twin);
+      if (step) saveSuggestedMission(childId, step.missionName);
+    }
   };
 
   const loadTwin = async (signal: AbortSignal, persist: boolean) => {

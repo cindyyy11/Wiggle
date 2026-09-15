@@ -36,4 +36,19 @@ describe("getNextStep", () => {
   it("returns null once every star is unlocked, instead of a stale suggestion", () => {
     expect(getNextStep(mastered, "child-1")).toBeNull();
   });
+
+  it("offers a different place when the closest star was already suggested", () => {
+    const first = getNextStep(base, "child-1");
+    expect(first?.missionName).toBe("Colors Canyon");
+    const second = getNextStep(base, "child-1", first?.missionName);
+    expect(second?.missionName).not.toBe("Colors Canyon");
+    expect(second?.title).toBe("Brave Beginner");
+    expect(second?.missionName).toBe("Life Cycle Garden");
+  });
+
+  it("repeats the suggestion rather than fabricating an alternative when there is only one", () => {
+    const onlyBraveBeginnerLocked: LearnerTwin = { ...mastered, initiationFriction: 0.5 };
+    const step = getNextStep(onlyBraveBeginnerLocked, "child-1", "Life Cycle Garden");
+    expect(step?.missionName).toBe("Life Cycle Garden");
+  });
 });

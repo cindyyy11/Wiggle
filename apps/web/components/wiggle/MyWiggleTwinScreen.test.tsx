@@ -40,8 +40,18 @@ describe("MyWiggleTwinScreen", () => {
   it("shows a clickable next step toward the nearest not-yet-unlocked star", async () => {
     render(<MyWiggleTwinScreen childId="child-1" client={fakeClient(baseTwin)} />);
     await screen.findByText("My Wiggle Twin");
-    const link = screen.getByRole("link", { name: /Go to .+↗/ });
+    const link = await screen.findByRole("link", { name: /Go to .+↗/ });
     expect(link.getAttribute("href")).toMatch(/^\/\?child=child-1&world=(science|math)/);
+  });
+
+  it("suggests a different place on the next visit instead of repeating itself", async () => {
+    const { unmount } = render(<MyWiggleTwinScreen childId="child-1" client={fakeClient(baseTwin)} />);
+    const first = await screen.findByRole("link", { name: /Go to .+↗/ });
+    const firstHref = first.getAttribute("href");
+    unmount();
+    render(<MyWiggleTwinScreen childId="child-1" client={fakeClient(baseTwin)} />);
+    const second = await screen.findByRole("link", { name: /Go to .+↗/ });
+    expect(second.getAttribute("href")).not.toBe(firstHref);
   });
 
   it("starts a one-day streak on first visit", async () => {

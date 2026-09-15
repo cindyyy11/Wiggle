@@ -11,7 +11,8 @@ import { TwinCheckIn } from "./TwinCheckIn";
 import { getLastSeenTwin, saveSeenTwin } from "./twinMemory";
 import { saveSeenConstellationStars, seenConstellationStars } from "./constellationMemory";
 import { recordTwinVisit } from "./twinStreak";
-import { getNextStep } from "./nextStep";
+import { getNextStep, type NextStep } from "./nextStep";
+import { getLastSuggestedMission, saveSuggestedMission } from "./nextStepMemory";
 import styles from "./myWiggleTwin.module.css";
 
 export interface MyWiggleTwinScreenProps {
@@ -25,6 +26,7 @@ export function MyWiggleTwinScreen({ childId, client: suppliedClient }: MyWiggle
   const [data, setData] = useState<ParentInsightsResponse | null>(null);
   const [freshStars, setFreshStars] = useState<ConstellationStarId[]>([]);
   const [streak, setStreak] = useState(0);
+  const [nextStep, setNextStep] = useState<NextStep | null>(null);
   const remembered = useRef(false);
 
   useEffect(() => {
@@ -45,6 +47,9 @@ export function MyWiggleTwinScreen({ childId, client: suppliedClient }: MyWiggle
     saveSeenConstellationStars(childId, [...new Set([...seenStars, ...allUnlocked])]);
     saveSeenTwin(childId, data.twin);
     setStreak(recordTwinVisit(childId));
+    const step = getNextStep(data.twin, childId, getLastSuggestedMission(childId));
+    setNextStep(step);
+    if (step) saveSuggestedMission(childId, step.missionName);
   }, [data, childId]);
 
   if (!data) return <main className={styles.shell}><p role="status" className={styles.empty}>Waking up your Twin…</p></main>;
@@ -55,7 +60,6 @@ export function MyWiggleTwinScreen({ childId, client: suppliedClient }: MyWiggle
   const unlockedCount = stars.filter(star => star.unlocked).length;
   const subjectsProgressing = Object.keys(data.twin.mastery).length;
   const topStar = stars.find(star => freshStars.includes(star.id)) ?? stars.find(star => star.unlocked);
-  const nextStep = getNextStep(data.twin, childId);
 
   return <main className={styles.shell}>
     <header className={styles.header}>
