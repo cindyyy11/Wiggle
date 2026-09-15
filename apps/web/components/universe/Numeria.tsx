@@ -89,23 +89,33 @@ function Forest({ count }: { count: number }) {
     if (trunks.current) trunks.current.instanceMatrix.needsUpdate = true;
     if (crowns.current) { crowns.current.instanceMatrix.needsUpdate = true; if (crowns.current.instanceColor) crowns.current.instanceColor.needsUpdate = true; }
   }, [count]);
-  return <group><instancedMesh ref={trunks} args={[undefined, undefined, count]}><cylinderGeometry args={[.035, .05, .3, 5]} /><meshStandardMaterial color="#5e8b67" roughness={1} /></instancedMesh><instancedMesh ref={crowns} args={[undefined, undefined, count]}><coneGeometry args={[.18, .52, 5]} /><meshStandardMaterial roughness={1} flatShading /></instancedMesh></group>;
+  return <group><instancedMesh ref={trunks} args={[undefined, undefined, count]}><cylinderGeometry args={[.035, .05, .3, 5]} /><meshStandardMaterial color="#5e8b67" roughness={1} /></instancedMesh><instancedMesh ref={crowns} args={[undefined, undefined, count]}><sphereGeometry args={[.26, 8, 6]} /><meshStandardMaterial roughness={1} flatShading /></instancedMesh></group>;
 }
 
+const HILL_COLORS = ["#cceaf2", "#a9d9ee", "#d9c9f0"];
+
 function TerrainObjects({ dimmed }: { dimmed: boolean }) {
-  const peaks = useMemo(() => Array.from({ length: 20 }, (_, index) => {
+  const hills = useMemo(() => Array.from({ length: 20 }, (_, index) => {
     const angle = index * 2.39996; const distance = .12 + Math.sqrt(index / 20) * .4;
     const normal = new Vector3(...surfacePoint({ latitude: .71 + Math.sin(angle) * distance, longitude: .72 + Math.cos(angle) * distance }, 1));
     return { position: normal.clone().multiplyScalar(RADIUS), quaternion: new Quaternion().setFromUnitVectors(UP, normal), height: .35 + ((index * 7) % 5) * .11 };
   }), []);
-  const crystals = useMemo(() => Array.from({ length: 28 }, (_, index) => {
+  const berries = useMemo(() => Array.from({ length: 28 }, (_, index) => {
     const angle = index * 2.4; const distance = .16 + Math.sqrt(index / 28) * .34;
     const normal = new Vector3(...surfacePoint({ latitude: -.25 + Math.sin(angle) * distance, longitude: -.73 + Math.cos(angle) * distance }, 1));
     return { position: normal.clone().multiplyScalar(RADIUS + .04), quaternion: new Quaternion().setFromUnitVectors(UP, normal), scale: .8 + (index % 4) * .25 };
   }), []);
   return <group>
-    {peaks.map((peak, index) => <group key={index} position={peak.position} quaternion={peak.quaternion}><mesh position={[0, peak.height * .35, 0]}><coneGeometry args={[.24, peak.height, index % 2 ? 4 : 5]} /><meshStandardMaterial color={index % 2 ? "#cceaf2" : "#a9d9ee"} roughness={1} flatShading /></mesh><mesh position={[0, peak.height * .66, 0]}><coneGeometry args={[.11, peak.height * .4, index % 2 ? 4 : 5]} /><meshStandardMaterial color="#fff7e7" flatShading /></mesh></group>)}
-    {crystals.map((crystal, index) => <group key={index} position={crystal.position} quaternion={crystal.quaternion} scale={crystal.scale}><mesh position={[0, .13, 0]} rotation={[.12, index, .15]}><octahedronGeometry args={[.18, 0]} /><meshStandardMaterial color={index % 3 === 0 ? "#ef8b78" : "#f4c95d"} emissive="#ef8b78" emissiveIntensity={dimmed ? .02 : .1} roughness={.68} flatShading /></mesh></group>)}
+    {/* Soft, rounded candy hills — no sharp peaks. */}
+    {hills.map((hill, index) => <group key={index} position={hill.position} quaternion={hill.quaternion}>
+      <mesh position={[0, hill.height * .32, 0]} scale={[1, .82, 1]}><sphereGeometry args={[hill.height * .55, 10, 8]} /><meshStandardMaterial color={HILL_COLORS[index % HILL_COLORS.length]} roughness={1} flatShading /></mesh>
+      <mesh position={[0, hill.height * .58, 0]} scale={[.5, .42, .5]}><sphereGeometry args={[hill.height * .55, 8, 6]} /><meshStandardMaterial color="#fff7e7" flatShading /></mesh>
+    </group>)}
+    {/* Round gem berries — plump and glossy instead of pointy crystals. */}
+    {berries.map((berry, index) => <group key={index} position={berry.position} quaternion={berry.quaternion} scale={berry.scale}>
+      <mesh position={[0, .13, 0]}><sphereGeometry args={[.15, 10, 8]} /><meshStandardMaterial color={index % 3 === 0 ? "#ef8b78" : "#f4c95d"} emissive="#ef8b78" emissiveIntensity={dimmed ? .02 : .1} roughness={.5} flatShading /></mesh>
+      <mesh position={[-.04, .18, .09]}><sphereGeometry args={[.04, 6, 6]} /><meshStandardMaterial color="#fff7e7" transparent opacity={.8} /></mesh>
+    </group>)}
     <NumberGarden />
   </group>;
 }
@@ -118,7 +128,20 @@ function NumberGarden() {
   })}</group>;
 }
 
-/** A scattered layer of small shape confetti across the whole globe, echoing Numeria's math motifs (matches the density added to the BM and English planets). */
+function Bubble({ color }: { color: string }) {
+  return <mesh><sphereGeometry args={[.12, 10, 8]} /><meshStandardMaterial color={color} flatShading emissive={color} emissiveIntensity={.15} /></mesh>;
+}
+
+function Bloom({ color }: { color: string }) {
+  return <group>
+    {Array.from({ length: 5 }, (_, i) => <mesh key={i} position={[Math.sin(i / 5 * Math.PI * 2) * .09, 0, Math.cos(i / 5 * Math.PI * 2) * .09]} scale={[1, .55, 1]}>
+      <sphereGeometry args={[.08, 8, 6]} /><meshStandardMaterial color={color} flatShading />
+    </mesh>)}
+    <mesh><sphereGeometry args={[.05, 8, 6]} /><meshStandardMaterial color="#fff7e7" flatShading /></mesh>
+  </group>;
+}
+
+/** A scattered layer of small, fully-rounded confetti (bubbles and blooms — no sharp points) across the whole globe, matching the density added to the BM and English planets. */
 function ShapeSparkles({ quality }: { quality: "high" | "low" }) {
   const sparkles = useMemo(() => fibonacciSphereRegions(quality === "high" ? 46 : 28, LANDMARKS.slice(0, 4)), [quality]);
   return <group>{sparkles.map(item => {
@@ -126,11 +149,7 @@ function ShapeSparkles({ quality }: { quality: "high" | "low" }) {
     const quaternion = new Quaternion().setFromUnitVectors(UP, normal);
     const scale = .5 + (item.index % 4) * .14;
     return <group key={item.index} position={normal.clone().multiplyScalar(RADIUS + .02)} quaternion={quaternion} rotation={[0, 0, item.index]} scale={scale}>
-      {item.index % 3 === 0
-        ? <mesh rotation={[Math.PI / 2, 0, 0]}><octahedronGeometry args={[.13, 0]} /><meshStandardMaterial color={item.color} flatShading emissive={item.color} emissiveIntensity={.15} /></mesh>
-        : item.index % 3 === 1
-          ? <mesh rotation={[Math.PI / 2, 0, 0]}><tetrahedronGeometry args={[.14, 0]} /><meshStandardMaterial color={item.color} flatShading /></mesh>
-          : <mesh rotation={[Math.PI / 2, 0, 0]}><boxGeometry args={[.14, .14, .05]} /><meshStandardMaterial color={item.color} flatShading /></mesh>}
+      {item.index % 2 === 0 ? <Bubble color={item.color} /> : <Bloom color={item.color} />}
     </group>;
   })}</group>;
 }
