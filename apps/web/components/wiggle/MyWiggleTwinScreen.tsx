@@ -7,8 +7,11 @@ import { ApiClient } from "../../lib/api/client";
 import { demoParent } from "../../lib/demo/parent";
 import { WiggleTwinAvatar } from "./WiggleTwinAvatar";
 import { WiggleConstellation } from "./WiggleConstellation";
+import { TwinCheckIn } from "./TwinCheckIn";
 import { getLastSeenTwin, saveSeenTwin } from "./twinMemory";
 import { saveSeenConstellationStars, seenConstellationStars } from "./constellationMemory";
+import { recordTwinVisit } from "./twinStreak";
+import { getNextStep } from "./nextStep";
 import styles from "./myWiggleTwin.module.css";
 
 export interface MyWiggleTwinScreenProps {
@@ -21,6 +24,7 @@ export function MyWiggleTwinScreen({ childId, client: suppliedClient }: MyWiggle
   const [client] = useState(() => suppliedClient ?? new ApiClient());
   const [data, setData] = useState<ParentInsightsResponse | null>(null);
   const [freshStars, setFreshStars] = useState<ConstellationStarId[]>([]);
+  const [streak, setStreak] = useState(0);
   const remembered = useRef(false);
 
   useEffect(() => {
@@ -40,6 +44,7 @@ export function MyWiggleTwinScreen({ childId, client: suppliedClient }: MyWiggle
     const allUnlocked = getConstellationStars(data.twin).filter(star => star.unlocked).map(star => star.id);
     saveSeenConstellationStars(childId, [...new Set([...seenStars, ...allUnlocked])]);
     saveSeenTwin(childId, data.twin);
+    setStreak(recordTwinVisit(childId));
   }, [data, childId]);
 
   if (!data) return <main className={styles.shell}><p role="status" className={styles.empty}>Waking up your Twin…</p></main>;
@@ -50,6 +55,7 @@ export function MyWiggleTwinScreen({ childId, client: suppliedClient }: MyWiggle
   const unlockedCount = stars.filter(star => star.unlocked).length;
   const subjectsProgressing = Object.keys(data.twin.mastery).length;
   const topStar = stars.find(star => freshStars.includes(star.id)) ?? stars.find(star => star.unlocked);
+  const nextStep = getNextStep(data.twin, childId);
 
   return <main className={styles.shell}>
     <header className={styles.header}>
@@ -64,12 +70,19 @@ export function MyWiggleTwinScreen({ childId, client: suppliedClient }: MyWiggle
     {freshStars.length > 0 && topStar ? (
       <p className={styles.discovery} role="status">✨ Your Twin discovered something! New star: <strong>{topStar.title}</strong></p>
     ) : null}
+    <TwinCheckIn />
     <section className={styles.stats} aria-label="Your progress">
+      <div className={styles.stat}><strong>{streak}</strong><span>Day streak 🔥</span></div>
       <div className={styles.stat}><strong>{data.completedMissions > 0 ? 1 : 0}</strong><span>Planets explored</span></div>
       <div className={styles.stat}><strong>{data.completedMissions}</strong><span>Missions completed</span></div>
       <div className={styles.stat}><strong>{unlockedCount}</strong><span>Stars unlocked</span></div>
       <div className={styles.stat}><strong>{subjectsProgressing}</strong><span>Subjects progressing</span></div>
     </section>
+    {nextStep ? <section className={styles.nextStep} aria-label="What to try next">
+      <h2>What can I try?</h2>
+      <p>{nextStep.description}</p>
+      <a className={styles.nextStepLink} href={nextStep.href}>{nextStep.actionLabel} ↗</a>
+    </section> : null}
     <section className={styles.achievements} aria-label="Recent discoveries">
       <h2>Recent discoveries</h2>
       {unlockedCount > 0 ? <ul>{stars.filter(star => star.unlocked).map(star => <li key={star.id}>{star.title}</li>)}</ul> : <p className={styles.empty}>Keep exploring missions to discover your first star.</p>}

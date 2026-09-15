@@ -37,6 +37,20 @@ describe("MyWiggleTwinScreen", () => {
     expect(document.body.textContent).not.toMatch(/accuracy/i);
   });
 
+  it("shows a clickable next step toward the nearest not-yet-unlocked star", async () => {
+    render(<MyWiggleTwinScreen childId="child-1" client={fakeClient(baseTwin)} />);
+    await screen.findByText("My Wiggle Twin");
+    const link = screen.getByRole("link", { name: /Go to .+↗/ });
+    expect(link.getAttribute("href")).toMatch(/^\/\?child=child-1&world=(science|math)/);
+  });
+
+  it("starts a one-day streak on first visit", async () => {
+    render(<MyWiggleTwinScreen childId="child-1" client={fakeClient(baseTwin)} />);
+    await screen.findByText("My Wiggle Twin");
+    const streakTile = await screen.findByText("Day streak 🔥");
+    expect(streakTile.closest("div")?.querySelector("strong")?.textContent).toBe("1");
+  });
+
   it("celebrates a newly unlocked star only the first time it is seen", async () => {
     const { unmount } = render(<MyWiggleTwinScreen childId="child-2" client={fakeClient(baseTwin)} />);
     await screen.findByText(/New star/);

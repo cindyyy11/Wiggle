@@ -8,7 +8,7 @@ import { ApiClient } from "../../lib/api/client";
 import { demoParent } from "../../lib/demo/parent";
 import { speakIfUnmuted } from "../../features/voice/voicePreference";
 import { getLastSeenTwin, saveSeenTwin } from "./twinMemory";
-import { nextConstellationSuggestion } from "./nextConstellationSuggestion";
+import { getNextStep, type NextStep } from "./nextStep";
 import { WiggleTwinAvatar } from "./WiggleTwinAvatar";
 import styles from "./twinLauncher.module.css";
 
@@ -18,11 +18,6 @@ export interface TwinLauncherProps {
   childId: string;
   client?: ApiClient;
   context?: TwinLauncherContext;
-}
-
-interface TwinSuggestion {
-  title: string;
-  description: string;
 }
 
 /**
@@ -38,7 +33,7 @@ export function TwinLauncher({ childId, client: suppliedClient, context = null }
   const [client] = useState(() => suppliedClient ?? new ApiClient());
   const [state, setState] = useState<TwinVisualState>("ready");
   const [message, setMessage] = useState<string>(twinVisualCopy.ready);
-  const [suggestion, setSuggestion] = useState<TwinSuggestion | null>(null);
+  const [nextStep, setNextStep] = useState<NextStep | null>(null);
   const [open, setOpen] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
   const launcherButton = useRef<HTMLButtonElement>(null);
@@ -48,8 +43,7 @@ export function TwinLauncher({ childId, client: suppliedClient, context = null }
     const nextState = getTwinVisualState(twin, previous);
     setState(nextState);
     setMessage(twinVisualCopy[nextState]);
-    const star = nextConstellationSuggestion(twin);
-    setSuggestion(star ? { title: star.title, description: star.description } : null);
+    setNextStep(getNextStep(twin, childId));
     if (persist) saveSeenTwin(childId, twin);
   };
 
@@ -103,9 +97,10 @@ export function TwinLauncher({ childId, client: suppliedClient, context = null }
     >
       <h2 ref={heading} tabIndex={-1}>My Wiggle Twin</h2>
       <p role="status">{message}{scienceLine}</p>
-      {suggestion ? <p className={styles.suggestion}>What can I try? {suggestion.description}</p> : null}
+      {nextStep ? <p className={styles.suggestion}>What can I try? {nextStep.description}</p> : null}
       <div className={styles.actions}>
         <button type="button" onClick={() => speakIfUnmuted(`${message}${scienceLine}`)}>Read aloud</button>
+        {nextStep ? <a href={nextStep.href}>{nextStep.actionLabel}</a> : null}
         <a href={`/twin?child=${encodeURIComponent(childId)}`}>See my whole Twin</a>
       </div>
       <button type="button" className={styles.close} onClick={close}>Close</button>

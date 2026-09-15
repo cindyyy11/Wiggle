@@ -41,5 +41,10 @@
 }
 .detail strong { display: block; margin-bottom: 3px; font-size: 14px; }
 
+.justUnlocked { animation: glowRing 1.8s ease-out 2; border-radius: 14px; }
+.justUnlocked .mark { animation: burst .6s ease-out; }
+
 @keyframes twinkle { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .75; transform: scale(1.12); } }
-@media (prefers-reduced-motion: reduce) { .unlocked .mark { animation: none; } }
+@keyframes burst { 0% { transform: scale(.4); opacity: 0; } 60% { transform: scale(1.35); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes glowRing { 0%, 100% { box-shadow: 0 0 0 0 #f4c95d00; } 40% { box-shadow: 0 0 18px 4px #f4c95d99; } }
+@media (prefers-reduced-motion: reduce) { .unlocked .mark { animation: none; } .justUnlocked, .justUnlocked .mark { animation: none; } }

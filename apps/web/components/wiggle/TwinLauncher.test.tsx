@@ -33,6 +33,8 @@ describe("TwinLauncher", () => {
     expect(screen.getByRole("button", { name: "Read aloud" })).toBeTruthy();
     const twinPage = screen.getByRole("link", { name: "See my whole Twin" });
     expect(twinPage.getAttribute("href")).toBe("/twin?child=child-1");
+    const goTo = screen.getByRole("link", { name: "Go to Colors Canyon" });
+    expect(goTo.getAttribute("href")).toBe("/?child=child-1&world=science&zone=colors");
     expect(document.body.textContent).not.toMatch(/\d+%/);
   });
 
