@@ -1,10 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
-import type { ParentInsightsResponse } from "@wiggle/contracts";
+import type { LearnerTwin, ParentInsightsResponse } from "@wiggle/contracts";
 import { getLearnerPatterns, getTwinVisualState, patternLabels, twinVisualCopy } from "@wiggle/contracts";
 import { parentRequest, type ParentDataMode } from "../../lib/api/parent";
 import { subscribeWiggleLiveEvents } from "../../features/sync/wiggleLiveChannel";
 import { getNextStep } from "../wiggle/nextStep";
+import { getLastSeenTwin, saveSeenTwin } from "../wiggle/twinMemory";
 import { HomeworkCheckIn } from "./HomeworkCheckIn";
 import { QuickCheckIn } from "./QuickCheckIn";
 import styles from "./parent.module.css";
@@ -86,6 +87,7 @@ export function ParentDashboard({ mode, onLock }: { mode: ParentDataMode; onLock
   const [retry, setRetry] = useState(0);
   const [insightsRefresh, setInsightsRefresh] = useState(0);
   const [liveNotice, setLiveNotice] = useState("");
+  const [previousTwin, setPreviousTwin] = useState<LearnerTwin | null>(null);
   useEffect(() => {
     let active = true;
     setError("");
@@ -101,6 +103,14 @@ export function ParentDashboard({ mode, onLock }: { mode: ParentDataMode; onLock
     parentRequest<ParentInsightsResponse>(`insights?child_id=${encodeURIComponent(childId)}`).then(result => { if (active) setData(result); }).catch(error => { if (active) setError(error.message); });
     return () => { active = false; };
   }, [childId, retry, insightsRefresh]);
+  useEffect(() => {
+    // Same per-browser "last seen twin" memory the child's own Twin screen uses (see
+    // twinMemory.ts) — reused here so the plain-English mood below can say "finding
+    // its groove" instead of only ever "ready", "mastered", or a friction state.
+    if (!data || !childId) return;
+    setPreviousTwin(getLastSeenTwin(childId));
+    saveSeenTwin(childId, data.twin);
+  }, [data, childId]);
   const name = children.find(child => child.id === childId)?.name || "Your explorer";
   useEffect(() => {
     setLiveNotice("");
@@ -212,7 +222,7 @@ export function ParentDashboard({ mode, onLock }: { mode: ParentDataMode; onLock
             </dl>
           </article>
           {(() => {
-            const mood = twinVisualCopy[getTwinVisualState(data.twin)];
+            const mood = twinVisualCopy[getTwinVisualState(data.twin, previousTwin)];
             const nextStep = getNextStep(data.twin, childId);
             return <article className={`${styles.panel} ${toneClass.sage}`} aria-label="Your child's Wiggle Twin">
               <h3 className={styles.panelTitle}>{name}&rsquo;s Wiggle Twin, in plain English</h3>
