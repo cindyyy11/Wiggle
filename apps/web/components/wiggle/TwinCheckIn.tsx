@@ -16,10 +16,15 @@ const MOOD_REPLIES: Readonly<Record<Mood, string>> = {
   tricky: "Thanks for telling me. Let's find something gentler together.",
 };
 
+// A negated positive ("not fun", "wasn't easy", "didn't like it") should read as
+// tricky, not great — checked first so a plain keyword match can't be fooled by it.
+const NEGATED_POSITIVE = /\b(not|isn'?t|wasn'?t|aren'?t|weren'?t|didn'?t|doesn'?t|don'?t|no)\b[^.!?]{0,20}\b(good|great|fun|happy|easy|awesome|love|amazing|like|enjoy)\b/;
+
 function moodFromTranscript(transcript: string): Mood {
   const text = transcript.toLowerCase();
-  if (/tired|hard|tricky|stuck|sad|frustrat|difficult|bad/.test(text)) return "tricky";
-  if (/good|great|fun|happy|easy|awesome|love|amazing/.test(text)) return "great";
+  if (NEGATED_POSITIVE.test(text)) return "tricky";
+  if (/tired|hard|tricky|stuck|sad|frustrat(ed|ing)?|difficult|bad|boring|confus(ed|ing)|annoying|upset/.test(text)) return "tricky";
+  if (/good|great|fun|happy|easy|awesome|love|amazing|nice|cool|yay/.test(text)) return "great";
   return "okay";
 }
 
@@ -30,7 +35,9 @@ function moodFromTranscript(transcript: string): Mood {
  * own mastery/friction math (see packages/contracts/src/twinVisualState.ts), so
  * this never writes anywhere and never claims to change how the Twin looks. It
  * exists so the child feels heard, using the same mic/speech plumbing as Lexi's
- * in-mission voice (useLexiVoice) without needing an active mission session.
+ * in-mission voice (useLexiVoice) without needing an active mission session. A
+ * "Tricky" answer also offers a real, honest next step — a link back to the World
+ * Selector to try something else — rather than a reply with nowhere to go.
  */
 export function TwinCheckIn() {
   const [mood, setMood] = useState<Mood | null>(null);
@@ -52,5 +59,6 @@ export function TwinCheckIn() {
       </button>}
     </div>
     {mood ? <p role="status" className={styles.response}>{MOOD_REPLIES[mood]}</p> : null}
+    {mood === "tricky" ? <a className={styles.gentleLink} href="/">Let's try something else for now ↗</a> : null}
   </section>;
 }

@@ -38,6 +38,16 @@ describe("TwinLauncher", () => {
     expect(document.body.textContent).not.toMatch(/\d+%/);
   });
 
+  it("avoids repeating the same suggestion the next time the panel opens", async () => {
+    render(<TwinLauncher childId="child-1" client={fakeClient(twin)} />);
+    openLauncher();
+    await screen.findByRole("link", { name: "Go to Colors Canyon" });
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    openLauncher();
+    const goTo = await screen.findByRole("link", { name: "Go to Life Cycle Garden" });
+    expect(goTo.getAttribute("href")).toContain("zone=life-cycle");
+  });
+
   it("adds a Science-specific line only when the context is science", async () => {
     render(<TwinLauncher childId="child-1" client={fakeClient(twin)} context="science" />);
     openLauncher();
