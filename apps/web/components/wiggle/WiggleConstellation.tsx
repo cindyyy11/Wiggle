@@ -35,7 +35,7 @@ export function WiggleConstellation({ twin, newlyUnlocked }: WiggleConstellation
           <button
             key={star.id}
             type="button"
-            className={`${styles.star} ${star.unlocked ? styles.unlocked : styles.locked}`}
+            className={`${styles.star} ${star.unlocked ? styles.unlocked : styles.locked} ${newlyUnlocked?.has(star.id) ? styles.justUnlocked : ""}`}
             aria-pressed={selected?.id === star.id}
             aria-label={star.unlocked ? `${star.title}: ${star.description}` : `${star.title}: not discovered yet`}
             onClick={() => setSelected(current => (current?.id === star.id ? null : star))}

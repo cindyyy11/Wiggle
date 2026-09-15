@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import type { ParentInsightsResponse } from "@wiggle/contracts";
-import { getLearnerPatterns, patternLabels } from "@wiggle/contracts";
+import { getLearnerPatterns, getTwinVisualState, patternLabels, twinVisualCopy } from "@wiggle/contracts";
 import { parentRequest, type ParentDataMode } from "../../lib/api/parent";
 import { subscribeWiggleLiveEvents } from "../../features/sync/wiggleLiveChannel";
+import { getNextStep } from "../wiggle/nextStep";
 import { HomeworkCheckIn } from "./HomeworkCheckIn";
 import { QuickCheckIn } from "./QuickCheckIn";
 import styles from "./parent.module.css";
@@ -210,6 +211,16 @@ export function ParentDashboard({ mode, onLock }: { mode: ParentDataMode; onLock
               <div data-tone="blue"><dt>Offline activity</dt><dd>{data.today?.offlineMinutes ?? 0} min</dd></div>
             </dl>
           </article>
+          {(() => {
+            const mood = twinVisualCopy[getTwinVisualState(data.twin)];
+            const nextStep = getNextStep(data.twin, childId);
+            return <article className={`${styles.panel} ${toneClass.sage}`} aria-label="Your child's Wiggle Twin">
+              <h3 className={styles.panelTitle}>{name}&rsquo;s Wiggle Twin, in plain English</h3>
+              <p className={styles.panelLead}>The same warm summary {name} sees on their own Twin screen — no scores, just the gist.</p>
+              <p>&ldquo;{mood}&rdquo;</p>
+              {nextStep && <p>A good next step: <strong>{nextStep.actionLabel.replace(/^Go to /, "")}</strong> — {nextStep.description}</p>}
+            </article>;
+          })()}
         </div>
       </section>
 
