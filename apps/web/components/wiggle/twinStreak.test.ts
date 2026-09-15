@@ -2,6 +2,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { recordTwinVisit } from "./twinStreak";
 
+// twinStreak reads the local calendar day (not UTC) so a child's "day" boundary is
+// their own midnight, not somewhere in their afternoon. Pin the process timezone to
+// UTC so these UTC-labelled system times are deterministic on any machine/CI.
+process.env.TZ = "UTC";
+
 beforeEach(() => { vi.useFakeTimers(); });
 afterEach(() => { vi.useRealTimers(); window.localStorage.clear(); });
 

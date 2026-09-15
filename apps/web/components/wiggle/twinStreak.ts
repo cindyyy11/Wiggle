@@ -14,12 +14,19 @@ interface StreakRecord {
   lastVisit: string;
 }
 
+/** The child's own local calendar date — not UTC, so the "day" boundary falls at their
+ * midnight, not somewhere in their afternoon or evening. */
 function today(): string {
-  return new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
 }
 
 function daysBetween(from: string, to: string): number {
-  return Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000);
+  const [fromYear, fromMonth, fromDay] = from.split("-").map(Number);
+  const [toYear, toMonth, toDay] = to.split("-").map(Number);
+  const fromMs = new Date(fromYear, fromMonth - 1, fromDay).getTime();
+  const toMs = new Date(toYear, toMonth - 1, toDay).getTime();
+  return Math.round((toMs - fromMs) / 86_400_000);
 }
 
 function isStreakRecord(value: unknown): value is StreakRecord {
