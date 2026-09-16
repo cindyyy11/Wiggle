@@ -1,8 +1,13 @@
 /* apps/web/components/wiggle/twinLauncher.module.css */
 .launcher{position:fixed;right:20px;bottom:20px;z-index:40;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
-.button{border:1px solid #285c8540;border-radius:50%;width:64px;height:64px;padding:4px;background:#fff7e7;box-shadow:0 12px 26px #285c8530}
-.button:hover{background:#e4f4f6}
-.button:focus-visible{outline:3px solid #173e5e;outline-offset:3px}
+.button{position:relative;border:0;width:72px;height:76px;padding:0;background:transparent;cursor:pointer;overflow:visible;animation:launcherFloat 4.5s ease-in-out infinite}
+.button:focus-visible{outline:3px solid #173e5e;outline-offset:6px;border-radius:50%}
+.pad{position:absolute;inset:10px 8px 4px 8px;border-radius:44% 56% 58% 42%/48% 44% 56% 52%;background:radial-gradient(circle at 34% 30%,#fff7e7,#e4f4f6 72%);border:1px solid #285c8540;box-shadow:0 12px 26px #285c8530;transition:background .2s ease,transform .2s ease}
+.button:hover .pad{background:#e4f4f6;transform:scale(1.05) rotate(-3deg)}
+.sparkle{position:absolute;top:-2px;left:4px;width:9px;height:9px;background:#f4c95d;clip-path:polygon(50% 0%,63% 38%,100% 50%,63% 62%,50% 100%,37% 62%,0% 50%,37% 38%);animation:sparkleTwinkle 2.6s ease-in-out infinite}
+.twinPeek{position:absolute;left:48%;bottom:0;transform:translateX(-62%) rotate(-8deg);line-height:0;pointer-events:none}
+@keyframes launcherFloat{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-5px) rotate(1.5deg)}}
+@keyframes sparkleTwinkle{0%,100%{opacity:.35;transform:scale(.8) rotate(0deg)}50%{opacity:1;transform:scale(1.15) rotate(20deg)}}
 .panel{width:min(300px,calc(100vw - 40px));padding:16px 16px 14px;border:1px solid #285c8540;border-radius:18px;background:#fff7e7;color:#285c85;box-shadow:0 18px 38px #285c8524}
 .panel h2{margin:0 0 8px;font-size:19px;letter-spacing:-.02em}
 .panel h2:focus{outline:none}
@@ -12,4 +17,4 @@
 .actions button,.actions a{min-height:44px;border:1px solid #285c8540;border-radius:999px;padding:0 14px;background:#fff7e7;color:#285c85;font-size:12px;font-weight:800;text-decoration:none;display:grid;place-items:center}
 .actions button:hover,.actions a:hover{background:#e4f4f6}
 .close{border:0;background:transparent;display:block;margin:10px auto 0;font-size:12px;text-decoration:underline;text-underline-offset:4px;padding:0;color:#285c85}
-@media(prefers-reduced-motion:reduce){.button,.actions button,.actions a{transition:none}}
+@media(prefers-reduced-motion:reduce){.button,.actions button,.actions a{transition:none;animation:none}.sparkle{animation:none}}
