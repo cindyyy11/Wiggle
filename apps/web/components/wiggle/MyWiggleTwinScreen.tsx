@@ -68,6 +68,9 @@ export function MyWiggleTwinScreen({ childId, client: suppliedClient }: MyWiggle
     </header>
     <h1 className={styles.title}>My Wiggle Twin</h1>
     <div className={styles.stage}>
+      <span className={styles.stageGlow} aria-hidden="true" />
+      <span className={`${styles.stageSparkle} ${styles.stageSparkleA}`} aria-hidden="true" />
+      <span className={`${styles.stageSparkle} ${styles.stageSparkleB}`} aria-hidden="true" />
       <WiggleTwinAvatar state={state} size={190} />
       <p className={styles.bubble} role="status">Lexi says: “{data.twin && topStar ? `${topStar.description}` : "One small step is a good place to start."}”</p>
     </div>
