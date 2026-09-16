@@ -22,8 +22,7 @@ afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 const click = (name: string) => fireEvent.click(screen.getByRole("button", { name }));
 const idle = () => waitFor(() => expect(screen.getByRole("region", { name: "Fraction mission" }).getAttribute("aria-busy")).toBe("false"));
 const enterAtlas = async () => {
-  click("Let's Wiggle");
-  await screen.findByRole("button", { name: "Start fractions mission" });
+  await screen.findByRole("button", { name: "Start fractions mission" }, { timeout: 3000 });
 };
 
 it.each(["buttons", "stuck", "recognized", "removed", "unchanged-grab"])("records actual selected input for %s completion", async kind => {

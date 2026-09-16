@@ -58,8 +58,7 @@ afterEach(() => {
 });
 
 function enterWorlds() {
-  fireEvent.click(screen.getByRole("button", { name: "Let's Wiggle" }));
-  act(() => vi.advanceTimersByTime(320));
+  act(() => vi.advanceTimersByTime(900 + 320));
 }
 
 it("keeps the splash, then routes Numeria from either orbit control to the existing MissionAtlas", () => {
@@ -89,7 +88,7 @@ it("keeps the splash, then routes Numeria from either orbit control to the exist
   expect((missionProps.current as { client?: unknown }).client).toBe(client);
   fireEvent.click(screen.getByRole("button", { name: "Back to Worlds" }));
   expect(screen.getByRole("region", { name: "Choose a subject world" })).toBeTruthy();
-  expect(screen.queryByRole("button", { name: "Let's Wiggle" })).toBeNull();
+  expect(screen.queryByRole("region", { name: "Welcome to Wiggle" })).toBeNull();
 
   fireEvent.click(screen.getByRole("button", { name: "Select modeled Numeria" }));
   expect(window.location.search).toBe("?child=owned&world=math");

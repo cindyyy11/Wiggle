@@ -3,30 +3,24 @@
 import { useEffect, useRef, useState } from "react";
 import styles from "./SubjectWorlds.module.css";
 
+const SPLASH_DISPLAY_MS = 900;
 const SPLASH_EXIT_DELAY_MS = 320;
 
 export function WiggleSplash({ onEntered }: { onEntered: () => void }) {
   const [leaving, setLeaving] = useState(false);
-  const started = useRef(false);
-  const timeout = useRef<number | null>(null);
-  const startButton = useRef<HTMLButtonElement | null>(null);
+  const onEnteredRef = useRef(onEntered);
+  onEnteredRef.current = onEntered;
 
   useEffect(() => {
-    startButton.current?.focus();
+    const leaveTimer = window.setTimeout(() => setLeaving(true), SPLASH_DISPLAY_MS);
+    const enterTimer = window.setTimeout(() => onEnteredRef.current(), SPLASH_DISPLAY_MS + SPLASH_EXIT_DELAY_MS);
     return () => {
-      if (timeout.current !== null) window.clearTimeout(timeout.current);
+      window.clearTimeout(leaveTimer);
+      window.clearTimeout(enterTimer);
     };
   }, []);
 
-  const enter = () => {
-    if (started.current) return;
-    started.current = true;
-    setLeaving(true);
-    timeout.current = window.setTimeout(onEntered, SPLASH_EXIT_DELAY_MS);
-  };
-
   return <section className={`${styles.splash} ${leaving ? styles.splashLeaving : ""}`} aria-label="Welcome to Wiggle">
     <img className={styles.splashBrand} src="/brand/wiggle-full.jpeg" alt="Wiggle. Wonder. Wow!" />
-    <button ref={startButton} type="button" className={styles.splashStart} onClick={enter} disabled={leaving}>Let's Wiggle</button>
   </section>;
 }

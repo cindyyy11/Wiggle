@@ -1,8 +1,7 @@
 import { expect, type Page } from "@playwright/test";
 
 export async function launchWiggle(page: Page): Promise<void> {
-  await page.getByRole("button", { name: "Let's Wiggle", exact: true }).click();
-  await expect(page.getByRole("region", { name: "Choose a subject world" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Choose a subject world" })).toBeVisible({ timeout: 10000 });
 }
 
 export async function enterScience(page: Page): Promise<void> {

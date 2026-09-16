@@ -14,7 +14,7 @@ The queue preserves event delivery through reload, not the active mission UI or 
 
 ## 3D hand interaction and access flow
 
-To reach the gesture mission from the running app, start the web app (`npm run dev`), open `http://localhost:3000`, choose **Let's Wiggle**, select **Numeria**, then enter **Fraction Forest**. Choose **Start fractions mission**, select **Gesture** (or **Gesture + Visual**), and allow camera access when the browser asks. The camera status and fallback slice buttons are shown beside the 3D scene. On a device without camera/WebGL, the same mission remains playable with the accessible 2D map and buttons.
+To reach the gesture mission from the running app, start the web app (`npm run dev`), open `http://localhost:3000`, wait for the splash to auto-dismiss, select **Numeria**, then enter **Fraction Forest**. Choose **Start fractions mission**, select **Gesture** (or **Gesture + Visual**), and allow camera access when the browser asks. The camera status and fallback slice buttons are shown beside the 3D scene. On a device without camera/WebGL, the same mission remains playable with the accessible 2D map and buttons.
 
 Inside Fraction Forest the hand cursor is mapped into the 3D scene, not to screen zones:
 

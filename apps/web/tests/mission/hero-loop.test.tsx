@@ -12,8 +12,7 @@ import type { SelectAdaptationResponse } from "@wiggle/contracts";
 vi.mock("next/dynamic", () => ({ default: () => () => null }));
 
 const enterAtlas = async () => {
-  fireEvent.click(screen.getByRole("button", { name: "Let's Wiggle" }));
-  await screen.findByRole("button", { name: "Start fractions mission" });
+  await screen.findByRole("button", { name: "Start fractions mission" }, { timeout: 3000 });
 };
 
 it("keeps household failures out of demo play and retains the session-start retry key", async () => {

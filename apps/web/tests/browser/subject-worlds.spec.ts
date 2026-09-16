@@ -122,8 +122,7 @@ test("locked subject worlds retain focus and do not open a fake lesson", async (
 
 test("a direct Science route restores its zone and retains its child through every topic selection", async ({ page }) => {
   await page.goto("/?child=child-123&world=science&zone=colors");
-  await page.getByRole("button", { name: "Let's Wiggle", exact: true }).click();
-  await expect(page.getByRole("region", { name: "Science Planet" })).toBeVisible();
+  await expect(page.getByRole("region", { name: "Science Planet" })).toBeVisible({ timeout: 10000 });
   await expect(page.getByRole("button", { name: "Visit Colors Canyon", exact: true })).toHaveAttribute("aria-pressed", "true");
 
   for (const zone of SCIENCE_ZONES) {
@@ -185,9 +184,9 @@ test("forced WebGL fallback keeps the subject orbit and all destinations usable"
   await expect(page.getByRole("region", { name: "Choose a subject world" })).toBeVisible();
 });
 
-test("keyboard navigation reaches splash, Science, and Magnet Lab without pointer input", async ({ page }) => {
+test("keyboard navigation reaches Science and Magnet Lab past the auto-dismissing splash without pointer input", async ({ page }) => {
   await page.goto("/");
-  await keyboardActivate(page, "Let's Wiggle");
+  await expect(page.getByRole("region", { name: "Choose a subject world" })).toBeVisible({ timeout: 10000 });
   await keyboardActivate(page, "Show Science Planet");
   await keyboardActivate(page, "Explore Science Planet");
   await keyboardActivate(page, "Explore Magnet Lands");
@@ -205,14 +204,14 @@ test("orbit controls stay useful at desktop and mobile widths", async ({ page },
   await expectOrbitControlsFit(page, testInfo);
 });
 
-test("keyboard navigation reaches splash, Numeria, and Science from the orbit", async ({ page }) => {
+test("keyboard navigation reaches Numeria and Science from the orbit past the auto-dismissing splash", async ({ page }) => {
   await page.goto("/");
-  await keyboardActivate(page, "Let's Wiggle");
+  await expect(page.getByRole("region", { name: "Choose a subject world" })).toBeVisible({ timeout: 10000 });
   await keyboardActivate(page, "Explore Numeria");
   await expect(page.getByRole("button", { name: "Start fractions mission", exact: true })).toBeVisible();
 
   await page.goto("/");
-  await keyboardActivate(page, "Let's Wiggle");
+  await expect(page.getByRole("region", { name: "Choose a subject world" })).toBeVisible({ timeout: 10000 });
   await keyboardActivate(page, "Show Science Planet");
   await keyboardActivate(page, "Explore Science Planet");
   await keyboardActivate(page, "Explore Magnet Lands");

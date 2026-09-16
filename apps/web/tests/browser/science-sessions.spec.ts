@@ -7,8 +7,7 @@ test('all lands invite, open with B or tap, and complete their own starter sessi
   test.setTimeout(120000);
   await page.addInitScript(() => { Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { getUserMedia: () => Promise.reject(new DOMException('Denied', 'NotAllowedError')) } }); });
   await page.goto('/?world=science');
-  await page.getByRole('button', { name: "Let's Wiggle", exact: true }).click();
-  await expect(page.getByRole('region', { name: 'Science Planet', exact: true }).locator('canvas')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Science Planet', exact: true }).locator('canvas')).toBeVisible({ timeout: 10000 });
   for (const land of ['animals', 'colors', 'life-cycle'] as const) {
     await page.getByRole('button', { name: `Visit ${scienceLand(land).name}`, exact: true }).click();
     await expect(page.getByRole('dialog')).toHaveCount(0);
@@ -37,7 +36,7 @@ test('all lands invite, open with B or tap, and complete their own starter sessi
 
 test('invitation dismissal, focus containment and Escape return', async ({ page }) => {
   await page.goto('/?world=science');
-  await page.getByRole('button', { name: "Let's Wiggle", exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Visit Magnet Lands', exact: true })).toBeVisible({ timeout: 10000 });
   await page.getByRole('button', { name: 'Visit Magnet Lands', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Not now', exact: true })).toBeVisible({ timeout: 20000 });
   await page.getByRole('button', { name: 'Not now', exact: true }).click();

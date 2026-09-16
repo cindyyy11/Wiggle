@@ -35,6 +35,7 @@ export interface MissionAtlasProps {
   onWorldsRequest?: () => void;
 }
 type SplashState = "ready" | "leaving" | "complete";
+const SPLASH_DISPLAY_MS = 900;
 const SPLASH_EXIT_DELAY_MS = 320;
 export function MissionAtlas({ quality = "auto", client: suppliedClient, childId = DEMO_CHILD_ID, allowLocalFallback = true, showSplash = true, onMissionOverlayChange, onWorldsRequest }: MissionAtlasProps) {
   const [client] = useState(() => suppliedClient ?? (allowLocalFallback ? new ApiClient() : new ApiClient("/api/backend")));
@@ -68,15 +69,10 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
   const [splashState, setSplashState] = useState<SplashState>(showSplash ? "ready" : "complete");
   const splashStarting = useRef(false);
   const splashTimeout = useRef<number | null>(null);
-  const splashStartButton = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => () => {
     if (splashTimeout.current !== null) window.clearTimeout(splashTimeout.current);
   }, []);
-
-  useEffect(() => {
-    if (splashState === "ready") splashStartButton.current?.focus();
-  }, [splashState]);
 
   const startSplash = () => {
     if (splashStarting.current) return;
@@ -100,6 +96,13 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
       SPLASH_EXIT_DELAY_MS,
     );
   };
+
+  useEffect(() => {
+    if (splashState !== "ready") return;
+    const autoStart = window.setTimeout(startSplash, SPLASH_DISPLAY_MS);
+    return () => window.clearTimeout(autoStart);
+  }, [splashState]);
+
   const [support, setSupport] = useState<"lexi" | "reset" | "reality" | null>(null);
   const [supportText, setSupportText] = useState("");
   const realityStarted = useRef(false);
@@ -396,5 +399,5 @@ export function MissionAtlas({ quality = "auto", client: suppliedClient, childId
     {!phase && busy ? <p className={styles.starting} role="status">Your mission is coming into view…</p> : null}
     {!phase && feedback ? <p className={styles.starting} role="alert">{feedback}</p> : null}
     {phase ? <FractionMission phase={phase} mode={mode} selectedSlices={slices} report={report} answer={answer} feedback={feedback} busy={busy} correctness={correctness} realityCompleted={realityCompleted} onAnswer={value => { interact(); setAnswer(value); setFeedback(""); }} onStuck={() => { interact(); setCameraEnabled(false); emit({ kind: "stuck_requested", mode }); setFeedback(""); setPhase("stuck"); supportReady.current = false; void operation(signal => adapt("visual_gesture", signal, true)); }} onSimulate={simulate} onSelect={select} onCheck={check} onClose={close} onBack={() => setPhase(mode === "standard" ? "standard" : "activity")} commands={commands} cameraEnabled={cameraEnabled} onCameraEnable={() => setCameraEnabled(true)} onCameraDisable={() => { setCameraEnabled(false); setGesturePhase(null); setHeld(null); }} tracking={handTracking} support={support} supportText={supportText} twinState={missionTwinState} newStar={newStar} greeting={greeting} onLexiRequest={requestLexi} onSupportClose={closeSupport} onSupportComplete={completeSupport} /> : null}
-  </UniverseCanvas></div>{splashVisible ? <section className={`${styles.splash} ${splashState === "leaving" ? styles.splashLeaving : ""}`} aria-label="Welcome to Wiggle"><img className={styles.splashBrand} src="/brand/wiggle-full.jpeg" alt="Wiggle. Wonder. Wow!" /><button ref={splashStartButton} type="button" className={styles.splashStart} onClick={startSplash} disabled={splashState === "leaving"}>Let's Wiggle</button></section> : null}</>;
+  </UniverseCanvas></div>{splashVisible ? <section className={`${styles.splash} ${splashState === "leaving" ? styles.splashLeaving : ""}`} aria-label="Welcome to Wiggle"><img className={styles.splashBrand} src="/brand/wiggle-full.jpeg" alt="Wiggle. Wonder. Wow!" /></section> : null}</>;
 }

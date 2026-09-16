@@ -11,8 +11,7 @@ afterEach(() => {
 });
 
 function enterWorlds() {
-  fireEvent.click(screen.getByRole("button", { name: "Let's Wiggle" }));
-  act(() => vi.advanceTimersByTime(320));
+  act(() => vi.advanceTimersByTime(900 + 320));
 }
 
 it("keeps all subject-orbit actions available through native controls when WebGL falls back", () => {
