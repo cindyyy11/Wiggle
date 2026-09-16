@@ -16,7 +16,7 @@ export function WorldSelector({ selectedWorld = "math", onChoose, onSlide, onSel
   const world = SUBJECT_WORLDS.find(item => item.id === selectedWorld)!;
   const locked = world.status === "coming-soon";
   return <section className={`${styles.selector} ${styles.carouselSelector}`} aria-label="Choose a subject world">
-    <header className={styles.carouselHeader}><img src="/brand/wiggle-mark.png" alt="Wiggle" /><span>Wiggle. Wonder. Wow!</span></header>
+    <header className={styles.carouselHeader}><img src="/brand/wiggle-wordmark.png" alt="Wiggle" /><span>Wonder. Wow!</span></header>
     <p className={styles.carouselHint}>A whole world of discovery.<br /><span>Slide to find your next adventure</span></p>
     <button className={`${styles.carouselArrow} ${styles.arrowPrevious}`} aria-label="Previous planet" disabled={selectedWorld === "math"} onClick={() => onSlide?.(-1)}>←</button>
     <button className={`${styles.carouselArrow} ${styles.arrowNext}`} aria-label="Next planet" disabled={selectedWorld === "english"} onClick={() => onSlide?.(1)}>→</button>

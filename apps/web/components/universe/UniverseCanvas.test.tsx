@@ -21,10 +21,10 @@ beforeEach(() => {
 afterEach(() => { cleanup(); vi.restoreAllMocks(); });
 
 describe("Numeria quality and accessible controls", () => {
-  it("uses the compact Wiggle mark as the accessible home link", () => {
+  it("uses the Wiggle wordmark as the accessible home link", () => {
     render(<UniverseCanvas quality="fallback" />);
     const home = screen.getByRole("link", { name: "Wiggle home" });
-    const mark = home.querySelector('img[src="/brand/wiggle-mark.png"]');
+    const mark = home.querySelector('img[src="/brand/wiggle-wordmark.png"]');
     expect(mark?.getAttribute("alt")).toBe("");
   });
 
