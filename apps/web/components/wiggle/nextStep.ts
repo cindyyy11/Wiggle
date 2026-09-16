@@ -13,6 +13,9 @@ export interface NextStep {
   href: string;
 }
 
+/** Destinations that exist but are never offered as a "Go to …" suggestion. */
+const EXCLUDED_MISSION_NAMES = new Set(["Magnet Lab"]);
+
 /**
  * Turns "you're close to a star" into something the child can actually click — the
  * gap the global launcher spec deliberately left open (no star-to-mission mapping
@@ -25,7 +28,7 @@ export interface NextStep {
  * the suggestion repeats rather than pretending there's a real alternative.
  */
 export function getNextStep(twin: LearnerTwin, childId?: string, avoidMissionName?: string | null): NextStep | null {
-  const candidates = rankedLockedStars(twin);
+  const candidates = rankedLockedStars(twin).filter(candidate => !EXCLUDED_MISSION_NAMES.has(starDestination(candidate.id).missionName));
   if (candidates.length === 0) return null;
   const star = (avoidMissionName
     ? candidates.find(candidate => starDestination(candidate.id).missionName !== avoidMissionName)
