@@ -24,13 +24,13 @@ function openLauncher() {
 }
 
 describe("TwinLauncher", () => {
-  it("opens to show the Twin's current mood, a suggestion, read-aloud, and a link to the full Twin page", async () => {
+  it("opens to show the Twin's current mood, a suggestion, a sound toggle, and a link to the full Twin page", async () => {
     render(<TwinLauncher childId="child-1" client={fakeClient(twin)} />);
     openLauncher();
     expect(screen.getByRole("heading", { name: "My Wiggle Twin" })).toBeTruthy();
     expect(screen.getByRole("status").textContent).toContain("Ready for a mission whenever you are!");
     await screen.findByText(/Pictures and diagrams help you learn fast\./);
-    expect(screen.getByRole("button", { name: "Read aloud" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "🔈 Sound on" })).toBeTruthy();
     const twinPage = screen.getByRole("link", { name: "See my whole Twin" });
     expect(twinPage.getAttribute("href")).toBe("/twin?child=child-1");
     const goTo = screen.getByRole("link", { name: "Go to Colors Canyon" });
@@ -80,14 +80,28 @@ describe("TwinLauncher", () => {
     expect(screen.getByRole("region", { name: "My Wiggle Twin" })).toBeTruthy();
   });
 
-  it("reads the current message aloud", async () => {
+  it("reads the current message aloud automatically once, without needing a click", async () => {
     const speak = vi.fn();
     (window as unknown as { speechSynthesis: unknown }).speechSynthesis = { speak, cancel: vi.fn() };
     (window as unknown as { SpeechSynthesisUtterance: unknown }).SpeechSynthesisUtterance = class { constructor(public text: string) {} };
     render(<TwinLauncher childId="child-1" client={fakeClient(twin)} />);
     openLauncher();
-    fireEvent.click(screen.getByRole("button", { name: "Read aloud" }));
+    await screen.findByRole("status");
     expect(speak).toHaveBeenCalledTimes(1);
+  });
+
+  it("mutes and unmutes the Twin's voice instead of replaying it on every click", async () => {
+    const speak = vi.fn();
+    (window as unknown as { speechSynthesis: unknown }).speechSynthesis = { speak, cancel: vi.fn() };
+    (window as unknown as { SpeechSynthesisUtterance: unknown }).SpeechSynthesisUtterance = class { constructor(public text: string) {} };
+    render(<TwinLauncher childId="child-1" client={fakeClient(twin)} />);
+    openLauncher();
+    await screen.findByRole("status");
+    expect(speak).toHaveBeenCalledTimes(1);
+    const soundButton = screen.getByRole("button", { name: "🔈 Sound on" });
+    fireEvent.click(soundButton);
+    expect(screen.getByRole("button", { name: "🔇 Sound off" })).toBeTruthy();
+    expect(window.localStorage.getItem("wiggle:voice-muted")).toBe("1");
   });
 
   it("falls back gracefully when the backend is unavailable", async () => {
