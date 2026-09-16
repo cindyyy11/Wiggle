@@ -95,7 +95,6 @@ export function TwinLauncher({ childId, client: suppliedClient, context = null }
       aria-expanded={open}
       onClick={toggle}
     >
-      <span className={styles.pad} aria-hidden="true" />
       <span className={styles.sparkle} aria-hidden="true" />
       <span className={styles.twinPeek} aria-hidden="true"><WiggleTwinAvatar state={state} size={62} /></span>
     </button>

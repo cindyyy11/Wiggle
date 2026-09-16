@@ -51,4 +51,24 @@ describe("getNextStep", () => {
     const step = getNextStep(onlyBraveBeginnerLocked, "child-1", "Life Cycle Garden");
     expect(step?.missionName).toBe("Life Cycle Garden");
   });
+
+  it("never suggests Magnet Lab, even when Movement Explorer is the nearest locked star", () => {
+    const movementNearestButExcluded: LearnerTwin = {
+      ...mastered,
+      modalityEffectiveness: { ...mastered.modalityEffectiveness, movement: 0.65, visual: 0.1 },
+      strategyEffectiveness: { ...mastered.strategyEffectiveness, movementBreak: 0.65 },
+    };
+    const step = getNextStep(movementNearestButExcluded, "child-1");
+    expect(step?.missionName).not.toBe("Magnet Lab");
+    expect(step?.missionName).toBe("Colors Canyon");
+  });
+
+  it("returns null when Movement Explorer is the only locked star, instead of suggesting Magnet Lab", () => {
+    const onlyMovementLocked: LearnerTwin = {
+      ...mastered,
+      modalityEffectiveness: { ...mastered.modalityEffectiveness, movement: 0.65 },
+      strategyEffectiveness: { ...mastered.strategyEffectiveness, movementBreak: 0.65 },
+    };
+    expect(getNextStep(onlyMovementLocked, "child-1")).toBeNull();
+  });
 });
