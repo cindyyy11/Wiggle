@@ -63,6 +63,23 @@ describe("TwinLauncher", () => {
     expect(document.activeElement).toBe(screen.getByRole("button", { name: "Ready for a mission whenever you are!" }));
   });
 
+  it("closes when clicking outside the panel, without stealing focus back", async () => {
+    render(<TwinLauncher childId="child-1" client={fakeClient(twin)} />);
+    openLauncher();
+    await screen.findByRole("region", { name: "My Wiggle Twin" });
+    fireEvent.click(document.body);
+    expect(screen.queryByRole("region", { name: "My Wiggle Twin" })).toBeNull();
+    expect(document.activeElement).not.toBe(screen.getByRole("button", { name: "Ready for a mission whenever you are!" }));
+  });
+
+  it("stays open when clicking inside the panel", async () => {
+    render(<TwinLauncher childId="child-1" client={fakeClient(twin)} />);
+    openLauncher();
+    const panel = await screen.findByRole("region", { name: "My Wiggle Twin" });
+    fireEvent.click(panel);
+    expect(screen.getByRole("region", { name: "My Wiggle Twin" })).toBeTruthy();
+  });
+
   it("reads the current message aloud", async () => {
     const speak = vi.fn();
     (window as unknown as { speechSynthesis: unknown }).speechSynthesis = { speak, cancel: vi.fn() };
