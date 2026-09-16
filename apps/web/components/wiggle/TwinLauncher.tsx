@@ -38,6 +38,7 @@ export function TwinLauncher({ childId, client: suppliedClient, context = null }
   const [open, setOpen] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
   const launcherButton = useRef<HTMLButtonElement>(null);
+  const panel = useRef<HTMLElement>(null);
 
   const applyTwin = (twin: LearnerTwin, persist: boolean) => {
     const previous = getLastSeenTwin(childId);
@@ -71,6 +72,21 @@ export function TwinLauncher({ childId, client: suppliedClient, context = null }
 
   useEffect(() => { if (open) heading.current?.focus(); }, [open]);
 
+  // Clicking anywhere outside the open panel (and off the launcher button itself,
+  // which already toggles it) dismisses it, same as Escape — but without stealing
+  // focus back, since the child just clicked somewhere else on purpose.
+  useEffect(() => {
+    if (!open) return;
+    const handleOutsideClick = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (panel.current?.contains(target) || launcherButton.current?.contains(target)) return;
+      setOpen(false);
+      window.speechSynthesis?.cancel();
+    };
+    document.addEventListener("click", handleOutsideClick);
+    return () => document.removeEventListener("click", handleOutsideClick);
+  }, [open]);
+
   const close = () => {
     setOpen(false);
     window.speechSynthesis?.cancel();
@@ -96,13 +112,15 @@ export function TwinLauncher({ childId, client: suppliedClient, context = null }
       onClick={toggle}
     >
       <span className={styles.sparkle} aria-hidden="true" />
-      <span className={styles.twinPeek} aria-hidden="true"><WiggleTwinAvatar state={state} size={62} /></span>
+      <span className={styles.twinPeek} aria-hidden="true"><WiggleTwinAvatar state={state} size={84} /></span>
     </button>
     {open ? <section
+      ref={panel}
       className={styles.panel}
       aria-label="My Wiggle Twin"
       onKeyDown={event => { if (event.key === "Escape") close(); }}
     >
+      <button type="button" className={styles.close} aria-label="Close" onClick={close}>×</button>
       <h2 ref={heading} tabIndex={-1}>My Wiggle Twin</h2>
       <p role="status">{message}{scienceLine}</p>
       {nextStep ? <p className={styles.suggestion}>What can I try? {nextStep.description}</p> : null}
@@ -111,7 +129,6 @@ export function TwinLauncher({ childId, client: suppliedClient, context = null }
         {nextStep ? <a href={nextStep.href}>{nextStep.actionLabel}</a> : null}
         <a href={`/twin?child=${encodeURIComponent(childId)}`}>See my whole Twin</a>
       </div>
-      <button type="button" className={styles.close} onClick={close}>Close</button>
     </section> : null}
   </div>;
 }
