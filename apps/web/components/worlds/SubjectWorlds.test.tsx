@@ -123,7 +123,8 @@ it("announces locked worlds without changing the route and blocks navigation awa
   fireEvent.click(screen.getByRole("button", { name: "Show English" }));
   expect(screen.getByText("Coming soon", { selector: "span" })).toBeTruthy();
   expect(document.body.textContent).not.toContain("🔒");
-  expect(document.querySelector('[aria-hidden="true"]')).toBeTruthy();
+  const chooser = screen.getByRole("region", { name: "Choose a subject world" });
+  expect(chooser.firstElementChild).toHaveAttribute("aria-hidden", "true");
   const english = screen.getByRole("button", { name: "English (coming soon)" });
   english.focus();
   fireEvent.click(english);
