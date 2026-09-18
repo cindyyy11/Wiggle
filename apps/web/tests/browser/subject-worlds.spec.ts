@@ -46,6 +46,35 @@ async function expectOrbitControlsFit(page: Page, testInfo: TestInfo) {
   await page.screenshot({ path: testInfo.outputPath(`subject-orbit-${testInfo.project.name}.png`) });
 }
 
+function boxesIntersect(a: { x: number; y: number; width: number; height: number }, b: { x: number; y: number; width: number; height: number }) {
+  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+}
+
+async function expectSubjectTabsClearTwinLauncher(page: Page, testInfo: TestInfo) {
+  if (testInfo.project.name !== "mobile") return;
+  const twinLauncher = page.locator('button[aria-expanded]:not([data-nextjs-dev-tools-button])');
+  const twinBox = await twinLauncher.boundingBox();
+  expect(twinBox).not.toBeNull();
+
+  for (const name of SUBJECT_PORTALS) {
+    const subjectTab = page.getByRole("button", { name, exact: true });
+    const tabBox = await subjectTab.boundingBox();
+    expect(tabBox).not.toBeNull();
+    expect(tabBox!.width).toBeGreaterThanOrEqual(44);
+    expect(tabBox!.height).toBeGreaterThanOrEqual(44);
+    expect(boxesIntersect(tabBox!, twinBox!)).toBe(false);
+  }
+
+  const english = page.getByRole("button", { name: "Show English", exact: true });
+  await english.click();
+  await expect(english).toHaveAttribute("aria-pressed", "true");
+  expect(await english.evaluate(button => {
+    const rect = button.getBoundingClientRect();
+    const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    return hit === button || button.contains(hit);
+  })).toBe(true);
+}
+
 async function expectCameraHelpAndExit(page: Page) {
   await expect(page.getByRole("heading", { name: "Ask an adult to turn on the camera" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Use hand gestures|Try the magnet|Test paper clip|Not attracted/ })).toHaveCount(0);
@@ -202,6 +231,18 @@ test("orbit controls stay useful at desktop and mobile widths", async ({ page },
   await expect(page.getByTestId("subject-orbit")).toHaveAttribute("data-reduced-motion", "true");
   await expectOrbitAfterSplash(page);
   await expectOrbitControlsFit(page, testInfo);
+  await expectSubjectTabsClearTwinLauncher(page, testInfo);
+
+  const nextPlanet = page.getByRole("button", { name: "Next planet", exact: true });
+  await nextPlanet.hover();
+  await expect(nextPlanet).toHaveCSS("transform", "none");
+  await page.mouse.down();
+  await expect(nextPlanet).toHaveCSS("transform", "none");
+  await page.mouse.up();
+
+  const enterWorld = page.getByRole("button", { name: /Explore Numeria|Explore Science Planet|English \(coming soon\)/, exact: true });
+  await enterWorld.hover();
+  await expect(enterWorld).toHaveCSS("transform", "none");
 });
 
 test("keyboard navigation reaches Numeria and Science from the orbit past the auto-dismissing splash", async ({ page }) => {
