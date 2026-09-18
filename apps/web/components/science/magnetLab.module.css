@@ -7,7 +7,7 @@
   isolation: isolate;
   display: grid;
   grid-template-columns: minmax(10rem, 1fr) minmax(18rem, 2.7fr) minmax(10rem, 1fr);
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   gap: clamp(.75rem, 1.6vw, 1.5rem);
   padding: clamp(.75rem, 2.5vw, 2rem);
   overflow: hidden;
@@ -23,13 +23,13 @@
 .mission button:focus-visible { outline: 3px solid #ffd991; outline-offset: 5px; }
 .exit { grid-column: 1; grid-row: 1; align-self: start; justify-self: start; background: #f9e7ce; color: #342c43; z-index: 2; }
 .exit:hover, .retry:hover { background: #ffd991; }
-.missionCard { grid-column: 2; grid-row: 1; z-index: 2; text-align: center; padding: 1.4rem 1.5rem 1rem; background: #fff0d4; color: #342c43; border-radius: 1.5rem; box-shadow: 0 .75rem 2rem #100d2040; }
+.missionCard { grid-column: 2; grid-row: 1; align-self: start; z-index: 2; text-align: center; padding: 1.4rem 1.5rem 1rem; background: #fff0d4; color: #342c43; border-radius: 1.5rem; box-shadow: 0 .75rem 2rem #100d2040; }
 .missionCard p { margin: .75rem 0; }
 .progress { display: flex; justify-content: center; gap: .55rem; margin-top: 1rem; }
 .progress span { width: .8rem; height: .8rem; border: 2px solid #72576b; border-radius: 50%; }
 .progress span[data-complete="true"] { background: #5b785b; border-color: #5b785b; }
 .missionCard .checkpoint { margin-bottom: 0; font-size: .8rem; font-weight: 700; color: #654d5c; }
-.guide { grid-column: 1; grid-row: 2; z-index: 2; align-self: start; max-height: 100%; overflow-y: auto; }
+.guide { grid-column: 1; grid-row: 1; z-index: 2; align-self: end; max-height: 100%; overflow-y: auto; }
 .guideSpeaker {
   display: grid;
   place-items: center;
@@ -72,7 +72,7 @@
   0%, 100% { transform: translateY(0) rotate(0deg); }
   50% { transform: translateY(-.12rem) rotate(-3deg); }
 }
-.workbench { grid-column: 1 / -1; grid-row: 2; min-width: 0; height: 100%; z-index: 1; }
+.workbench { grid-column: 1 / -1; grid-row: 1; min-width: 0; height: 100%; z-index: 1; }
 .cameraBackdrop, .cameraBackdropReady {
   position: absolute;
   inset: 0;
@@ -103,7 +103,7 @@
 .cameraStatus { margin: 0; font-weight: 700; color: #654d5c; }
 .objectKey {
   grid-column: 3;
-  grid-row: 2;
+  grid-row: 1;
   align-self: end;
   z-index: 2;
   min-width: 0;
