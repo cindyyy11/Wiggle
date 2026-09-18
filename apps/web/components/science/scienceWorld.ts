@@ -35,8 +35,10 @@ export const MAGNET_OBJECTS = [
   { id: "plastic-button", name: "plastic button", result: "not-attracted", color: "#6aa6cf", scenePosition: [.86, .80], sceneKind: "button" },
 ] as const satisfies readonly MagnetObject[];
 
-/** Clear center rest spot — kept outside every object's magnet field. */
-export const MAGNET_HOME: { readonly x: number; readonly y: number } = { x: .5, y: .55 };
+/** A docked rest spot near the player's edge of the table — kept outside every object's magnet
+ * field and clear of the toolbox investigate spot, so the magnet doesn't sit in the middle of
+ * the play area or give away the hidden-magnet checkpoint by resting on the toolbox. */
+export const MAGNET_HOME: { readonly x: number; readonly y: number } = { x: .5, y: .92 };
 
 export function resultForMagnetObject(id: MagnetObjectId): MagnetResult {
   const magnetObject = MAGNET_OBJECTS.find((object) => object.id === id);

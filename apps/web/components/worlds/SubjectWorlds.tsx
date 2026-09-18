@@ -41,6 +41,7 @@ export function SubjectWorlds({ childId, allowLocalFallback, client, quality, in
   const [entered, setEntered] = useState(false);
   const [route, setRoute] = useState<SubjectRoute>(() => routeForChild(initialRoute, childId));
   const [mathsOverlayOpen, setMathsOverlayOpen] = useState(false);
+  const [scienceOverlayOpen, setScienceOverlayOpen] = useState(false);
   const [activeWorld, setActiveWorld] = useState<SubjectWorldId | null>(null);
   const [selectedWorld, setSelectedWorld] = useState<SubjectWorldId>("math");
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
@@ -114,6 +115,7 @@ export function SubjectWorlds({ childId, allowLocalFallback, client, quality, in
     quality={quality}
     onZoneSelect={(zone) => navigate({ world: "science", zone, child: currentChild })}
     onBackToWorlds={() => navigate({ world: null, child: currentChild })}
+    onSessionOpenChange={setScienceOverlayOpen}
   /> : <section className={styles.worldsView} aria-label="Subject worlds">
     <div className={styles.starChart} aria-hidden="true" />
     <div className={styles.constellationLayer}
@@ -149,6 +151,6 @@ export function SubjectWorlds({ childId, allowLocalFallback, client, quality, in
   return <>
     {content}
     <ParentEntryLink disabled={mathsOverlayOpen} disabledMessage={MATHS_MISSION_BLOCKED_MESSAGE} />
-    {!mathsOverlayOpen ? <TwinLauncher childId={currentChild ?? DEMO_CHILD_ID} client={client} context={route.world === "science" ? "science" : null} /> : null}
+    {!mathsOverlayOpen && !scienceOverlayOpen ? <TwinLauncher childId={currentChild ?? DEMO_CHILD_ID} client={client} context={route.world === "science" ? "science" : null} /> : null}
   </>;
 }

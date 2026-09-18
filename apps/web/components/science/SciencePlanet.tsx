@@ -9,15 +9,17 @@ export type SciencePlanetProps = {
   quality?: QualityPreference;
   onZoneSelect: (zone: ScienceZoneId) => void;
   onBackToWorlds: () => void;
+  onSessionOpenChange?: (open: boolean) => void;
 };
 
-export function SciencePlanet({ selectedZone, quality, onZoneSelect, onBackToWorlds }: SciencePlanetProps) {
+export function SciencePlanet({ selectedZone, quality, onZoneSelect, onBackToWorlds, onSessionOpenChange }: SciencePlanetProps) {
   return <>
     <SciencePlanetCanvas
       selectedZone={selectedZone}
       quality={quality}
       onZoneSelect={onZoneSelect}
       onBackToWorlds={onBackToWorlds}
+      onSessionOpenChange={onSessionOpenChange}
     />
   </>;
 }

@@ -18,6 +18,7 @@ export type SciencePlanetCanvasProps = {
   quality?: QualityPreference; reducedMotion?: boolean; selectedZone: ScienceZoneId;
   onZoneSelect: (zone: ScienceZoneId) => void; onBackToWorlds: () => void;
   onStartMagnetLab?: () => void; completionMessage?: string;
+  onSessionOpenChange?: (open: boolean) => void;
 };
 export function SciencePlanetCanvas(props: SciencePlanetCanvasProps) {
   const [mode, setMode] = useState<CameraMode>("globe");
@@ -45,6 +46,7 @@ export function SciencePlanetCanvas(props: SciencePlanetCanvasProps) {
     input.current.keys.clear(); input.current.horizontal = 0; input.current.vertical = 0; input.current.destination = null; input.current.hop = false;
     input.current.paused = true; setSession(zone); setInvitation(null);
     if (zone === 'magnet-lab') props.onStartMagnetLab?.();
+    props.onSessionOpenChange?.(true);
   }, [mode, props]);
   const close = useCallback(() => {
     setSession(null);
@@ -52,7 +54,8 @@ export function SciencePlanetCanvas(props: SciencePlanetCanvasProps) {
     setDestination(null);
     if (entry.current) { input.current.teleport = entry.current.position; input.current.restoreCamera = entry.current.camera; setMode(entry.current.mode); }
     setDismissed(nearby); setInvitation(null); setResetKey(key => key + 1);
-  }, [nearby]);
+    props.onSessionOpenChange?.(false);
+  }, [nearby, props]);
   const shownInvitation = !session && invitation !== dismissed ? invitation : null;
   useEffect(() => {
     if (!shownInvitation) return;
