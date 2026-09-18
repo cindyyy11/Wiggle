@@ -41,9 +41,9 @@ function Planet({ world, offset, reducedMotion, onSelect, onChoose }: {
   });
   return <group ref={group} position={initialPosition} scale={initialScale}
     onClick={event => { event.stopPropagation(); if (event.delta > 7) return; if (offset === 0) onSelect(world); else onChoose(world); }}
-    onPointerDown={event => { pressed.current = true; event.target.setPointerCapture(event.pointerId); }}
-    onPointerUp={event => { pressed.current = false; event.target.releasePointerCapture(event.pointerId); }}
-    onPointerCancel={event => { pressed.current = false; event.target.releasePointerCapture(event.pointerId); }}>
+    onPointerDown={event => { pressed.current = true; (event.target as Element | null)?.setPointerCapture(event.pointerId); }}
+    onPointerUp={event => { pressed.current = false; (event.target as Element | null)?.releasePointerCapture(event.pointerId); }}
+    onPointerCancel={event => { pressed.current = false; (event.target as Element | null)?.releasePointerCapture(event.pointerId); }}>
     <group ref={visual}>
       <group rotation={[.2, -.45, -.12]}>
       <Numeria quality="low" dimmed={false} theme={world} preview onDestination={noop} />
