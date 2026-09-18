@@ -2,7 +2,7 @@
 
 ## Goal
 
-Refine the existing subject-world homepage into a believable deep-space environment while preserving its child-friendly character, routes, interactions, accessibility, and existing planet artwork. Remove common AI-generated visual tells, especially excessive glow, glassy pills, emoji labels, and uniformly rounded controls.
+Refine the existing subject-world homepage into a believable deep-space environment while preserving its child-friendly character, routes, interactions, accessibility, and existing planet artwork. Remove common AI-generated visual tells, especially excessive glow, glassy pills, and uniformly rounded controls. A familiar lock symbol remains visible for unavailable worlds at the user's request.
 
 ## Design Direction
 
@@ -55,7 +55,7 @@ Design dials:
 ### Subject Selector
 
 - Replace pills with a segmented navigation rail using short underline or edge indicators.
-- Remove visible emoji locks. Communicate availability through plain text and existing accessible labels.
+- Show a visible `🔒` beside “Coming soon” and in the BM/English tab labels so unavailable worlds are immediately recognizable. Preserve the existing accessible labels without reading the decorative symbol aloud.
 - Use the cyan accent only for the selected subject and keyboard focus.
 
 ## Interaction and Motion

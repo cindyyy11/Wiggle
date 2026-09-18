@@ -18,13 +18,13 @@
 - Use one dark page theme, one pale-cyan interaction accent, warm off-white primary text, and muted blue-gray secondary text.
 - Keep touch targets at least 44 by 44 pixels and CTA labels on one line.
 - Stop ambient drift and eliminate large movement when `prefers-reduced-motion: reduce` is active.
-- Do not add emoji, glassmorphism, excessive bloom, serif display type, or fully rounded pill controls.
+- Do not add decorative emoji other than the user-requested `🔒` availability symbol; avoid glassmorphism, excessive bloom, serif display type, and fully rounded pill controls.
 
 ---
 
 ## File Map
 
-- Modify `apps/web/components/worlds/WorldSelector.tsx`: add the decorative constellation chart hook and replace visible emoji lock copy with plain text.
+- Modify `apps/web/components/worlds/WorldSelector.tsx`: add the decorative constellation chart hook and show the user-requested lock symbol with plain availability text.
 - Modify `apps/web/components/worlds/SubjectWorlds.module.css`: implement the deep-space atmosphere, constellation chart, typography, controls, responsive rules, and reduced-motion behavior.
 - Modify `apps/web/components/worlds/SubjectWorlds.test.tsx`: lock the visible text and accessibility contract while retaining existing navigation regression coverage.
 - Inspect `apps/web/tests/browser/subject-worlds.spec.ts`: reuse existing browser coverage; only modify it if a selector depends on removed visible emoji text.
@@ -37,7 +37,7 @@
 
 **Interfaces:**
 - Consumes: existing `WorldSelectorProps` and `SubjectWorldId` values.
-- Produces: decorative `.starChart` element with `aria-hidden="true"`; unchanged accessible names such as `English (coming soon)` and `Show English`; visible locked labels without emoji.
+- Produces: decorative `.starChart` element with `aria-hidden="true"`; unchanged accessible names such as `English (coming soon)` and `Show English`; visible locked labels with a decorative `🔒` symbol.
 
 - [ ] **Step 1: Add a failing regression assertion**
 

@@ -122,7 +122,7 @@ it("announces locked worlds without changing the route and blocks navigation awa
   enterWorlds();
   fireEvent.click(screen.getByRole("button", { name: "Show English" }));
   expect(screen.getByText("Coming soon", { selector: "span" })).toBeTruthy();
-  expect(document.body.textContent).not.toContain("🔒");
+  expect(screen.getAllByText("🔒")).toHaveLength(3);
   const worlds = screen.getByRole("region", { name: "Subject worlds" });
   const starChart = worlds.querySelector(':scope > div[aria-hidden="true"]');
   expect(starChart?.getAttribute("aria-hidden")).toBe("true");

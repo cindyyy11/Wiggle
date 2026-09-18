@@ -26,10 +26,10 @@ export function WorldSelector({ selectedWorld = "math", onChoose, onSlide, onSel
       <span>{locked ? "More adventures are on their way." : selectedWorld === "math" ? "Little steps. Big discoveries. Your adventure starts here." : "Explore, experiment, and discover how the world works."}</span>
       <button className={styles.carouselEnter} aria-label={locked ? `${world.name} (coming soon)` : `Explore ${world.name}`} aria-describedby={locked ? "world-lock-status" : undefined} onClick={() => onSelect(selectedWorld)}>
         <span>{locked ? "Coming soon" : `Explore ${selectedWorld === "math" ? "Numeria" : "Science Planet"}`}</span>
-        <span aria-hidden="true">{locked ? "Locked" : "↗"}</span>
+        <span aria-hidden="true">{locked ? "🔒" : "↗"}</span>
       </button>
       <div className={styles.subjectTabs} role="group" aria-label="Choose a planet">
-        {order.map(id => <button key={id} aria-label={`Show ${id === "math" ? "Numeria" : id === "science" ? "Science Planet" : id === "bm" ? "Bahasa Melayu" : "English"}`} aria-pressed={selectedWorld === id} onClick={() => onChoose?.(id)}>{id === "math" ? "Maths" : id === "science" ? "Science" : id === "bm" ? "BM · Soon" : "English · Soon"}</button>)}
+        {order.map(id => <button key={id} aria-label={`Show ${id === "math" ? "Numeria" : id === "science" ? "Science Planet" : id === "bm" ? "Bahasa Melayu" : "English"}`} aria-pressed={selectedWorld === id} onClick={() => onChoose?.(id)}>{id === "math" ? "Maths" : id === "science" ? "Science" : <>{id === "bm" ? "BM" : "English"} <span aria-hidden="true">🔒</span></>}</button>)}
       </div>
     </div>
     <p id="world-lock-status" className={styles.status} role="status" aria-live="polite" aria-atomic="true">{statusMessage}</p>
