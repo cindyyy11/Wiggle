@@ -1,9 +1,16 @@
 "use client";
 
 import { useEffect, useId, useState, type CSSProperties } from "react";
+import { ArrowUpRight, Gem, Sparkles, Triangle, type LucideIcon } from "lucide-react";
 import type { CameraMode, Landmark, LandmarkId } from "./world";
 import { LANDMARKS } from "./world";
 import styles from "./explorationHud.module.css";
+
+const LANDMARK_ICONS: Partial<Record<LandmarkId, LucideIcon>> = {
+  "geometry-ridge": Triangle,
+  "crystal-crater": Gem,
+  lexi: Sparkles,
+};
 
 type ExplorationHudProps = {
   mode: CameraMode;
@@ -67,12 +74,15 @@ export function ExplorationHud({ mode, mapVisible, selectedLandmark, landmark, h
       <span className={styles.contextLabel}>{selectedLandmark === "fraction-forest" ? "BEACON NEARBY" : "COURSE SET"}</span>
       <h2>{landmark.name}</h2>
       <p>{landmark.subtitle}</p>
-      {canStartMission ? <button type="button" className={styles.primary} onClick={onMissionStart}>Start fractions mission <span aria-hidden="true">↗</span></button> : <button type="button" className={styles.primary} onClick={() => { onSelectLandmark(selectedLandmark); onModeChange("follow"); }}>Let's explore <span aria-hidden="true">↗</span></button>}
+      {canStartMission ? <button type="button" className={styles.primary} onClick={onMissionStart}>Start fractions mission <ArrowUpRight aria-hidden="true" size={18} /></button> : <button type="button" className={styles.primary} onClick={() => { onSelectLandmark(selectedLandmark); onModeChange("follow"); }}>Let's explore <ArrowUpRight aria-hidden="true" size={18} /></button>}
     </aside> : null}
 
     {showNavigator ? <nav id="numeria-places" className={styles.navigator} aria-label="Numeria destinations">
       <div className={styles.navigatorHead}><span>MISSION CONSTELLATION</span>{!mapVisible ? <button type="button" className={styles.close} onClick={() => setNavigatorOpen(false)} aria-label="Close places">Close</button> : null}</div>
-      <div className={styles.placeList}>{LANDMARKS.map(item => <button type="button" key={item.id} className={item.id === selectedLandmark ? styles.placeSelected : ""} onClick={() => { onSelectLandmark(item.id); onModeChange("follow"); setNavigatorOpen(false); }} aria-label={`Visit ${item.name}`} aria-pressed={item.id === selectedLandmark}><span className={styles.placeDot} style={{ "--region": item.color } as CSSProperties} aria-hidden="true">{item.symbol}</span><span>{item.name}</span><span className={styles.arrow} aria-hidden="true">↗</span></button>)}</div>
+      <div className={styles.placeList}>{LANDMARKS.map(item => {
+        const Icon = LANDMARK_ICONS[item.id];
+        return <button type="button" key={item.id} className={item.id === selectedLandmark ? styles.placeSelected : ""} onClick={() => { onSelectLandmark(item.id); onModeChange("follow"); setNavigatorOpen(false); }} aria-label={`Visit ${item.name}`} aria-pressed={item.id === selectedLandmark}><span className={styles.placeDot} style={{ "--region": item.color } as CSSProperties} aria-hidden="true">{Icon ? <Icon size={16} /> : item.symbol}</span><span>{item.name}</span><ArrowUpRight className={styles.arrow} aria-hidden="true" size={16} /></button>;
+      })}</div>
     </nav> : null}
 
     {help ? <aside className={styles.help} aria-label="Exploration instructions"><h2>Make yourself at home.</h2><p id={instructionsId}>Drag to look around. Scroll or pinch to zoom. Tap the ground to walk. Focus the movement pad and use arrows or WASD. Hold Shift to run. Space to hop.</p><p>Choose a place from the constellation when you want a new course.</p><button type="button" onClick={() => onHelpChange(false)}>Got it</button></aside> : null}

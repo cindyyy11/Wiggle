@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Volume2, VolumeX, X } from "lucide-react";
 import type { LearnerTwin, TwinVisualState } from "@wiggle/contracts";
 import { getTwinVisualState, twinVisualCopy } from "@wiggle/contracts";
 import { ApiClient } from "../../lib/api/client";
@@ -143,12 +144,12 @@ export function TwinLauncher({ childId, client: suppliedClient, context = null }
       aria-label="My Wiggle Twin"
       onKeyDown={event => { if (event.key === "Escape") close(); }}
     >
-      <button type="button" className={styles.close} aria-label="Close" onClick={close}>×</button>
+      <button type="button" className={styles.close} aria-label="Close" onClick={close}><X aria-hidden="true" size={18} /></button>
       <h2 ref={heading} tabIndex={-1}>My Wiggle Twin</h2>
       <p role="status">{message}{scienceLine}</p>
       {nextStep ? <p className={styles.suggestion}>What can I try? {nextStep.description}</p> : null}
       <div className={styles.actions}>
-        <button type="button" aria-pressed={muted} onClick={toggleMuted}>{muted ? "🔇 Sound off" : "🔈 Sound on"}</button>
+        <button type="button" aria-pressed={muted} onClick={toggleMuted}>{muted ? <VolumeX aria-hidden="true" size={16} /> : <Volume2 aria-hidden="true" size={16} />}<span>{muted ? "Sound off" : "Sound on"}</span></button>
         {nextStep ? <a href={nextStep.href}>{nextStep.actionLabel}</a> : null}
         <a href={`/twin?child=${encodeURIComponent(childId)}`}>See my whole Twin</a>
       </div>

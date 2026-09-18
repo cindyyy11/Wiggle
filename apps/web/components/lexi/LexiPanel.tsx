@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Mic, Volume2, VolumeX } from "lucide-react";
 import type { LexiRequest, TwinVisualState } from "@wiggle/contracts";
 import { WiggleTwinAvatar } from "../wiggle/WiggleTwinAvatar";
 import { useLexiVoice } from "../../features/voice/useLexiVoice";
@@ -36,8 +37,8 @@ export function LexiPanel({ text, busy, twinState = "ready", onRequest, onClose 
     <WiggleTwinAvatar state={twinState} size={96} listening={voice.phase === "listening"} speaking={voice.phase === "speaking"} />
     <p role="status" aria-label="Lexi">{busy ? "Lexi is thinking…" : text || "One small step is a good place to start."}</p>
     <fieldset disabled={busy} className={styles.supportActions}>
-      {voice.supported && <button aria-pressed={voice.phase === "listening"} onClick={() => (voice.phase === "listening" ? voice.stop() : voice.start())}>{voice.phase === "listening" ? "Listening… tap to stop" : "🎤 Talk to Lexi"}</button>}
-      <button aria-pressed={muted} onClick={toggleMuted}>{muted ? "🔇 Lexi's voice is off" : "🔈 Lexi's voice is on"}</button>
+      {voice.supported && <button aria-pressed={voice.phase === "listening"} onClick={() => (voice.phase === "listening" ? voice.stop() : voice.start())}>{voice.phase === "listening" ? "Listening… tap to stop" : <><Mic aria-hidden="true" size={16} /> Talk to Lexi</>}</button>}
+      <button aria-pressed={muted} onClick={toggleMuted}>{muted ? <VolumeX aria-hidden="true" size={16} /> : <Volume2 aria-hidden="true" size={16} />} {muted ? "Lexi's voice is off" : "Lexi's voice is on"}</button>
       <button onClick={() => onRequest({ tool: "request_hint" })}>Give me a hint</button>
       <button onClick={() => onRequest({ tool: "switch_learning_mode", mode: "chunk" })}>Try one tiny step</button>
       <button onClick={() => onRequest({ tool: "start_reset_station" })}>Take a learning reset</button>

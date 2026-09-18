@@ -30,7 +30,7 @@ describe("TwinLauncher", () => {
     expect(screen.getByRole("heading", { name: "My Wiggle Twin" })).toBeTruthy();
     expect(screen.getByRole("status").textContent).toContain("Ready for a mission whenever you are!");
     await screen.findByText(/Pictures and diagrams help you learn fast\./);
-    expect(screen.getByRole("button", { name: "🔈 Sound on" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Sound on" })).toBeTruthy();
     const twinPage = screen.getByRole("link", { name: "See my whole Twin" });
     expect(twinPage.getAttribute("href")).toBe("/twin?child=child-1");
     const goTo = screen.getByRole("link", { name: "Go to Colors Canyon" });
@@ -98,9 +98,9 @@ describe("TwinLauncher", () => {
     openLauncher();
     await screen.findByRole("status");
     expect(speak).toHaveBeenCalledTimes(1);
-    const soundButton = screen.getByRole("button", { name: "🔈 Sound on" });
+    const soundButton = screen.getByRole("button", { name: "Sound on" });
     fireEvent.click(soundButton);
-    expect(screen.getByRole("button", { name: "🔇 Sound off" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Sound off" })).toBeTruthy();
     expect(window.localStorage.getItem("wiggle:voice-muted")).toBe("1");
   });
 

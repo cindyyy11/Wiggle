@@ -17,6 +17,7 @@
     "@supabase/ssr": "0.12.7",
     "@supabase/supabase-js": "2.116.0",
     "@wiggle/contracts": "^0.1.0",
+    "lucide-react": "1.47.0",
     "next": "15.5.24",
     "react": "19.1.9",
     "react-dom": "19.1.9",

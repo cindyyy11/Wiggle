@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Sparkles } from "lucide-react";
 import { AMBIENT_TRACKS, useAmbientSound } from "../../features/audio/useAmbientSound";
 import styles from "./mission.module.css";
 
@@ -20,7 +21,7 @@ export function ResetStation({ onComplete, onCancel }: { onComplete(): void; onC
   }, [phase]);
   return <section className={styles.support} aria-label="Learning reset" onKeyDown={event => { if (event.key === "Escape") onCancel(); }}>
     <h2 ref={heading} tabIndex={-1}>Reset Station</h2>
-    <div className={styles.breath} aria-hidden="true">✳</div>
+    <div className={styles.breath} aria-hidden="true"><Sparkles size={32} /></div>
     <p role="status" aria-live="polite" className={styles.breathText}>{BREATH_PHASES[phase].text}</p>
     <p>A learning reset, at your own pace. Take an easy breath. Let your shoulders relax, stretch if you like, and look at something far away.</p>
     <fieldset className={styles.ambient}>

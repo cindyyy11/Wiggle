@@ -2,6 +2,7 @@
 
 import React, { Component, useCallback, useEffect, useId, useRef, useState, type ReactNode, type CSSProperties, type PointerEvent } from "react";
 import dynamic from "next/dynamic";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Minus, Plus, Sparkle } from "lucide-react";
 import { LANDMARKS, MISSION_DESTINATION, createExplorerInput, resolveQuality, type CameraMode, type Destination, type LandmarkId, type PizzaPresentation, type QualityPreference, type SceneQuality } from "./world";
 import { ExplorationHud } from "./ExplorationHud";
 import { useWiggleSound } from "../../features/audio/useWiggleSound";
@@ -122,7 +123,7 @@ export function UniverseCanvas({ explorerInput, controlsDisabled = false, resetV
       {mapVisible ? theme === "science" ? <p className={styles.loading} role="status">3D view unavailable. Your Science checkpoints are still ready below.</p> : <NumeriaMap /> : <GraphicsBoundary onFailure={graphicsFailed}><Scene resetViewKey={resetViewKey} activityView={activityView} theme={theme} sceneContent={sceneContent} mode={mode} quality={quality === "high" ? "high" : "low"} reducedMotion={reducedMotion} input={input} selectedLandmark={selectedLandmark} onLandmarkSelect={selectLandmark} onDestinationChange={onDestinationChange} onContextLost={graphicsFailed} onQualityChange={lowerQuality} pizza={pizza} /></GraphicsBoundary>}
     </div>
     {!mapVisible && hand?.enabled ? <div className={styles.handOverlay} aria-live="polite">
-      {handFrame?.pointer && handFrame.isTracking ? <span className={styles.handCursor} data-testid="hand-cursor" style={{ "--hand-x": `${(handFrame.pointer.x + 1) * 50}%`, "--hand-y": `${(1 - handFrame.pointer.y) * 50}%` } as CSSProperties} aria-hidden="true">✦</span> : null}
+      {handFrame?.pointer && handFrame.isTracking ? <span className={styles.handCursor} data-testid="hand-cursor" style={{ "--hand-x": `${(handFrame.pointer.x + 1) * 50}%`, "--hand-y": `${(1 - handFrame.pointer.y) * 50}%` } as CSSProperties} aria-hidden="true"><Sparkle size={16} /></span> : null}
       <p className={styles.handStatus}>{hand.status === "starting" ? "Opening camera…" : hand.status === "unavailable" ? "Camera unavailable. You can still use the slice buttons." : handFrame?.isTracking ? "Hand ready" : "Show me your hand 👋"}</p>
       {handDebug ? <output className={styles.handDebug} aria-label="Hand tracking debug">gesture: {hand.gesture ?? "none"} · pointer: {handFrame?.pointer ? `${handFrame.pointer.x.toFixed(2)}, ${handFrame.pointer.y.toFixed(2)}` : "none"} · tracking: {String(handFrame?.isTracking ?? false)}</output> : null}
     </div> : null}
