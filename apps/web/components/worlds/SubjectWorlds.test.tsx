@@ -124,7 +124,7 @@ it("announces locked worlds without changing the route and blocks navigation awa
   fireEvent.click(screen.getByRole("button", { name: "Next planet" }));
   fireEvent.click(screen.getByRole("button", { name: "Next planet" }));
   expect(screen.getByText("Coming soon", { selector: "span" })).toBeTruthy();
-  expect(document.querySelectorAll(".lucide-lock")).toHaveLength(1);
+  expect(screen.getByText("🔒", { selector: "span" })).toBeTruthy();
   const worlds = screen.getByRole("region", { name: "Subject worlds" });
   expect(worlds.querySelector(':scope > div[aria-hidden="true"]')).toBeNull();
   const locked = screen.getByRole("button", { name: "??? (coming soon)" });
