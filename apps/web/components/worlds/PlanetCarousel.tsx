@@ -52,7 +52,7 @@ function Planet({ world, offset, reducedMotion, onSelect, onChoose }: {
       </group> : null}
       </group>
     </group>
-    {mystery ? <group position={[0, 0, 3.9]}>
+    {mystery ? <group position={[0, 0, 0.72]} scale={offset === 0 ? 1.35 : 1}>
       <mesh><boxGeometry args={[1.05, .8, .2]} /><meshStandardMaterial color="#fff7e7" roughness={.8} /></mesh>
       <mesh position={[0, .48, 0]}><torusGeometry args={[.36, .1, 8, 24, Math.PI]} /><meshStandardMaterial color="#fff7e7" /></mesh>
       <mesh position={[0, 0, .12]}><sphereGeometry args={[.1, 10, 8]} /><meshBasicMaterial color="#27395b" /></mesh>

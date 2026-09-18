@@ -20,7 +20,6 @@ export const SUBJECT_ORBIT_LAYOUT: Record<SubjectWorldId, SubjectOrbitLayout> = 
   science: { position: [2, 0.05, -0.2], scale: 1.28, label: "Science Planet", playable: true },
   english: { position: [-3, 1.45, -1.2], scale: 0.38, label: "English", playable: false },
   bm: { position: [3, 1.3, -1.3], scale: 0.36, label: "Bahasa Melayu", playable: false },
-  nova: { position: [0, 1.6, -1.4], scale: 0.4, label: "Nova", playable: false },
 };
 
 export function orbitDecorationCounts(quality: "high" | "low"): OrbitDecorationCounts {

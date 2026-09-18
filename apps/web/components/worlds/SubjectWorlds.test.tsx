@@ -124,15 +124,13 @@ it("announces locked worlds without changing the route and blocks navigation awa
   fireEvent.click(screen.getByRole("button", { name: "Next planet" }));
   fireEvent.click(screen.getByRole("button", { name: "Next planet" }));
   expect(screen.getByText("Coming soon", { selector: "span" })).toBeTruthy();
-  expect(screen.getAllByText("🔒")).toHaveLength(1);
+  expect(document.querySelectorAll(".lucide-lock")).toHaveLength(1);
   const worlds = screen.getByRole("region", { name: "Subject worlds" });
-  const starChart = worlds.querySelector(':scope > div[aria-hidden="true"]');
-  expect(starChart?.getAttribute("aria-hidden")).toBe("true");
+  expect(worlds.querySelector(':scope > div[aria-hidden="true"]')).toBeNull();
   const locked = screen.getByRole("button", { name: "??? (coming soon)" });
-  locked.focus();
   fireEvent.click(locked);
-  expect(document.activeElement).toBe(locked);
-  expect(screen.getByRole("status").textContent).toContain("??? is coming soon");
+  expect((locked as HTMLButtonElement).disabled).toBe(true);
+  expect(screen.getByRole("status").textContent).toBe("");
   expect(window.location.search).toBe("");
 
   fireEvent.click(screen.getByRole("button", { name: "Previous planet" }));
@@ -158,7 +156,7 @@ it("slides between planets without navigating and keeps locked planets on the ch
   fireEvent.click(screen.getByRole("button", { name: "Next planet" }));
   fireEvent.click(screen.getByRole("button", { name: "??? (coming soon)" }));
   expect(window.location.search).toBe("");
-  expect(screen.getByRole("status").textContent).toContain("??? is coming soon");
+  expect(screen.getByRole("status").textContent).toBe("");
   fireEvent.click(screen.getByRole("button", { name: "Previous planet" }));
   expect(screen.getByRole("button", { name: "Explore Science Planet" })).toBeTruthy();
 });
@@ -181,23 +179,20 @@ it("plays slideWhoosh only when the selected planet actually changes", () => {
   const layer = screen.getByTestId("mock-constellation").parentElement!;
   fireEvent.pointerDown(layer, { button: 0, clientX: 200, clientY: 100 });
   fireEvent.pointerUp(layer, { button: 0, clientX: 100, clientY: 100 });
-  expect(screen.getByRole("heading", { name: "Nova" })).toBeTruthy();
+  expect(screen.getByRole("heading", { name: "???" })).toBeTruthy();
   expect(soundPlay).not.toHaveBeenCalled();
 });
 
-it("keeps the last coming-soon planet fully colorful, naming it instead of hiding it behind \"???\"", () => {
+it("ends on the final locked planet with a disabled coming-soon button", () => {
   vi.useFakeTimers();
   render(<SubjectWorlds initialRoute={{ world: null }} quality="fallback" />);
   enterWorlds();
 
-  for (let step = 0; step < 4; step++) fireEvent.click(screen.getByRole("button", { name: "Next planet" }));
-  expect(screen.getByRole("heading", { name: "Nova" })).toBeTruthy();
+  for (let step = 0; step < 3; step++) fireEvent.click(screen.getByRole("button", { name: "Next planet" }));
   expect((screen.getByRole("button", { name: "Next planet" }) as HTMLButtonElement).disabled).toBe(true);
 
-  const enter = screen.getByRole("button", { name: "Nova (coming soon)" });
-  fireEvent.click(enter);
   expect(window.location.search).toBe("");
-  expect(screen.getByRole("status").textContent).toContain("Nova is coming soon");
+  expect((screen.getByRole("button", { name: "??? (coming soon)" }) as HTMLButtonElement).disabled).toBe(true);
 });
 
 it("shows the global Twin launcher and Parent link on the worlds hub, and hides the launcher during an active Maths mission", () => {

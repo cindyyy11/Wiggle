@@ -1,4 +1,4 @@
-export type SubjectWorldId = "science" | "math" | "english" | "bm" | "nova";
+export type SubjectWorldId = "science" | "math" | "english" | "bm";
 export type EnterableWorldId = "science" | "math";
 export type ScienceZoneId =
   | "magnet-lab"
@@ -58,16 +58,10 @@ export const SUBJECT_WORLDS: readonly SubjectWorld[] = [
     accent: "#8dab9a",
     mystery: true,
   },
-  {
-    id: "nova",
-    name: "Nova",
-    status: "coming-soon",
-    accent: "#f2b56b",
-  },
 ];
 
 /** Carousel/swipe order for the Worlds hub — also the source of the arrow buttons' first/last bounds in [[WorldSelector]]. */
-export const SUBJECT_WORLD_ORDER: readonly SubjectWorldId[] = ["math", "science", "bm", "english", "nova"];
+export const SUBJECT_WORLD_ORDER: readonly SubjectWorldId[] = ["math", "science", "bm", "english"];
 
 export const DEFAULT_SCIENCE_ZONE: ScienceZoneId = "magnet-lab";
 

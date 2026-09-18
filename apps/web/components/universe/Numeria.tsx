@@ -10,18 +10,16 @@ import { EnglishLandScenery } from "../worlds/EnglishLandScenery";
 import { ENGLISH_LANDS } from "../worlds/englishLands";
 import { BmLandScenery } from "../worlds/BmLandScenery";
 import { BM_LANDS } from "../worlds/bmLands";
-import { NovaLandScenery } from "../worlds/NovaLandScenery";
-import { NOVA_LANDS } from "../worlds/novaLands";
 import { fibonacciSphereRegions } from "../worlds/planetScatter";
 
 const UP = new Vector3(0, 1, 0);
-const REGION_COLORS = ["#9dc99a", "#f4c95d", "#a9d9ee", "#ef8b78"];
-export type NumeriaTheme = "math" | "science" | "bm" | "english" | "nova";
+const REGION_COLORS = ["#8ed081", "#ffd45f", "#77c9ed", "#ff806f"];
+const REGION_BORDER_COLOR = "#fff0c7";
+export type NumeriaTheme = "math" | "science" | "bm" | "english";
 const THEMED_LANDS: Record<Exclude<NumeriaTheme, "math">, readonly { color: string; destination: Destination }[]> = {
   science: SCIENCE_LANDS,
   english: ENGLISH_LANDS,
   bm: BM_LANDS,
-  nova: NOVA_LANDS,
 };
 
 function createTerrain(detail: number, theme: NumeriaTheme) {
@@ -34,10 +32,15 @@ function createTerrain(detail: number, theme: NumeriaTheme) {
   const centers = (lands ?? LANDMARKS.slice(0, 4)).map(item => new Vector3(...surfacePoint(item.destination, 1)));
   for (let index = 0; index < points.count; index += 3) {
     normal.fromBufferAttribute(points, index).normalize();
-    let nearest = 0; let maximum = -Infinity;
-    centers.forEach((center, region) => { const alignment = normal.dot(center); if (alignment > maximum) { maximum = alignment; nearest = region; } });
-    color.set(lands ? lands[nearest].color : maximum > .54 ? REGION_COLORS[nearest] : "#78ad91");
-    color.multiplyScalar(.9 + Math.sin(index * 4.79) * .08);
+    let nearest = 0; let maximum = -Infinity; let runnerUp = -Infinity;
+    centers.forEach((center, region) => {
+      const alignment = normal.dot(center);
+      if (alignment > maximum) { runnerUp = maximum; maximum = alignment; nearest = region; }
+      else if (alignment > runnerUp) runnerUp = alignment;
+    });
+    const isMathsBorder = !lands && maximum - runnerUp < .045;
+    color.set(lands ? lands[nearest].color : isMathsBorder ? REGION_BORDER_COLOR : REGION_COLORS[nearest]);
+    color.multiplyScalar(.94 + Math.sin(index * 4.79) * .055);
     for (let vertex = index; vertex < index + 3; vertex++) {
       const x = points.getX(vertex); const y = points.getY(vertex); const z = points.getZ(vertex);
       const height = 1 + .009 * Math.sin(x * 4) * Math.cos(y * 3) * Math.sin(z * 4);
@@ -66,7 +69,6 @@ export function Numeria({ quality, dimmed, onDestination, theme = "math", previe
     {theme === "science" ? <ScienceLandScenery quality={quality} />
       : theme === "english" ? <EnglishLandScenery quality={quality} />
       : theme === "bm" ? <BmLandScenery quality={quality} />
-      : theme === "nova" ? <NovaLandScenery quality={quality} />
       : <><Forest count={quality === "high" ? 104 : 58} /><TerrainObjects dimmed={dimmed} /><ShapeSparkles quality={quality} /></>}
     <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, -3.65, 0]} scale={[1, 1, 1]}>
       <torusGeometry args={[4.08, .009, 3, 96]} /><meshBasicMaterial color="#6fa8c2" transparent opacity={.22} />

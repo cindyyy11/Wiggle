@@ -120,7 +120,6 @@ export function SubjectWorlds({ childId, allowLocalFallback, client, quality, in
     onBackToWorlds={() => navigate({ world: null, child: currentChild })}
     onSessionOpenChange={setScienceOverlayOpen}
   /> : <section className={styles.worldsView} aria-label="Subject worlds">
-    <div className={styles.starChart} aria-hidden="true" />
     <div className={styles.constellationLayer}
       onPointerDownCapture={event => { if (event.button !== 0) return; swipeStart.current = { x: event.clientX, y: event.clientY }; suppressClick.current = false; }}
       onPointerUpCapture={event => {
