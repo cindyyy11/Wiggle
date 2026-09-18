@@ -9,12 +9,22 @@ import type { SubjectWorldId } from "./subjectRoute";
 
 export const PLANET_ORDER: SubjectWorldId[] = ["math", "science", "bm", "english"];
 const noop = () => undefined;
+const SELECTED_SPIN_SPEED = 0.12;
+const SIDE_SPIN_SPEED = 0.075;
+const MAX_FRAME_DELTA = 0.05;
+
+export function planetSpinStep(delta: number, offset: number, reducedMotion: boolean, pressed: boolean): number {
+  if (reducedMotion || pressed) return 0;
+  return Math.min(delta, MAX_FRAME_DELTA) * (offset === 0 ? SELECTED_SPIN_SPEED : SIDE_SPIN_SPEED);
+}
 
 function Planet({ world, offset, reducedMotion, onSelect, onChoose }: {
   world: SubjectWorldId; offset: number; reducedMotion: boolean;
   onSelect: (world: SubjectWorldId) => void; onChoose: (world: SubjectWorldId) => void;
 }) {
   const group = useRef<Group>(null);
+  const visual = useRef<Group>(null);
+  const pressed = useRef(false);
   const { viewport } = useThree();
   const locked = world === "bm" || world === "english";
   const radiusScale = Math.min(.9, viewport.width / 8.5);
@@ -27,14 +37,21 @@ function Planet({ world, offset, reducedMotion, onSelect, onChoose }: {
     group.current.position.x = MathUtils.lerp(group.current.position.x, offset * spacing, blend);
     const scale = radiusScale * (offset === 0 ? 1 : .66);
     group.current.scale.lerp({ x: scale, y: scale, z: scale }, blend);
+    if (visual.current) visual.current.rotation.y += planetSpinStep(delta, offset, reducedMotion, pressed.current);
   });
   return <group ref={group} position={initialPosition} scale={initialScale}
-    onClick={event => { event.stopPropagation(); if (event.delta > 7) return; if (offset === 0) onSelect(world); else onChoose(world); }}>
-    <group rotation={[.2, -.45, -.12]}>
+    onClick={event => { event.stopPropagation(); if (event.delta > 7) return; if (offset === 0) onSelect(world); else onChoose(world); }}
+    onPointerDown={() => { pressed.current = true; }}
+    onPointerUp={() => { pressed.current = false; }}
+    onPointerCancel={() => { pressed.current = false; }}
+    onPointerOut={() => { pressed.current = false; }}>
+    <group ref={visual}>
+      <group rotation={[.2, -.45, -.12]}>
       <Numeria quality="low" dimmed={false} theme={world} preview onDestination={noop} />
       {world === "math" ? <group onClick={event => { event.stopPropagation(); if (event.delta <= 7) { if (offset === 0) onSelect(world); else onChoose(world); } }}>
         <Landmarks selected="fraction-forest" onSelect={() => { if (offset === 0) onSelect(world); else onChoose(world); }} reducedMotion={reducedMotion} mission={false} />
       </group> : null}
+      </group>
     </group>
     {locked ? <group position={[0, 0, 3.9]}>
       <mesh><boxGeometry args={[1.05, .8, .2]} /><meshStandardMaterial color="#fff7e7" roughness={.8} /></mesh>
