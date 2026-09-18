@@ -12,9 +12,10 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
     <html lang="en">
       <body suppressHydrationWarning style={{ margin: 0 }}>
         <div style={{
-          position: "sticky", top: 0, zIndex: 1000, width: "100%",
+          position: "fixed", top: 0, left: 0, right: 0, zIndex: 1000,
           background: "#fbbf24", color: "#1f2937", textAlign: "center",
-          padding: "6px 12px", fontSize: 14, fontWeight: 600
+          padding: "4px 12px", fontSize: 12, fontWeight: 600,
+          pointerEvents: "none"
         }}>
           🚧 Wiggle is still in development — things may change or break.
         </div>
