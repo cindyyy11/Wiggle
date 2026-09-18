@@ -7,8 +7,8 @@ import { fibonacciSphereRegions } from "./planetScatter";
 
 const UP = new Vector3(0, 1, 0);
 const PAGE_COLORS = ["#fff7e7", "#ffe9d6"];
-const BLOCK_COLORS = ["#ff6f61", "#4ea8de", "#ffd23f", "#b185db"];
-const BUNTING_COLORS = ["#ff6f61", "#ffd23f", "#4ea8de", "#b185db", "#5cd6a9"];
+const BLOCK_COLORS = ["#9aa1ab", "#b3b9c2", "#7d8590", "#c7cdd4"];
+const BUNTING_COLORS = ["#9aa1ab", "#c7cdd4", "#b3b9c2", "#7d8590", "#aeb4bd"];
 
 function placement(latitude: number, longitude: number, radius = RADIUS + .03) {
   const normal = new Vector3(...surfacePoint({ latitude, longitude }, 1));

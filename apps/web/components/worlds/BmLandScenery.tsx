@@ -6,7 +6,7 @@ import { BM_LANDS } from "./bmLands";
 import { fibonacciSphereRegions } from "./planetScatter";
 
 const UP = new Vector3(0, 1, 0);
-const BATIK_BANDS = ["#d81159", "#f2a71b", "#0f9b8e", "#5b2a86"];
+const BATIK_BANDS = ["#9aa1ab", "#b3b9c2", "#7d8590", "#c7cdd4"];
 
 function placement(latitude: number, longitude: number, radius = RADIUS + .03) {
   const normal = new Vector3(...surfacePoint({ latitude, longitude }, 1));
@@ -15,32 +15,32 @@ function placement(latitude: number, longitude: number, radius = RADIUS + .03) {
 
 function Hibiscus({ color }: { color: string }) {
   return <group>
-    <mesh position={[0, .14, 0]}><cylinderGeometry args={[.02, .03, .28, 5]} /><meshStandardMaterial color="#3f8f4f" /></mesh>
+    <mesh position={[0, .14, 0]}><cylinderGeometry args={[.02, .03, .28, 5]} /><meshStandardMaterial color="#8a8f97" /></mesh>
     <group position={[0, .3, 0]}>
       {Array.from({ length: 5 }, (_, i) => <mesh key={i} position={[Math.sin(i / 5 * Math.PI * 2) * .1, 0, Math.cos(i / 5 * Math.PI * 2) * .1]} rotation={[0, -i / 5 * Math.PI * 2, 0]} scale={[1, .55, 1]}>
         <sphereGeometry args={[.11, 8, 6]} /><meshStandardMaterial color={color} flatShading />
       </mesh>)}
-      <mesh position={[0, .04, 0]}><cylinderGeometry args={[.012, .012, .16, 5]} /><meshStandardMaterial color="#f2a71b" emissive="#f2a71b" emissiveIntensity={.2} /></mesh>
+      <mesh position={[0, .04, 0]}><cylinderGeometry args={[.012, .012, .16, 5]} /><meshStandardMaterial color="#b3b9c2" emissive="#b3b9c2" emissiveIntensity={.2} /></mesh>
     </group>
   </group>;
 }
 
 function PalmTree() {
   return <group>
-    <mesh position={[0, .32, 0]} rotation={[0, 0, .06]}><cylinderGeometry args={[.045, .07, .64, 6]} /><meshStandardMaterial color="#8a6a3d" /></mesh>
+    <mesh position={[0, .32, 0]} rotation={[0, 0, .06]}><cylinderGeometry args={[.045, .07, .64, 6]} /><meshStandardMaterial color="#8a8f97" /></mesh>
     {Array.from({ length: 6 }, (_, i) => <mesh key={i} position={[0, .64, 0]} rotation={[.5, i / 6 * Math.PI * 2, 0]}>
-      <coneGeometry args={[.07, .5, 4]} /><meshStandardMaterial color="#1f9d55" flatShading />
+      <coneGeometry args={[.07, .5, 4]} /><meshStandardMaterial color="#9aa1ab" flatShading />
     </mesh>)}
   </group>;
 }
 
 function WauBulan({ color }: { color: string }) {
   return <group>
-    <mesh position={[0, .34, 0]}><cylinderGeometry args={[.015, .015, .68, 5]} /><meshStandardMaterial color="#a2785d" /></mesh>
+    <mesh position={[0, .34, 0]}><cylinderGeometry args={[.015, .015, .68, 5]} /><meshStandardMaterial color="#8a8f97" /></mesh>
     <mesh position={[0, .58, 0]} rotation={[Math.PI / 2, 0, Math.PI / 4]} scale={[1, 1, .05]}>
       <octahedronGeometry args={[.22, 0]} /><meshStandardMaterial color={color} flatShading />
     </mesh>
-    <mesh position={[0, .58, .02]} rotation={[0, 0, Math.PI / 4]}><torusGeometry args={[.09, .025, 6, 12, Math.PI]} /><meshStandardMaterial color="#f2a71b" /></mesh>
+    <mesh position={[0, .58, .02]} rotation={[0, 0, Math.PI / 4]}><torusGeometry args={[.09, .025, 6, 12, Math.PI]} /><meshStandardMaterial color="#b3b9c2" /></mesh>
   </group>;
 }
 
@@ -53,15 +53,15 @@ function BatikTotem() {
 function Ketupat({ color }: { color: string }) {
   return <group>
     <mesh position={[0, .18, 0]} rotation={[0, Math.PI / 4, 0]} scale={[1, 1.15, .7]}><octahedronGeometry args={[.16, 0]} /><meshStandardMaterial color={color} flatShading /></mesh>
-    <mesh position={[0, .34, 0]}><cylinderGeometry args={[.01, .01, .1, 4]} /><meshStandardMaterial color="#6f9c56" /></mesh>
+    <mesh position={[0, .34, 0]}><cylinderGeometry args={[.01, .01, .1, 4]} /><meshStandardMaterial color="#8a8f97" /></mesh>
   </group>;
 }
 
 function Pelita({ color }: { color: string }) {
   return <group>
-    <mesh position={[0, .07, 0]}><cylinderGeometry args={[.05, .1, .14, 8]} /><meshStandardMaterial color="#c98a3c" flatShading /></mesh>
-    <mesh position={[0, .155, 0]}><cylinderGeometry args={[.11, .09, .04, 8]} /><meshStandardMaterial color="#8a5a24" /></mesh>
-    <mesh position={[0, .23, 0]}><coneGeometry args={[.05, .12, 6]} /><meshStandardMaterial color="#ffcf5c" emissive={color} emissiveIntensity={.5} /></mesh>
+    <mesh position={[0, .07, 0]}><cylinderGeometry args={[.05, .1, .14, 8]} /><meshStandardMaterial color="#9aa1ab" flatShading /></mesh>
+    <mesh position={[0, .155, 0]}><cylinderGeometry args={[.11, .09, .04, 8]} /><meshStandardMaterial color="#7d8590" /></mesh>
+    <mesh position={[0, .23, 0]}><coneGeometry args={[.05, .12, 6]} /><meshStandardMaterial color="#c7cdd4" emissive={color} emissiveIntensity={.5} /></mesh>
   </group>;
 }
 
