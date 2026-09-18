@@ -30,6 +30,7 @@ type ObjectMaterialMap = Partial<Record<MagnetObjectId, MeshStandardMaterial>>;
 
 const TABLE_WIDTH = 2.8;
 const TABLE_HEIGHT = 1.7;
+const TRACKING_LOSS_GRACE_SECONDS = .4;
 const OBJECT_HIT_RADIUS = .125;
 const TARGET_HIT_RADIUS = .18;
 const TOOLBOX_HIT_RADIUS = .18;
@@ -386,6 +387,7 @@ function LabInteraction({ props }: { props: MagnetHandLabSceneProps }) {
   const objectGroups = useRef<ObjectGroupMap>({});
   const objectMaterials = useRef<ObjectMaterialMap>({});
   const previousTarget = useRef<TablePoint>({ ...MAGNET_HOME });
+  const lostTrackingSince = useRef<number | null>(null);
   const magnetTarget = useRef(new Vector3(tableX(MAGNET_HOME.x), tableY(MAGNET_HOME.y), .35));
   const objectTarget = useRef(new Vector3());
   const scaleTarget = useRef(new Vector3(1, 1, 1));
@@ -411,15 +413,27 @@ function LabInteraction({ props }: { props: MagnetHandLabSceneProps }) {
     bannerText.current = "";
     activePullId.current = null;
     previousTarget.current = { ...MAGNET_HOME };
+    lostTrackingSince.current = null;
     setPullId(null);
     setBanner(null);
   }, [props.state.checkpoint]);
 
   useFrame(({ clock }) => {
     const point = trackedTablePoint(props.latest.current);
-    // Rest at the clear home pad until a hand is tracked; return home when the hand is lost.
-    const target = point ?? MAGNET_HOME;
-    if (point) previousTarget.current = point;
+    // Rest at the clear home pad until a hand is tracked. Brief tracking dropouts hold the
+    // last known position instead of snapping home, since momentary confidence dips are
+    // common and would otherwise make the magnet feel like it fights the player's hand.
+    let target: TablePoint;
+    if (point) {
+      previousTarget.current = point;
+      lostTrackingSince.current = null;
+      target = point;
+    } else {
+      if (lostTrackingSince.current === null) lostTrackingSince.current = clock.elapsedTime;
+      target = clock.elapsedTime - lostTrackingSince.current < TRACKING_LOSS_GRACE_SECONDS
+        ? previousTarget.current
+        : MAGNET_HOME;
+    }
 
     magnetTarget.current.set(tableX(target.x), tableY(target.y), .35);
     if (magnet.current) {
