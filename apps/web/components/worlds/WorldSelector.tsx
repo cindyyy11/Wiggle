@@ -1,5 +1,5 @@
 "use client";
-import { SUBJECT_WORLDS, type SubjectWorldId } from "./subjectRoute";
+import { SUBJECT_WORLD_ORDER, SUBJECT_WORLDS, type SubjectWorldId } from "./subjectRoute";
 import styles from "./SubjectWorlds.module.css";
 
 export type WorldSelectorProps = {
@@ -16,9 +16,9 @@ export function WorldSelector({ selectedWorld = "math", onSlide, onSelect, statu
   return <section className={`${styles.selector} ${styles.carouselSelector}`} aria-label="Choose a subject world">
     <header className={styles.carouselHeader}><img src="/brand/wiggle-wordmark.png" alt="Wiggle" /><span>Wonder. Wow!</span></header>
     <p className={styles.carouselHint}>A whole world of discovery.<br /><span>Slide to find your next adventure</span></p>
-    <button className={`${styles.carouselArrow} ${styles.arrowPrevious}`} aria-label="Previous planet" disabled={selectedWorld === "math"} onClick={() => onSlide?.(-1)}>←</button>
-    <button className={`${styles.carouselArrow} ${styles.arrowNext}`} aria-label="Next planet" disabled={selectedWorld === "english"} onClick={() => onSlide?.(1)}>→</button>
-    <div className={styles.carouselCaption} data-locked={locked || undefined}>
+    <button className={`${styles.carouselArrow} ${styles.arrowPrevious}`} aria-label="Previous planet" disabled={selectedWorld === SUBJECT_WORLD_ORDER[0]} onClick={() => onSlide?.(-1)}>←</button>
+    <button className={`${styles.carouselArrow} ${styles.arrowNext}`} aria-label="Next planet" disabled={selectedWorld === SUBJECT_WORLD_ORDER[SUBJECT_WORLD_ORDER.length - 1]} onClick={() => onSlide?.(1)}>→</button>
+    <div className={styles.carouselCaption} data-mystery={world.mystery || undefined}>
       <p>{selectedWorld === "math" ? "THE MATHS PLANET" : selectedWorld === "science" ? "THE SCIENCE PLANET" : "A NEW WORLD IS GROWING"}</p>
       <h1>{world.name}</h1>
       <span>{locked ? "More adventures are on their way." : selectedWorld === "math" ? "Little steps. Big discoveries. Your adventure starts here." : "Explore, experiment, and discover how the world works."}</span>

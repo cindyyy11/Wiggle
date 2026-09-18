@@ -10,15 +10,18 @@ import { EnglishLandScenery } from "../worlds/EnglishLandScenery";
 import { ENGLISH_LANDS } from "../worlds/englishLands";
 import { BmLandScenery } from "../worlds/BmLandScenery";
 import { BM_LANDS } from "../worlds/bmLands";
+import { NovaLandScenery } from "../worlds/NovaLandScenery";
+import { NOVA_LANDS } from "../worlds/novaLands";
 import { fibonacciSphereRegions } from "../worlds/planetScatter";
 
 const UP = new Vector3(0, 1, 0);
 const REGION_COLORS = ["#9dc99a", "#f4c95d", "#a9d9ee", "#ef8b78"];
-export type NumeriaTheme = "math" | "science" | "bm" | "english";
+export type NumeriaTheme = "math" | "science" | "bm" | "english" | "nova";
 const THEMED_LANDS: Record<Exclude<NumeriaTheme, "math">, readonly { color: string; destination: Destination }[]> = {
   science: SCIENCE_LANDS,
   english: ENGLISH_LANDS,
   bm: BM_LANDS,
+  nova: NOVA_LANDS,
 };
 
 function createTerrain(detail: number, theme: NumeriaTheme) {
@@ -63,6 +66,7 @@ export function Numeria({ quality, dimmed, onDestination, theme = "math", previe
     {theme === "science" ? <ScienceLandScenery quality={quality} />
       : theme === "english" ? <EnglishLandScenery quality={quality} />
       : theme === "bm" ? <BmLandScenery quality={quality} />
+      : theme === "nova" ? <NovaLandScenery quality={quality} />
       : <><Forest count={quality === "high" ? 104 : 58} /><TerrainObjects dimmed={dimmed} /><ShapeSparkles quality={quality} /></>}
     <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, -3.65, 0]} scale={[1, 1, 1]}>
       <torusGeometry args={[4.08, .009, 3, 96]} /><meshBasicMaterial color="#6fa8c2" transparent opacity={.22} />

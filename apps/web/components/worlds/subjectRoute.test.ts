@@ -6,13 +6,17 @@ import {
   parseSubjectRoute,
 } from "./subjectRoute";
 
-it("models four subject planets with only Science and Numeria enterable", () => {
+it("models the subject planets with only Science and Numeria enterable", () => {
   expect(SUBJECT_WORLDS.map(world => [world.id, world.status])).toEqual([
     ["science", "available"],
     ["math", "available"],
     ["english", "coming-soon"],
     ["bm", "coming-soon"],
+    ["nova", "coming-soon"],
   ]);
+  expect(SUBJECT_WORLDS.find(world => world.id === "nova")?.mystery).toBeFalsy();
+  expect(SUBJECT_WORLDS.find(world => world.id === "english")?.mystery).toBe(true);
+  expect(SUBJECT_WORLDS.find(world => world.id === "bm")?.mystery).toBe(true);
   expect(DEFAULT_SCIENCE_ZONE).toBe("magnet-lab");
 });
 

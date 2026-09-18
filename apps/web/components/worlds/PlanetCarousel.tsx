@@ -5,9 +5,9 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { Group, MathUtils } from "three";
 import { Numeria } from "../universe/Numeria";
 import { Landmarks } from "../universe/Landmarks";
-import type { SubjectWorldId } from "./subjectRoute";
+import { SUBJECT_WORLDS, SUBJECT_WORLD_ORDER, type SubjectWorldId } from "./subjectRoute";
 
-export const PLANET_ORDER: SubjectWorldId[] = ["math", "science", "bm", "english"];
+export const PLANET_ORDER: readonly SubjectWorldId[] = SUBJECT_WORLD_ORDER;
 const noop = () => undefined;
 const SELECTED_SPIN_SPEED = 0.12;
 const SIDE_SPIN_SPEED = 0.075;
@@ -26,7 +26,7 @@ function Planet({ world, offset, reducedMotion, onSelect, onChoose }: {
   const visual = useRef<Group>(null);
   const pressed = useRef(false);
   const { viewport } = useThree();
-  const locked = world === "bm" || world === "english";
+  const mystery = SUBJECT_WORLDS.find(item => item.id === world)?.mystery ?? false;
   const radiusScale = Math.min(.9, viewport.width / 8.5);
   const spacing = Math.min(7.2, viewport.width * .86);
   const [initialPosition] = useState<[number, number, number]>(() => [offset * spacing, -.25, 0]);
@@ -52,7 +52,7 @@ function Planet({ world, offset, reducedMotion, onSelect, onChoose }: {
       </group> : null}
       </group>
     </group>
-    {locked ? <group position={[0, 0, 3.9]}>
+    {mystery ? <group position={[0, 0, 3.9]}>
       <mesh><boxGeometry args={[1.05, .8, .2]} /><meshStandardMaterial color="#fff7e7" roughness={.8} /></mesh>
       <mesh position={[0, .48, 0]}><torusGeometry args={[.36, .1, 8, 24, Math.PI]} /><meshStandardMaterial color="#fff7e7" /></mesh>
       <mesh position={[0, 0, .12]}><sphereGeometry args={[.1, 10, 8]} /><meshBasicMaterial color="#27395b" /></mesh>

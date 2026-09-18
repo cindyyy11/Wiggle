@@ -10,6 +10,8 @@ import { ParentEntryLink } from "../wiggle/ParentEntryLink";
 import { TwinLauncher } from "../wiggle/TwinLauncher";
 import {
   DEFAULT_SCIENCE_ZONE,
+  SUBJECT_WORLD_ORDER,
+  SUBJECT_WORLDS,
   buildWorldHref,
   isEnterableWorld,
   parseSubjectRoute,
@@ -47,9 +49,9 @@ export function SubjectWorlds({ childId, allowLocalFallback, client, quality, in
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const suppressClick = useRef(false);
   const sound = useWiggleSound();
-  const order: SubjectWorldId[] = ["math", "science", "bm", "english"];
   const chooseWorld = (world: SubjectWorldId) => { setSelectedWorld(world); setStatusMessage(""); };
   const slide = (direction: number) => {
+    const order = SUBJECT_WORLD_ORDER;
     const next = order[Math.max(0, Math.min(order.length - 1, order.indexOf(selectedWorld) + direction))];
     if (next !== selectedWorld) sound.play("slideWhoosh");
     setSelectedWorld(next);
@@ -86,7 +88,8 @@ export function SubjectWorlds({ childId, allowLocalFallback, client, quality, in
   const selectWorld = (world: SubjectWorldId) => {
     setActiveWorld(null);
     if (!isEnterableWorld(world)) {
-      setStatusMessage("??? is coming soon. Your current world is still here.");
+      const name = SUBJECT_WORLDS.find(item => item.id === world)?.name ?? "This world";
+      setStatusMessage(`${name} is coming soon. Your current world is still here.`);
       return;
     }
     setStatusMessage("");
