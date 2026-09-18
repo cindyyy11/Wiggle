@@ -44,13 +44,13 @@ export const SUBJECT_WORLDS: readonly SubjectWorld[] = [
   },
   {
     id: "english",
-    name: "English",
+    name: "???",
     status: "coming-soon",
     accent: "#a99bc8",
   },
   {
     id: "bm",
-    name: "Bahasa Melayu",
+    name: "???",
     status: "coming-soon",
     accent: "#8dab9a",
   },

@@ -86,7 +86,7 @@ export function SubjectWorlds({ childId, allowLocalFallback, client, quality, in
   const selectWorld = (world: SubjectWorldId) => {
     setActiveWorld(null);
     if (!isEnterableWorld(world)) {
-      setStatusMessage(`${world === "english" ? "English" : "Bahasa Melayu"} is coming soon. Your current world is still here.`);
+      setStatusMessage("??? is coming soon. Your current world is still here.");
       return;
     }
     setStatusMessage("");
@@ -139,7 +139,6 @@ export function SubjectWorlds({ childId, allowLocalFallback, client, quality, in
     </div>
     <WorldSelector
       selectedWorld={selectedWorld}
-      onChoose={chooseWorld}
       onSlide={slide}
       activeWorld={activeWorld}
       onActiveWorldChange={setActiveWorld}

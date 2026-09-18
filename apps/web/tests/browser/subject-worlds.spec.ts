@@ -2,7 +2,7 @@ import { expect, test, type Page, type TestInfo } from "@playwright/test";
 import { SCIENCE_ZONES } from "../../components/science/scienceWorld";
 import { acceptScienceInvitation, denyCamera, enterMagnetLab, enterNumeria, enterScience, keyboardActivate, launchWiggle } from "./helpers";
 
-const SUBJECT_PORTALS = ["Show Numeria", "Show Science Planet", "Show English", "Show Bahasa Melayu"] as const;
+const CAROUSEL_ARROWS = ["Previous planet", "Next planet"] as const;
 
 async function expectInteractiveOrbit(page: Page) {
   const orbit = page.getByTestId("subject-orbit");
@@ -11,7 +11,7 @@ async function expectInteractiveOrbit(page: Page) {
   const canvas = orbit.locator("canvas");
   await expect(canvas).toBeVisible();
   await expect(canvas).toHaveCSS("pointer-events", "auto");
-  for (const name of SUBJECT_PORTALS) {
+  for (const name of CAROUSEL_ARROWS) {
     await expect(page.getByRole("button", { name, exact: true })).toBeVisible();
   }
 }
@@ -25,7 +25,7 @@ async function expectOrbitAfterSplash(page: Page) {
   await page.waitForTimeout(400);
   if (await orbit.getAttribute("data-quality") === "fallback") {
     await expect(orbit.locator("canvas")).toHaveCount(0);
-    for (const name of SUBJECT_PORTALS) {
+    for (const name of CAROUSEL_ARROWS) {
       await expect(page.getByRole("button", { name, exact: true })).toBeVisible();
     }
     return;
@@ -34,7 +34,7 @@ async function expectOrbitAfterSplash(page: Page) {
 }
 
 async function expectOrbitControlsFit(page: Page, testInfo: TestInfo) {
-  for (const name of ["Show Numeria", "Show Science Planet"] as const) {
+  for (const name of CAROUSEL_ARROWS) {
     const box = await page.getByRole("button", { name, exact: true }).boundingBox();
     expect(box).not.toBeNull();
     expect(box!.height).toBeGreaterThanOrEqual(44);
@@ -50,25 +50,27 @@ function boxesIntersect(a: { x: number; y: number; width: number; height: number
   return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
 }
 
-async function expectSubjectTabsClearTwinLauncher(page: Page, testInfo: TestInfo) {
+async function expectCarouselClearsTwinLauncher(page: Page, testInfo: TestInfo) {
   if (testInfo.project.name !== "mobile") return;
   const twinLauncher = page.locator('button[aria-expanded]:not([data-nextjs-dev-tools-button])');
   const twinBox = await twinLauncher.boundingBox();
   expect(twinBox).not.toBeNull();
 
-  for (const name of SUBJECT_PORTALS) {
-    const subjectTab = page.getByRole("button", { name, exact: true });
-    const tabBox = await subjectTab.boundingBox();
-    expect(tabBox).not.toBeNull();
-    expect(tabBox!.width).toBeGreaterThanOrEqual(44);
-    expect(tabBox!.height).toBeGreaterThanOrEqual(44);
-    expect(boxesIntersect(tabBox!, twinBox!)).toBe(false);
+  for (const name of CAROUSEL_ARROWS) {
+    const arrow = page.getByRole("button", { name, exact: true });
+    const arrowBox = await arrow.boundingBox();
+    expect(arrowBox).not.toBeNull();
+    expect(arrowBox!.width).toBeGreaterThanOrEqual(44);
+    expect(arrowBox!.height).toBeGreaterThanOrEqual(44);
+    expect(boxesIntersect(arrowBox!, twinBox!)).toBe(false);
   }
 
-  const english = page.getByRole("button", { name: "Show English", exact: true });
-  await english.click();
-  await expect(english).toHaveAttribute("aria-pressed", "true");
-  expect(await english.evaluate(button => {
+  await page.getByRole("button", { name: "Next planet", exact: true }).click();
+  await page.getByRole("button", { name: "Next planet", exact: true }).click();
+  await page.getByRole("button", { name: "Next planet", exact: true }).click();
+  const locked = page.getByRole("button", { name: "??? (coming soon)", exact: true });
+  await expect(locked).toBeVisible();
+  expect(await locked.evaluate(button => {
     const rect = button.getBoundingClientRect();
     const hit = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
     return hit === button || button.contains(hit);
@@ -87,7 +89,7 @@ test("splash, Worlds, Science, and Magnet Lab stay on a native-control path", as
   await page.goto("/");
   await launchWiggle(page);
   await expectOrbitAfterSplash(page);
-  await page.getByRole("button", { name: "Show Science Planet", exact: true }).click();
+  await page.getByRole("button", { name: "Next planet", exact: true }).click();
   const sciencePortal = page.getByRole("button", { name: "Explore Science Planet", exact: true });
   await expect(sciencePortal).toBeVisible();
   await expect(sciencePortal).toBeEnabled();
@@ -133,16 +135,14 @@ test("locked subject worlds retain focus and do not open a fake lesson", async (
   await launchWiggle(page);
   await expectOrbitAfterSplash(page);
 
-  for (const [name, status] of [
-    ["English (coming soon)", "English is coming soon"],
-    ["Bahasa Melayu (coming soon)", "Bahasa Melayu is coming soon"],
-  ]) {
-    await page.getByRole("button", { name: `Show ${name.replace(" (coming soon)", "")}`, exact: true }).click();
-    const locked = page.getByRole("button", { name, exact: true });
+  await page.getByRole("button", { name: "Next planet", exact: true }).click();
+  for (let step = 0; step < 2; step++) {
+    await page.getByRole("button", { name: "Next planet", exact: true }).click();
+    const locked = page.getByRole("button", { name: "??? (coming soon)", exact: true });
     await locked.focus();
     await locked.click();
     await expect(locked).toBeFocused();
-    await expect(page.getByRole("status").filter({ hasText: status })).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: "??? is coming soon" })).toBeVisible();
     await expect(page.getByRole("region", { name: "Choose a subject world" })).toBeVisible();
     await expect(page.getByRole("region", { name: "Science Planet" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Start Magnet Lab", exact: true })).toHaveCount(0);
@@ -201,7 +201,7 @@ test("forced WebGL fallback keeps the subject orbit and all destinations usable"
   const orbit = page.getByTestId("subject-orbit");
   await expect(orbit).toHaveAttribute("data-quality", "fallback");
   await expect(orbit.locator("canvas")).toHaveCount(0);
-  for (const name of SUBJECT_PORTALS) {
+  for (const name of CAROUSEL_ARROWS) {
     await expect(page.getByRole("button", { name, exact: true })).toBeVisible();
   }
   await enterScience(page);
@@ -216,7 +216,7 @@ test("forced WebGL fallback keeps the subject orbit and all destinations usable"
 test("keyboard navigation reaches Science and Magnet Lab past the auto-dismissing splash without pointer input", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("region", { name: "Choose a subject world" })).toBeVisible({ timeout: 10000 });
-  await keyboardActivate(page, "Show Science Planet");
+  await keyboardActivate(page, "Next planet");
   await keyboardActivate(page, "Explore Science Planet");
   await keyboardActivate(page, "Explore Magnet Lands");
   await acceptScienceInvitation(page, true);
@@ -231,7 +231,7 @@ test("orbit controls stay useful at desktop and mobile widths", async ({ page },
   await expect(page.getByTestId("subject-orbit")).toHaveAttribute("data-reduced-motion", "true");
   await expectOrbitAfterSplash(page);
   await expectOrbitControlsFit(page, testInfo);
-  await expectSubjectTabsClearTwinLauncher(page, testInfo);
+  await expectCarouselClearsTwinLauncher(page, testInfo);
 
   const nextPlanet = page.getByRole("button", { name: "Next planet", exact: true });
   await nextPlanet.hover();
@@ -240,7 +240,7 @@ test("orbit controls stay useful at desktop and mobile widths", async ({ page },
   await expect(nextPlanet).toHaveCSS("transform", "none");
   await page.mouse.up();
 
-  const enterWorld = page.getByRole("button", { name: /Explore Numeria|Explore Science Planet|English \(coming soon\)/, exact: true });
+  const enterWorld = page.getByRole("button", { name: /Explore Numeria|Explore Science Planet|\?\?\? \(coming soon\)/, exact: true });
   await enterWorld.hover();
   await expect(enterWorld).toHaveCSS("transform", "none");
 });
@@ -253,7 +253,7 @@ test("keyboard navigation reaches Numeria and Science from the orbit past the au
 
   await page.goto("/");
   await expect(page.getByRole("region", { name: "Choose a subject world" })).toBeVisible({ timeout: 10000 });
-  await keyboardActivate(page, "Show Science Planet");
+  await keyboardActivate(page, "Next planet");
   await keyboardActivate(page, "Explore Science Planet");
   await keyboardActivate(page, "Explore Magnet Lands");
   await acceptScienceInvitation(page, true);

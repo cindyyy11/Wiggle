@@ -5,7 +5,7 @@ export async function launchWiggle(page: Page): Promise<void> {
 }
 
 export async function enterScience(page: Page): Promise<void> {
-  await page.getByRole("button", { name: "Show Science Planet", exact: true }).click();
+  await page.getByRole("button", { name: "Next planet", exact: true }).click();
   await page.getByRole("button", { name: "Explore Science Planet", exact: true }).click();
   await expect(page.getByRole("region", { name: "Science Planet" })).toBeVisible();
 }

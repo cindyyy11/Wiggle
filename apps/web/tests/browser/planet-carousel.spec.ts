@@ -16,10 +16,11 @@ test("swiping changes the planet without entering it; locked worlds stay locked"
   await expect(page.getByRole("heading", { name: "Science Planet", exact: true })).toBeVisible();
   await expect(page).toHaveURL(/\/$/);
   await page.getByRole("button", { name: "Next planet", exact: true }).click();
-  await page.getByRole("button", { name: "Bahasa Melayu (coming soon)", exact: true }).click();
-  await expect(page.getByRole("status")).toContainText("Bahasa Melayu is coming soon");
+  await page.getByRole("button", { name: "??? (coming soon)", exact: true }).click();
+  await expect(page.getByRole("status")).toContainText("??? is coming soon");
   await expect(page).toHaveURL(/\/$/);
-  await page.getByRole("button", { name: "Show Numeria", exact: true }).click();
+  await page.getByRole("button", { name: "Previous planet", exact: true }).click();
+  await page.getByRole("button", { name: "Previous planet", exact: true }).click();
   await page.getByRole("button", { name: "Explore Numeria", exact: true }).click();
   await expect(page.getByRole("button", { name: "Start fractions mission", exact: true })).toBeVisible();
 });

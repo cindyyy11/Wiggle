@@ -6,7 +6,6 @@ import type { SubjectWorldId } from "./subjectRoute";
 import { isOrbitPress, SUBJECT_ORBIT_LAYOUT, type OrbitDecorationCounts } from "./worldOrbit";
 
 const numeriaGround = new MeshStandardMaterial({ color: "#d5e6a8", roughness: 1, flatShading: true, vertexColors: true });
-const grassMatte = new MeshStandardMaterial({ color: "#8fc77d", roughness: 1, flatShading: true });
 const treeTrunk = new MeshStandardMaterial({ color: "#7caa6d", roughness: 1, flatShading: true });
 const treeCrown = new MeshStandardMaterial({ color: "#74aa7a", roughness: 1, flatShading: true });
 const cloudMatte = new MeshStandardMaterial({ color: "#fff3db", roughness: 1, flatShading: true, transparent: true, opacity: .86 });
@@ -20,8 +19,9 @@ const creamMatte = new MeshStandardMaterial({ color: "#fff3d9", roughness: 1, fl
 const telescopeGlass = new MeshStandardMaterial({ color: "#8ed4e1", roughness: .8, transparent: true, opacity: .86 });
 const magnetMatte = new MeshStandardMaterial({ color: "#ef8b78", roughness: 1, flatShading: true });
 const scienceFragment = new MeshStandardMaterial({ color: "#f4c95d", roughness: 1, flatShading: true });
-const englishMoon = new MeshStandardMaterial({ color: "#b9a9dc", roughness: 1, flatShading: true });
-const bmMoon = new MeshStandardMaterial({ color: "#8fbda2", roughness: 1, flatShading: true });
+const englishMoon = new MeshStandardMaterial({ color: "#9aa1ab", roughness: 1, flatShading: true });
+const bmMoon = new MeshStandardMaterial({ color: "#9aa1ab", roughness: 1, flatShading: true });
+const lockedAccent = new MeshStandardMaterial({ color: "#c3c9d1", roughness: 1, flatShading: true });
 const activeGlow = new MeshBasicMaterial({ color: "#fff3c9", transparent: true, opacity: .1 });
 const lockKeyhole = new MeshBasicMaterial({ color: "#725998" });
 
@@ -176,8 +176,8 @@ function LockBadge() {
 function LockedStoryMoon() {
   return <group rotation={[-.13, -.2, 0]}>
     <mesh material={englishMoon}><icosahedronGeometry args={[1, 1]} /></mesh>
-    <mesh position={[-.18, .32, .78]} rotation={[.15, -.35, .12]} material={creamMatte}><boxGeometry args={[.3, .11, .08]} /></mesh>
-    <mesh position={[.14, .34, .8]} rotation={[.15, .35, -.12]} material={creamMatte}><boxGeometry args={[.3, .11, .08]} /></mesh>
+    <mesh position={[-.18, .32, .78]} rotation={[.15, -.35, .12]} material={lockedAccent}><boxGeometry args={[.3, .11, .08]} /></mesh>
+    <mesh position={[.14, .34, .8]} rotation={[.15, .35, -.12]} material={lockedAccent}><boxGeometry args={[.3, .11, .08]} /></mesh>
     <LockBadge />
   </group>;
 }
@@ -185,9 +185,9 @@ function LockedStoryMoon() {
 function LockedGardenMoon() {
   return <group rotation={[-.13, .18, 0]}>
     <mesh material={bmMoon}><icosahedronGeometry args={[1, 1]} /></mesh>
-    <mesh position={[-.16, .35, .78]} rotation={[.3, .2, -.55]} material={grassMatte}><sphereGeometry args={[.13, 7, 5]} /></mesh>
-    <mesh position={[.15, .27, .8]} rotation={[-.25, .4, .55]} material={grassMatte}><sphereGeometry args={[.12, 7, 5]} /></mesh>
-    <mesh position={[0, .2, .78]} material={treeTrunk}><cylinderGeometry args={[.025, .025, .31, 5]} /></mesh>
+    <mesh position={[-.16, .35, .78]} rotation={[.3, .2, -.55]} material={lockedAccent}><sphereGeometry args={[.13, 7, 5]} /></mesh>
+    <mesh position={[.15, .27, .8]} rotation={[-.25, .4, .55]} material={lockedAccent}><sphereGeometry args={[.12, 7, 5]} /></mesh>
+    <mesh position={[0, .2, .78]} material={lockedAccent}><cylinderGeometry args={[.025, .025, .31, 5]} /></mesh>
     <LockBadge />
   </group>;
 }
