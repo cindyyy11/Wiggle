@@ -5,6 +5,11 @@ demo seeds Nova (`10000000-0000-0000-0000-000000000011`) and the fraction missio
 (`10000000-0000-0000-0000-000000000111`). Open `/docs` for the validated request/response
 schemas. TypeScript counterparts are in `packages/contracts/src/api.ts`.
 
+The in-memory demo also pre-sets the parent PIN to the sample `123456`, so it is ready after
+every restart (the demo forgets everything when the server stops). Set `WIGGLE_DEMO_PIN` to
+another six digits to change it, or to an empty value to make the parent create one. It never
+applies to Supabase household data.
+
 The hero workflow is:
 
 1. `POST /session/start` with `{ "childId": "10000000-0000-0000-0000-000000000011" }`.

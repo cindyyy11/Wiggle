@@ -26,6 +26,37 @@ def test_status_labels_the_actual_memory_repository_and_tracks_setup() -> None:
     assert client.post("/parent/pin/verify", json={"pin": "654321"}).status_code == 200
 
 
+def test_demo_pin_is_preset_only_when_asked_and_still_verified() -> None:
+    client = TestClient(create_app(demo_pin="123456"))
+    assert client.get("/parent/pin/status").json() == {
+        "setupRequired": False,
+        "dataMode": "memory_demo",
+    }
+    assert client.post("/parent/pin/verify", json={"pin": "000000"}).status_code == 403
+    assert client.post("/parent/pin/verify", json={"pin": "123456"}).status_code == 200
+    # Already configured, so a second setup is refused rather than overwriting it.
+    assert client.post("/parent/pin/setup", json={"pin": "654321"}).status_code == 409
+
+
+def test_served_app_presets_the_sample_pin_but_create_app_does_not() -> None:
+    from app.main import app
+
+    assert TestClient(app).get("/parent/pin/status").json()["setupRequired"] is False
+    assert TestClient(create_app()).get("/parent/pin/status").json()["setupRequired"] is True
+
+
+def test_demo_pin_must_be_six_digits() -> None:
+    with pytest.raises(ValueError, match="six digits"):
+        create_app(demo_pin="12")
+
+
+def test_demo_pin_never_applies_to_a_supplied_repository() -> None:
+    repository = MemoryRepository(DEMO_PARENT_ID)
+    seed_demo(repository)
+    client = TestClient(create_app(repository=repository, demo_pin="123456"))
+    assert client.get("/parent/pin/status").json()["setupRequired"] is True
+
+
 def test_status_labels_supabase_household_without_network(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

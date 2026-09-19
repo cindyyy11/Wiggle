@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import tempfile
 from pathlib import Path
 from threading import Lock
@@ -17,13 +18,24 @@ from app.repositories.memory import MemoryRepository
 from app.repositories.protocols import RepositoryAccessError, RepositoryError, WiggleRepository
 from app.repositories.supabase import RepositorySettings
 from app.routes import adaptation, child, events, lexi, parent, sessions, twin
-from app.services.parent_pin import PinStore
+from app.services.parent_pin import PinStore, hash_pin
 from app.services.sessions import WorkflowError
+
+DEFAULT_DEMO_PIN = "123456"
 
 
 def create_app(
-    *, repository: WiggleRepository | None = None, provider: AIProvider | None = None
+    *,
+    repository: WiggleRepository | None = None,
+    provider: AIProvider | None = None,
+    demo_pin: str | None = None,
 ) -> FastAPI:
+    """Build the API.
+
+    ``demo_pin`` pre-sets the parent PIN, but only on the built-in in-memory demo repository.
+    It is ignored for Supabase/household data and for a caller-supplied repository, so a real
+    household always creates its own PIN.
+    """
     app = FastAPI(title="Wiggle API", version="0.1.0")
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     app.middleware("http")(request_summary)
@@ -46,6 +58,10 @@ def create_app(
     if repository is None and settings.backend == "memory":
         memory = MemoryRepository(DEMO_PARENT_ID)
         seed_demo(memory)
+        if demo_pin:
+            if not re.fullmatch(r"[0-9]{6}", demo_pin):
+                raise ValueError("WIGGLE_DEMO_PIN must be exactly six digits")
+            memory.put_settings({**(memory.get_settings() or {}), "pin_hash": hash_pin(demo_pin)})
         repository = memory
     app.state.repository_settings = settings
     app.state.repository = repository
@@ -120,4 +136,6 @@ def create_app(
     return app
 
 
-app = create_app()
+# The served app pre-sets the sample PIN for the in-memory demo so it never needs setting up
+# after a restart. Set WIGGLE_DEMO_PIN to another six digits, or to an empty value to turn it off.
+app = create_app(demo_pin=os.environ.get("WIGGLE_DEMO_PIN", DEFAULT_DEMO_PIN))

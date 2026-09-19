@@ -17,7 +17,7 @@ export function ParentPortal() {
     }).catch(error => { if (active) setError(error.message); });
     return () => { active = false; };
   }, [generation]);
-  if (error) return <div role="alert" className={styles.statusCard}><p>{error}</p><div className={styles.errorActions}><a className={styles.ctaLink} href="/parent/sign-in">Household sign-in</a><a className={styles.ghostLink} href="/parent">Try again</a></div></div>;
+  if (error) return <div role="alert" className={styles.statusCard}><p>{error}</p></div>;
   if (status === null) return <p role="status" className={styles.loading}>Preparing your parent space…</p>;
   return <ParentPinGate key={generation} mode={status.dataMode} setup={status.setupRequired} verify={async pin => {
     await parentRequest(status.setupRequired ? "pin/setup" : "pin/verify", { pin });

@@ -4,3 +4,4 @@
 .worldFrame button { cursor: pointer; font-family: inherit; }
 .worldFrame button:focus-visible { outline: 3px solid #edab3f; outline-offset: 4px; }
 .worldFrame button:disabled { opacity: .5; cursor: default; }
+.worldFrame :global(.science-land-sign) { min-height: 44px; padding: 8px 14px; border: 0; border-radius: 12px; background: #fff6df; color: #203b58; font: 700 14px "Trebuchet MS", sans-serif; white-space: nowrap; }
