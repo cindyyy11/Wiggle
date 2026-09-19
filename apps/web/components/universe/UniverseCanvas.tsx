@@ -2,7 +2,7 @@
 
 import React, { Component, useCallback, useEffect, useId, useRef, useState, type ReactNode, type CSSProperties, type PointerEvent } from "react";
 import dynamic from "next/dynamic";
-import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Minus, Plus, Sparkle } from "lucide-react";
+import { Sparkle } from "lucide-react";
 import { LANDMARKS, MISSION_DESTINATION, createExplorerInput, resolveQuality, type CameraMode, type Destination, type LandmarkId, type PizzaPresentation, type QualityPreference, type SceneQuality } from "./world";
 import { ExplorationHud } from "./ExplorationHud";
 import { useWiggleSound } from "../../features/audio/useWiggleSound";
