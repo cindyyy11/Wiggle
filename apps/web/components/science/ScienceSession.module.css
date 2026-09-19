@@ -1,11 +1,5 @@
-.worldFrame { position: relative; min-height: 100svh; font-family: "Trebuchet MS", Arial, sans-serif; }
-.worldFrame:focus { outline: none; }
 .magnetOverlay { position: fixed; inset: 0; z-index: 20; overflow-y: auto; padding: 16px; background: #172d52e8; }
-.worldFrame * { box-sizing: border-box; }
-.worldFrame :global(.science-land-sign) { min-height: 44px; padding: 8px 14px; border: 0; border-radius: 12px; background: #fff6df; color: #203b58; font: 700 14px "Trebuchet MS", sans-serif; white-space: nowrap; }
-.worldFrame button { cursor: pointer; font-family: inherit; }
-.worldFrame button:focus-visible { outline: 3px solid #edab3f; outline-offset: 4px; }
-.worldFrame button:disabled { opacity: .5; cursor: default; }
+:global(.science-land-sign) { min-height: 44px; padding: 8px 14px; border: 0; border-radius: 12px; background: #fff6df; color: #203b58; font: 700 14px "Trebuchet MS", sans-serif; white-space: nowrap; }
 .invitation { position: absolute; z-index: 8; bottom: 28px; left: 50%; transform: translateX(-50%); display: flex; gap: 20px; width: min(540px, calc(100% - 32px)); padding: 22px; border-radius: 28px 28px 28px 6px; background: #fff6df; color: #203b58; box-shadow: 0 12px 40px #0a203c40; pointer-events: auto; }
 .invitation h2 { margin: 0 0 7px; font-size: 20px; }
 .invitation p { margin: 0 0 16px; line-height: 1.5; font-size: 15px; }

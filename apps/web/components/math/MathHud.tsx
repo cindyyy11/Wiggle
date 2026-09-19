@@ -36,19 +36,21 @@ export function MathHud({ selectedRegion, completedRegions, onRegionSelect, onEx
         const topic = MATH_ACTIVITIES[id];
         const Icon = REGION_ICONS[id];
         const complete = completedRegions.has(id);
+        const completionDescriptionId = `math-region-${id}-completion`;
 
         return <button
           key={id}
           className={styles.topicButton}
           type="button"
           aria-label={`Visit ${topic.name}`}
+          aria-describedby={complete ? completionDescriptionId : undefined}
           aria-pressed={id === selectedRegion}
           onClick={() => onRegionSelect(id)}
         >
           <Icon aria-hidden="true" size={18} />
           <span className={styles.topicName}>{topic.name}</span>
           <span className={styles.topicDot} style={{ backgroundColor: topic.color }} aria-hidden="true" />
-          {complete ? <span className={styles.completeBadge}>Complete</span> : null}
+          <span id={completionDescriptionId} className={styles.completeBadge} hidden={!complete}>Complete</span>
         </button>;
       })}
     </nav>

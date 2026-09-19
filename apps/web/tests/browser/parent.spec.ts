@@ -21,6 +21,9 @@ test("parent PIN, responsive dashboard, settings, check-in and relock", async ({
   await page.getByLabel("Preferred minutes between breaks").fill("25");
   await page.getByRole("button", { name: "Save break preference" }).click();
   await expect(page.getByText("Break preference saved.")).toBeVisible();
+  // Below 1100px the check-ins are tabs, so open the homework one first.
+  const homeworkTab = page.getByRole("tab", { name: "Homework" });
+  if (await homeworkTab.isVisible()) await homeworkTab.click();
   await page.getByLabel("Anything helpful to know?").fill("We used paper pizza slices today.");
   await page.getByRole("button", { name: "Share check-in" }).click();
   await expect(page.getByText("Demo check-in saved for this server session.")).toBeVisible();

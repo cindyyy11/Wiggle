@@ -1,5 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
+import { Check } from "lucide-react";
 import type { CheckInRequest, CheckInResponse } from "@wiggle/contracts";
 import { parentRequest } from "../../lib/api/parent";
 import styles from "./parent.module.css";
@@ -74,7 +75,7 @@ export function QuickCheckIn({ childId, submit = defaultSubmit }: {
         ))}
       </div>
     </> : null}
-    {message && <p role="status">{message}</p>}
-    {error && <p role="alert">{error}</p>}
+    {message && <p role="status" className={styles.formStatus}><Check className={styles.btnIcon} aria-hidden="true" />{message}</p>}
+    {error && <p role="alert" className={styles.formStatus} data-tone="error">{error}</p>}
   </article>;
 }

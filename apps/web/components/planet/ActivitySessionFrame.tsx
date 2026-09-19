@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useRef, type ReactNode } from 'react';
-import styles from '../science/ScienceSession.module.css';
+import styles from './ActivitySessionFrame.module.css';
 
 export type ActivitySessionFrameProps = {
   open: boolean;
@@ -22,7 +22,22 @@ export function ActivitySessionFrame({ open, name, onClose, children }: Activity
     // The universe remains mounted underneath a session, so trap focus in the
     // activity controls rather than including its map and exploration buttons.
     const controls = () => element.querySelector<HTMLElement>('[data-session-controls]') ?? element;
-    const focusables = () => Array.from(controls().querySelectorAll<HTMLElement>('button:not(:disabled), [href], input, select, textarea, [tabindex="0"]')).filter(item => !item.closest('[hidden], [inert]') && item.getClientRects().length > 0);
+    const focusables = () => {
+      const candidates = Array.from(controls().querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]'))
+        .filter(item => !item.matches(':disabled') && item.tabIndex >= 0 && !item.closest('[hidden], [inert]') && item.getClientRects().length > 0);
+      const radioGroups = new Map<string, HTMLInputElement[]>();
+      for (const item of candidates) {
+        if (!(item instanceof HTMLInputElement) || item.type !== 'radio' || !item.name) continue;
+        const group = radioGroups.get(item.name) ?? [];
+        group.push(item);
+        radioGroups.set(item.name, group);
+      }
+      return candidates.filter(item => {
+        if (!(item instanceof HTMLInputElement) || item.type !== 'radio' || !item.name) return true;
+        const group = radioGroups.get(item.name)!;
+        return item === (group.find(radio => radio.checked) ?? group[0]);
+      });
+    };
     (focusables()[0] ?? element).focus();
     const key = (event: KeyboardEvent) => {
       if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); close.current(); }

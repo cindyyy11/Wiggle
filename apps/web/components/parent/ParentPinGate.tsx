@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, type ReactNode } from "react";
+import { ArrowLeft, Lock } from "lucide-react";
 import type { ParentDataMode } from "../../lib/api/parent";
 import styles from "./parent.module.css";
 
@@ -17,6 +18,7 @@ export function ParentPinGate({ children, verify, setup = false, mode = "househo
   }, [open]);
   if (open) return children;
   return <section className={styles.gate} aria-labelledby="parent-entry">
+    <div className={styles.gateBadge} aria-hidden="true"><Lock /></div>
     <p className={styles.eyebrow}>A little space for the grown-ups</p>
     <h1 id="parent-entry">Parent mission control</h1>
     <p>{setup ? "Create a six-digit PIN for this shared device." : "Enter your six-digit PIN to see your explorer’s progress."}</p>
@@ -29,10 +31,10 @@ export function ParentPinGate({ children, verify, setup = false, mode = "househo
       finally { setBusy(false); }
     }}>
       <label htmlFor="parent-pin">Parent PIN</label>
-      <input id="parent-pin" className={styles.pin} type="password" inputMode="numeric" autoComplete={setup ? "new-password" : "current-password"} pattern="[0-9]{6}" minLength={6} maxLength={6} required value={pin} onChange={event => setPin(event.target.value.replace(/\D/g, ""))} />
-      <button disabled={busy}>{busy ? "Checking…" : setup ? "Set PIN and enter" : "Enter mission control"}</button>
+      <input id="parent-pin" className={styles.pin} autoFocus type="password" inputMode="numeric" autoComplete={setup ? "new-password" : "current-password"} pattern="[0-9]{6}" minLength={6} maxLength={6} required value={pin} onChange={event => setPin(event.target.value.replace(/\D/g, ""))} />
+      <button disabled={busy} aria-busy={busy}>{busy ? "Checking…" : setup ? "Set PIN and enter" : "Enter mission control"}</button>
       {error && <p role="alert">{error}</p>}
     </form>
-    <a href="/">Back to the universe</a>
+    <a href="/" className={styles.backLink}><ArrowLeft className={styles.btnIcon} aria-hidden="true" />Back to the universe</a>
   </section>;
 }

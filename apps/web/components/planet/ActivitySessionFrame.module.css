@@ -1,0 +1,6 @@
+.worldFrame { position: relative; min-height: 100svh; font-family: "Trebuchet MS", Arial, sans-serif; }
+.worldFrame:focus { outline: none; }
+.worldFrame * { box-sizing: border-box; }
+.worldFrame button { cursor: pointer; font-family: inherit; }
+.worldFrame button:focus-visible { outline: 3px solid #edab3f; outline-offset: 4px; }
+.worldFrame button:disabled { opacity: .5; cursor: default; }

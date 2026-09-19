@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { parentRequest, type ParentPinStatus } from "../../lib/api/parent";
 import { ParentPinGate } from "./ParentPinGate";
 import { ParentDashboard } from "./ParentDashboard";
+import styles from "./parent.module.css";
 
 export function ParentPortal() {
   const [status, setStatus] = useState<ParentPinStatus | null>(null);
@@ -16,8 +17,8 @@ export function ParentPortal() {
     }).catch(error => { if (active) setError(error.message); });
     return () => { active = false; };
   }, [generation]);
-  if (error) return <div role="alert"><p>{error}</p><a href="/parent/sign-in">Household sign-in</a> · <a href="/parent">Try again</a></div>;
-  if (status === null) return <p role="status">Preparing your parent space…</p>;
+  if (error) return <div role="alert" className={styles.statusCard}><p>{error}</p><div className={styles.errorActions}><a className={styles.ctaLink} href="/parent/sign-in">Household sign-in</a><a className={styles.ghostLink} href="/parent">Try again</a></div></div>;
+  if (status === null) return <p role="status" className={styles.loading}>Preparing your parent space…</p>;
   return <ParentPinGate key={generation} mode={status.dataMode} setup={status.setupRequired} verify={async pin => {
     await parentRequest(status.setupRequired ? "pin/setup" : "pin/verify", { pin });
     setStatus(previous => previous ? { ...previous, setupRequired: false } : previous);

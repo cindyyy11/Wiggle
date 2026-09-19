@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { ArrowLeft, Check, Lock } from "lucide-react";
 import type { LearnerTwin, ParentInsightsResponse } from "@wiggle/contracts";
 import { getLearnerPatterns, getTwinVisualState, patternLabels, twinVisualCopy } from "@wiggle/contracts";
 import { parentRequest, type ParentDataMode } from "../../lib/api/parent";
@@ -20,6 +21,30 @@ const toneClass: Record<Tone, string> = {
   mustard: styles.toneMustard,
   coral: styles.toneCoral,
 };
+
+const BREAK_PRESETS = [15, 20, 25, 30, 45] as const;
+
+/** Below this width the three forms become tabs (one at a time) instead of sitting side by side. */
+const COMPACT_QUERY = "(max-width: 1100px)";
+const FORM_TABS = [
+  { id: "break", label: "Break time" },
+  { id: "today", label: "Today" },
+  { id: "homework", label: "Homework" },
+] as const;
+type FormTab = (typeof FORM_TABS)[number]["id"];
+
+function useCompactLayout() {
+  const [compact, setCompact] = useState(false);
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const query = window.matchMedia(COMPACT_QUERY);
+    const update = () => setCompact(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+  return compact;
+}
 
 const NAV = [
   { href: "#overview", label: "Overview" },
@@ -83,6 +108,10 @@ export function ParentDashboard({ mode, onLock }: { mode: ParentDataMode; onLock
   const [interval, setInterval] = useState(20);
   const [saved, setSaved] = useState("");
   const [saving, setSaving] = useState(false);
+  const [saveFailed, setSaveFailed] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>(NAV[0].href.slice(1));
+  const [formTab, setFormTab] = useState<FormTab>("break");
+  const compact = useCompactLayout();
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
   const [insightsRefresh, setInsightsRefresh] = useState(0);
@@ -122,6 +151,17 @@ export function ParentDashboard({ mode, onLock }: { mode: ParentDataMode; onLock
     });
   }, [childId, name]);
 
+  useEffect(() => {
+    // Highlight the section the parent is reading in the app bar's section nav.
+    if (!data || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(entries => {
+      const inBand = entries.filter(entry => entry.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+      if (inBand) setActiveSection(inBand.target.id);
+    }, { rootMargin: "-25% 0px -60% 0px" });
+    NAV.forEach(item => { const element = document.getElementById(item.href.slice(1)); if (element) observer.observe(element); });
+    return () => observer.disconnect();
+  }, [data]);
+
   const signals = data ? rankedSignals(data) : [];
   const topSignal = signals[0];
   const masteryEntries = data ? Object.entries(data.twin.mastery) : [];
@@ -129,10 +169,16 @@ export function ParentDashboard({ mode, onLock }: { mode: ParentDataMode; onLock
 
   return <>
     <header className={styles.header}>
-      <a href="/" className={styles.brand}>wiggle<span> / parent space</span></a>
+      <a href="/" className={styles.brand}><img src="/brand/wiggle-wordmark.png" alt="Wiggle" /><span>parent space</span></a>
+      {data && <nav className={styles.pageNav} aria-label="On this page">
+        {NAV.map(item => {
+          const id = item.href.slice(1);
+          return <a key={item.href} href={item.href} aria-current={activeSection === id ? "location" : undefined} onClick={() => setActiveSection(id)}>{item.label}</a>;
+        })}
+      </nav>}
       <div className={styles.headerActions}>
-        <a href="/" className={styles.ghostLink}>Back to worlds</a>
-        <button type="button" className={styles.secondary} onClick={onLock}>Lock parent space</button>
+        <a href="/" className={styles.ghostLink} title="Back to worlds"><ArrowLeft className={styles.btnIcon} aria-hidden="true" /><span className={styles.btnLabel}>Back to worlds</span></a>
+        <button type="button" className={styles.secondary} onClick={onLock} title="Lock parent space"><Lock className={styles.btnIcon} aria-hidden="true" /><span className={styles.btnLabel}>Lock parent space</span></button>
       </div>
     </header>
 
@@ -148,17 +194,13 @@ export function ParentDashboard({ mode, onLock }: { mode: ParentDataMode; onLock
       {children.length > 0 && <label className={styles.childSelect}>Your explorer<select value={childId} onChange={event => setChildId(event.target.value)}>{children.map(child => <option key={child.id} value={child.id}>{child.name}</option>)}</select></label>}
     </div>
 
-    {data && <nav className={styles.pageNav} aria-label="On this page">
-      {NAV.map(item => <a key={item.href} href={item.href}>{item.label}</a>)}
-    </nav>}
-
     {liveNotice && <p className={styles.liveNotice} role="status">
       <span>{liveNotice}</span>
       <button type="button" className={styles.secondary} onClick={() => setLiveNotice("")}>Dismiss</button>
     </p>}
-    {error && <div className={styles.errorBox} role="alert"><p>{error}</p><button type="button" onClick={() => setRetry(value => value + 1)}>Try again</button> <button type="button" className={styles.secondary} onClick={onLock}>Return to PIN entry</button></div>}
-    {!children.length && !error && <p role="status">Loading your explorers… If this household is new, add a child profile before starting a mission.</p>}
-    {childId && !data && !error && <p role="status">Loading progress…</p>}
+    {error && <div className={styles.errorBox} role="alert"><p>{error}</p><div className={styles.errorActions}><button type="button" onClick={() => setRetry(value => value + 1)}>Try again</button><button type="button" className={styles.secondary} onClick={onLock}>Return to PIN entry</button></div></div>}
+    {!children.length && !error && <p role="status" className={styles.inlineStatus}>Loading your explorers… If this household is new, add a child profile before starting a mission.</p>}
+    {childId && !data && !error && <p role="status" className={styles.inlineStatus}>Loading progress…</p>}
 
     {data && <>
       <section id="overview" className={styles.region} aria-labelledby="overview-heading">
@@ -310,27 +352,49 @@ export function ParentDashboard({ mode, onLock }: { mode: ParentDataMode; onLock
         <div className={styles.regionHead}>
           <p className={styles.eyebrow}>Your turn</p>
           <h2 id="actions-heading">Share &amp; settings</h2>
-          <p className={styles.regionLead}>Optional check-ins and break preferences. These never change mastery scores.</p>
+          <p className={styles.regionLead}>Optional check-ins and break preferences for {name}. These never change mastery scores.</p>
         </div>
-        <div className={styles.grid}>
-          <article className={`${styles.panel} ${toneClass.mustard}`}>
-            <h3 className={styles.panelTitle}>Make room for a breather</h3>
-            <p className={styles.panelLead}>Save your preferred time between breaks. Automatic reminders are not available yet.</p>
-            <form onSubmit={async event => {
-              event.preventDefault(); setSaving(true); setSaved("");
-              try { await parentRequest("settings", { breakIntervalMinutes: interval }); setSaved("Break preference saved."); }
-              catch (error) { setSaved(error instanceof Error ? error.message : "Please try again."); }
-              finally { setSaving(false); }
-            }}>
-              <label htmlFor="break-interval">Preferred minutes between breaks</label>
-              <input id="break-interval" type="number" min={5} max={120} value={interval} onChange={event => setInterval(Number(event.target.value))} required />
-              <button type="submit" disabled={saving}>{saving ? "Saving…" : "Save break preference"}</button>
-              <p role="status">{saved}</p>
-            </form>
-            <small>{mode === "household" ? "This preference is saved for your household." : "This demo preference lasts only for this server session."} Breaks can always be started from the mission’s Reset Station.</small>
-          </article>
-          <QuickCheckIn key={`quick-${childId}`} childId={childId} />
-          <HomeworkCheckIn key={childId} childId={childId} />
+        {compact && <div className={styles.formTabs} role="tablist" aria-label="Share and settings" onKeyDown={event => {
+          const step = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+          if (!step) return;
+          event.preventDefault();
+          const next = FORM_TABS[(FORM_TABS.findIndex(tab => tab.id === formTab) + step + FORM_TABS.length) % FORM_TABS.length];
+          setFormTab(next.id);
+          document.getElementById(`form-tab-${next.id}`)?.focus();
+        }}>
+          {FORM_TABS.map(tab => <button key={tab.id} type="button" role="tab" id={`form-tab-${tab.id}`} className={styles.formTab} aria-selected={formTab === tab.id} aria-controls={`form-pane-${tab.id}`} tabIndex={formTab === tab.id ? 0 : -1} onClick={() => setFormTab(tab.id)}>{tab.label}</button>)}
+        </div>}
+        <div className={`${styles.grid} ${styles.actionsGrid}`}>
+          {/* Inactive tabs are hidden, not unmounted, so anything already typed is kept. */}
+          <div className={styles.formPane} {...(compact ? { role: "tabpanel", id: "form-pane-break", "aria-labelledby": "form-tab-break", hidden: formTab !== "break" } : {})}>
+            <article className={`${styles.panel} ${toneClass.mustard}`}>
+              <h3 className={styles.panelTitle}>Make room for a breather</h3>
+              <p className={styles.panelLead}>Save your preferred time between breaks. Automatic reminders are not available yet.</p>
+              <form onSubmit={async event => {
+                event.preventDefault(); setSaving(true); setSaved(""); setSaveFailed(false);
+                try { await parentRequest("settings", { breakIntervalMinutes: interval }); setSaved("Break preference saved."); }
+                catch (error) { setSaveFailed(true); setSaved(error instanceof Error ? error.message : "Please try again."); }
+                finally { setSaving(false); }
+              }}>
+                <label htmlFor="break-interval">Preferred minutes between breaks</label>
+                <input id="break-interval" type="number" min={5} max={120} value={interval} onChange={event => setInterval(Number(event.target.value))} required />
+                <div className={styles.choiceGroup} role="group" aria-label="Quick picks">
+                  {BREAK_PRESETS.map(minutes => <button key={minutes} type="button" className={styles.choice} aria-pressed={interval === minutes} onClick={() => setInterval(minutes)}>{minutes} min</button>)}
+                </div>
+                <div className={styles.actionRow}>
+                  <button type="submit" disabled={saving} aria-busy={saving}>{saving ? "Saving…" : "Save break preference"}</button>
+                  <p role="status" className={styles.formStatus} data-tone={saveFailed ? "error" : "ok"}>{saved && !saveFailed ? <Check className={styles.btnIcon} aria-hidden="true" /> : null}{saved}</p>
+                </div>
+              </form>
+              <small>{mode === "household" ? "This preference is saved for your household." : "This demo preference lasts only for this server session."} Breaks can always be started from the mission’s Reset Station.</small>
+            </article>
+          </div>
+          <div className={styles.formPane} {...(compact ? { role: "tabpanel", id: "form-pane-today", "aria-labelledby": "form-tab-today", hidden: formTab !== "today" } : {})}>
+            <QuickCheckIn key={`quick-${childId}`} childId={childId} />
+          </div>
+          <div className={styles.formPane} {...(compact ? { role: "tabpanel", id: "form-pane-homework", "aria-labelledby": "form-tab-homework", hidden: formTab !== "homework" } : {})}>
+            <HomeworkCheckIn key={childId} childId={childId} />
+          </div>
         </div>
       </section>
     </>}

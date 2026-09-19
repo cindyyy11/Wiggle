@@ -21,7 +21,11 @@ it("lets learners visit regions and explore the selected activity", () => {
   );
 
   expect(screen.getAllByRole("button", { name: /^Visit / })).toHaveLength(4);
-  expect(screen.getByRole("button", { name: "Visit Fraction Forest" }).getAttribute("aria-pressed")).toBe("true");
+  const completedRegion = screen.getByRole("button", { name: "Visit Fraction Forest" });
+  expect(completedRegion.getAttribute("aria-pressed")).toBe("true");
+  expect(completedRegion.getAttribute("aria-describedby")).toBe("math-region-fraction-forest-completion");
+  expect(document.getElementById("math-region-fraction-forest-completion")?.textContent).toBe("Complete");
+  expect(screen.getByRole("button", { name: "Visit Number Valley" }).hasAttribute("aria-describedby")).toBe(false);
   expect(screen.getByRole("heading", { name: "Fraction Forest" })).toBeTruthy();
   expect(screen.getByText("Complete")).toBeTruthy();
 

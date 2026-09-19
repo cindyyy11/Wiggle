@@ -1,5 +1,6 @@
 "use client";
 import { useRef, useState } from "react";
+import { Check } from "lucide-react";
 import type { CheckInRequest, CheckInResponse } from "@wiggle/contracts";
 import { parentRequest } from "../../lib/api/parent";
 import styles from "./parent.module.css";
@@ -32,8 +33,11 @@ export function HomeworkCheckIn({ childId, submit = defaultSubmit }: {
       </select>
       <label htmlFor="homework-note">Anything helpful to know?</label>
       <textarea id="homework-note" maxLength={1000} rows={3} value={note} onChange={event => setNote(event.target.value)} disabled={busy} />
-      <button type="submit" disabled={busy}>{busy ? "Sharing…" : "Share check-in"}</button>
-      {message && <p role="status">{message}</p>}{error && <p role="alert">{error}</p>}
+      <div className={styles.actionRow}>
+        <button type="submit" disabled={busy} aria-busy={busy}>{busy ? "Sharing…" : "Share check-in"}</button>
+        {message && <p role="status" className={styles.formStatus}><Check className={styles.btnIcon} aria-hidden="true" />{message}</p>}
+        {error && <p role="alert" className={styles.formStatus} data-tone="error">{error}</p>}
+      </div>
     </form>
   </article>;
 }
