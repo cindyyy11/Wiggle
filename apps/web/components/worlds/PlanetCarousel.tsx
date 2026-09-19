@@ -2,10 +2,12 @@
 
 import { useRef, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
+import { Html } from "@react-three/drei";
 import { Group, MathUtils } from "three";
 import { Numeria } from "../universe/Numeria";
 import { Landmarks } from "../universe/Landmarks";
 import { SUBJECT_WORLDS, SUBJECT_WORLD_ORDER, type SubjectWorldId } from "./subjectRoute";
+import styles from "./SubjectWorlds.module.css";
 
 export const PLANET_ORDER: readonly SubjectWorldId[] = SUBJECT_WORLD_ORDER;
 const noop = () => undefined;
@@ -106,6 +108,9 @@ function MoreAdventuresGhost({ offset, reducedMotion }: { offset: number; reduce
         <sphereGeometry args={[.045, 6, 6]} /><meshBasicMaterial color="#fff7e7" transparent opacity={.75} />
       </mesh>)}
     </group>
+    {Math.abs(offset) <= 1.5 ? <Html center position={[0, 1.85, 0]} style={{ pointerEvents: "none" }} zIndexRange={[5, 0]}>
+      <div className={styles.ghostHint}>✨ More worlds ahead</div>
+    </Html> : null}
   </group>;
 }
 
