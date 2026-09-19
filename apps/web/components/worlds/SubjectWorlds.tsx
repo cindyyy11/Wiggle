@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { MATHS_MISSION_BLOCKED_MESSAGE, MissionAtlas } from "../mission/MissionAtlas";
+import { MATHS_MISSION_BLOCKED_MESSAGE, MathPlanet } from "../math/MathPlanet";
 import { SciencePlanet } from "../science/SciencePlanet";
 import type { ApiClient } from "../../lib/api/client";
 import type { QualityPreference } from "../universe/world";
@@ -39,7 +39,7 @@ function routeForChild(route: SubjectRoute, childId?: string): SubjectRoute {
   return { world: null, child: childId };
 }
 
-export function SubjectWorlds({ childId, allowLocalFallback, client, quality, initialRoute }: SubjectWorldsProps) {
+export function SubjectWorlds({ childId, client, quality, initialRoute }: SubjectWorldsProps) {
   const [entered, setEntered] = useState(false);
   const [route, setRoute] = useState<SubjectRoute>(() => routeForChild(initialRoute, childId));
   const [mathsOverlayOpen, setMathsOverlayOpen] = useState(false);
@@ -103,14 +103,10 @@ export function SubjectWorlds({ childId, allowLocalFallback, client, quality, in
   if (!entered) return <WiggleSplash onEntered={() => setEntered(true)} />;
 
   const content = route.world === "math" ? <section className={styles.worldContent} aria-label="Numeria">
-    <MissionAtlas
-      childId={childId}
-      allowLocalFallback={allowLocalFallback}
-      client={client}
+    <MathPlanet
       quality={quality}
-      showSplash={false}
-      onMissionOverlayChange={setMathsOverlayOpen}
-      onWorldsRequest={() => navigate({ world: null, child: currentChild })}
+      onSessionOpenChange={setMathsOverlayOpen}
+      onBackToWorlds={() => navigate({ world: null, child: currentChild })}
     />
     <p className={styles.routeStatus} role="status" aria-live="polite">{statusMessage}</p>
   </section> : route.world === "science" ? <SciencePlanet

@@ -4,7 +4,7 @@ import { act, cleanup, fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, expect, it, vi } from "vitest";
 import { SubjectWorlds } from "./SubjectWorlds";
 
-const missionProps = vi.hoisted(() => ({ current: undefined as unknown }));
+const mathPlanetProps = vi.hoisted(() => ({ current: undefined as unknown }));
 const soundPlay = vi.hoisted(() => vi.fn());
 
 vi.mock("../../features/audio/useWiggleSound", () => ({
@@ -16,28 +16,21 @@ vi.mock("../../features/audio/useWiggleSound", () => ({
   }),
 }));
 
-vi.mock("../mission/MissionAtlas", () => ({
+vi.mock("../math/MathPlanet", () => ({
   MATHS_MISSION_BLOCKED_MESSAGE: "Finish or leave your Maths mission before changing worlds.",
-  MissionAtlas: (props: {
-    childId?: string;
-    allowLocalFallback?: boolean;
-    client?: unknown;
+  MathPlanet: (props: {
     quality?: string;
-    showSplash?: boolean;
-    onMissionOverlayChange?: (open: boolean) => void;
-    onWorldsRequest?: () => void;
+    onSessionOpenChange?: (open: boolean) => void;
+    onBackToWorlds: () => void;
   }) => {
-    missionProps.current = props;
+    mathPlanetProps.current = props;
     return <section aria-label="Mock Numeria">
     <output
       data-testid="maths-props"
-      data-child-id={props.childId}
-      data-demo={String(props.allowLocalFallback)}
       data-quality={props.quality}
-      data-splash={String(props.showSplash)}
     />
-    <button type="button" onClick={() => props.onMissionOverlayChange?.(true)}>Open Maths mission</button>
-    <button type="button" onClick={() => props.onWorldsRequest?.()}>Back to Worlds</button>
+    <button type="button" onClick={() => props.onSessionOpenChange?.(true)}>Open Maths session</button>
+    <button type="button" onClick={props.onBackToWorlds}>Back to Worlds</button>
     </section>;
   },
 }));
@@ -61,7 +54,7 @@ function enterWorlds() {
   act(() => vi.advanceTimersByTime(900 + 320));
 }
 
-it("keeps the splash, then routes Numeria from either orbit control to the existing MissionAtlas", () => {
+it("keeps the splash, then routes Numeria from either orbit control to MathPlanet", () => {
   vi.useFakeTimers();
   const client = {} as never;
   render(
@@ -80,25 +73,20 @@ it("keeps the splash, then routes Numeria from either orbit control to the exist
   fireEvent.click(screen.getByRole("button", { name: "Explore Numeria" }));
   expect(window.location.search).toBe("?child=owned&world=math");
   expect(screen.getByTestId("maths-props").dataset).toMatchObject({
-    childId: "owned",
-    demo: "false",
     quality: "fallback",
-    splash: "false",
   });
-  expect((missionProps.current as { client?: unknown }).client).toBe(client);
+  expect((mathPlanetProps.current as { quality?: string }).quality).toBe("fallback");
   fireEvent.click(screen.getByRole("button", { name: "Back to Worlds" }));
+  expect(window.location.search).toBe("?child=owned");
   expect(screen.getByRole("region", { name: "Choose a subject world" })).toBeTruthy();
   expect(screen.queryByRole("region", { name: "Welcome to Wiggle" })).toBeNull();
 
   fireEvent.click(screen.getByRole("button", { name: "Select modeled Numeria" }));
   expect(window.location.search).toBe("?child=owned&world=math");
   expect(screen.getByTestId("maths-props").dataset).toMatchObject({
-    childId: "owned",
-    demo: "false",
     quality: "fallback",
-    splash: "false",
   });
-  expect((missionProps.current as { client?: unknown }).client).toBe(client);
+  expect((mathPlanetProps.current as { quality?: string }).quality).toBe("fallback");
 });
 
 it("opens a direct Science route after the splash and preserves child context when returning to Worlds", () => {
@@ -137,7 +125,7 @@ it("announces locked worlds without changing the route and blocks navigation awa
   fireEvent.click(screen.getByRole("button", { name: "Previous planet" }));
   fireEvent.click(screen.getByRole("button", { name: "Previous planet" }));
   fireEvent.click(screen.getByRole("button", { name: "Explore Numeria" }));
-  fireEvent.click(screen.getByRole("button", { name: "Open Maths mission" }));
+  fireEvent.click(screen.getByRole("button", { name: "Open Maths session" }));
   window.history.pushState({}, "", "/?child=owned&world=science&zone=magnet-lab");
   act(() => window.dispatchEvent(new PopStateEvent("popstate")));
   expect(screen.getByTestId("maths-props")).toBeTruthy();
@@ -204,7 +192,7 @@ it("shows the global Twin launcher and Parent link on the worlds hub, and hides 
   expect(screen.getByRole("button", { name: "Ready for a mission whenever you are!" })).toBeTruthy();
 
   fireEvent.click(screen.getByRole("button", { name: "Explore Numeria" }));
-  fireEvent.click(screen.getByRole("button", { name: "Open Maths mission" }));
+  fireEvent.click(screen.getByRole("button", { name: "Open Maths session" }));
 
   expect(screen.queryByRole("button", { name: "Ready for a mission whenever you are!" })).toBeNull();
   expect(screen.getByRole("button", { name: "Parent mission control" })).toBeTruthy();

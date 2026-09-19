@@ -3,6 +3,8 @@
 import type { QualityPreference } from "../universe/world";
 import { MathPlanetCanvas } from "./MathPlanetCanvas";
 
+export { MATHS_MISSION_BLOCKED_MESSAGE } from "./mathNavigation";
+
 export type MathPlanetProps = {
   quality?: QualityPreference;
   reducedMotion?: boolean;

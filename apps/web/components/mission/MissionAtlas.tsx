@@ -21,9 +21,8 @@ import { useWiggleSound } from "../../features/audio/useWiggleSound";
 import { speakIfUnmuted } from "../../features/voice/voicePreference";
 import { publishWiggleLiveEvent } from "../../features/sync/wiggleLiveChannel";
 import { seenConstellationStars, saveSeenConstellationStars } from "../wiggle/constellationMemory";
+import { MATHS_MISSION_BLOCKED_MESSAGE } from "../math/mathNavigation";
 import styles from "./mission.module.css";
-
-export const MATHS_MISSION_BLOCKED_MESSAGE = "Finish or leave your Maths mission before changing worlds.";
 
 interface Run { session: StartSessionResponse; transport: "local" | "api"; startedAt: number; interacted: boolean; finished: boolean }
 export interface MissionAtlasProps {

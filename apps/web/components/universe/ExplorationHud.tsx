@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useState, type CSSProperties } from "react";
-import { ArrowUpRight, Gem, Sparkles, Triangle, type LucideIcon } from "lucide-react";
+import { ArrowUpRight, Gem, Triangle, type LucideIcon } from "lucide-react";
 import type { CameraMode, Landmark, LandmarkId } from "./world";
 import { LANDMARKS } from "./world";
 import styles from "./explorationHud.module.css";
@@ -9,7 +9,6 @@ import styles from "./explorationHud.module.css";
 const LANDMARK_ICONS: Partial<Record<LandmarkId, LucideIcon>> = {
   "geometry-ridge": Triangle,
   "crystal-crater": Gem,
-  lexi: Sparkles,
 };
 
 type ExplorationHudProps = {
@@ -79,7 +78,7 @@ export function ExplorationHud({ mode, mapVisible, selectedLandmark, landmark, h
 
     {showNavigator ? <nav id="numeria-places" className={styles.navigator} aria-label="Numeria destinations">
       <div className={styles.navigatorHead}><span>MISSION CONSTELLATION</span>{!mapVisible ? <button type="button" className={styles.close} onClick={() => setNavigatorOpen(false)} aria-label="Close places">Close</button> : null}</div>
-      <div className={styles.placeList}>{LANDMARKS.map(item => {
+      <div className={styles.placeList}>{LANDMARKS.filter(item => item.id !== "lexi").map(item => {
         const Icon = LANDMARK_ICONS[item.id];
         return <button type="button" key={item.id} className={item.id === selectedLandmark ? styles.placeSelected : ""} onClick={() => { onSelectLandmark(item.id); onModeChange("follow"); setNavigatorOpen(false); }} aria-label={`Visit ${item.name}`} aria-pressed={item.id === selectedLandmark}><span className={styles.placeDot} style={{ "--region": item.color } as CSSProperties} aria-hidden="true">{Icon ? <Icon size={16} /> : item.symbol}</span><span>{item.name}</span><ArrowUpRight className={styles.arrow} aria-hidden="true" size={16} /></button>;
       })}</div>
