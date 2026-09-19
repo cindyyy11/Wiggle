@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { planetSpinStep } from "./PlanetCarousel";
+import { LOCK_BADGE_CENTER_Y, LOCK_BADGE_SURFACE_Z, planetSpinStep } from "./PlanetCarousel";
 
 describe("planetSpinStep", () => {
   it("turns the selected planet faster than side planets", () => {
@@ -15,4 +15,9 @@ describe("planetSpinStep", () => {
     expect(planetSpinStep(1 / 60, 0, false, true)).toBe(0);
     expect(planetSpinStep(1 / 60, 0, true, false)).toBe(0);
   });
+});
+
+it("places locked-world badges on the visible front surface", () => {
+  expect(LOCK_BADGE_SURFACE_Z).toBeGreaterThan(3.5);
+  expect(LOCK_BADGE_CENTER_Y).toBeCloseTo(-.18);
 });

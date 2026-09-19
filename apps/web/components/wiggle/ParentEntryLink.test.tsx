@@ -16,7 +16,7 @@ describe("ParentEntryLink", () => {
     render(<ParentEntryLink disabled disabledMessage="Finish or leave your Maths mission before changing worlds." />);
     expect(screen.queryByRole("link")).toBeNull();
     const button = screen.getByRole("button", { name: "Parent mission control" });
-    expect(button).toBeDisabled();
+    expect((button as HTMLButtonElement).disabled).toBe(true);
     expect(screen.getByText("Finish or leave your Maths mission before changing worlds.")).toBeTruthy();
   });
 });

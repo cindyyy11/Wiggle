@@ -36,6 +36,7 @@ describe("WiggleConstellation", () => {
 
   it("flags newly unlocked stars for a celebratory cue", () => {
     render(<WiggleConstellation twin={twin} newlyUnlocked={new Set(["visual-explorer"])} />);
-    expect(screen.getByText(/Visual Explorer ✨/)).toBeTruthy();
+    expect(screen.getByText("Visual Explorer")).toBeTruthy();
+    expect(screen.getByLabelText("Newly unlocked")).toBeTruthy();
   });
 });

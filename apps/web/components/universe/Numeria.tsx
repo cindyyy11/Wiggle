@@ -13,8 +13,9 @@ import { BM_LANDS } from "../worlds/bmLands";
 import { fibonacciSphereRegions } from "../worlds/planetScatter";
 
 const UP = new Vector3(0, 1, 0);
-const REGION_COLORS = ["#8ed081", "#ffd45f", "#77c9ed", "#ff806f"];
-const REGION_BORDER_COLOR = "#fff0c7";
+export const NUMERIA_REGION_COLORS = ["#67c96f", "#f8c83f", "#55bde8", "#f17463"] as const;
+export const NUMERIA_REGION_COUNT = 4;
+const REGION_BORDER_COLOR = "#fff2c9";
 export type NumeriaTheme = "math" | "science" | "bm" | "english";
 const THEMED_LANDS: Record<Exclude<NumeriaTheme, "math">, readonly { color: string; destination: Destination }[]> = {
   science: SCIENCE_LANDS,
@@ -38,9 +39,9 @@ function createTerrain(detail: number, theme: NumeriaTheme) {
       if (alignment > maximum) { runnerUp = maximum; maximum = alignment; nearest = region; }
       else if (alignment > runnerUp) runnerUp = alignment;
     });
-    const isMathsBorder = !lands && maximum - runnerUp < .045;
-    color.set(lands ? lands[nearest].color : isMathsBorder ? REGION_BORDER_COLOR : REGION_COLORS[nearest]);
-    color.multiplyScalar(.94 + Math.sin(index * 4.79) * .055);
+    const isMathsBorder = !lands && maximum - runnerUp < .075;
+    color.set(lands ? lands[nearest].color : isMathsBorder ? REGION_BORDER_COLOR : NUMERIA_REGION_COLORS[nearest]);
+    color.multiplyScalar(.96 + Math.sin(index * 4.79) * .035);
     for (let vertex = index; vertex < index + 3; vertex++) {
       const x = points.getX(vertex); const y = points.getY(vertex); const z = points.getZ(vertex);
       const height = 1 + .009 * Math.sin(x * 4) * Math.cos(y * 3) * Math.sin(z * 4);
@@ -64,8 +65,9 @@ export function Numeria({ quality, dimmed, onDestination, theme = "math", previe
   };
   return <group>
     <mesh geometry={geometry} onClick={move}>
-      <meshStandardMaterial vertexColors flatShading roughness={1} color={dimmed ? "#bdd5c4" : "#fff7e7"} />
+      <meshStandardMaterial vertexColors flatShading roughness={1} color={dimmed ? "#bdd5c4" : theme === "math" ? "#fffdf7" : "#fff7e7"} />
     </mesh>
+    {theme === "math" ? <MathRegionPlateaus dimmed={dimmed} /> : null}
     {theme === "science" ? <ScienceLandScenery quality={quality} />
       : theme === "english" ? <EnglishLandScenery quality={quality} />
       : theme === "bm" ? <BmLandScenery quality={quality} />
@@ -74,6 +76,31 @@ export function Numeria({ quality, dimmed, onDestination, theme = "math", previe
       <torusGeometry args={[4.08, .009, 3, 96]} /><meshBasicMaterial color="#6fa8c2" transparent opacity={.22} />
     </mesh>
   </group>;
+}
+
+function MathRegionPlateaus({ dimmed }: { dimmed: boolean }) {
+  const regions = useMemo(() => LANDMARKS.slice(0, NUMERIA_REGION_COUNT).map((landmark, index) => {
+    const normal = new Vector3(...surfacePoint(landmark.destination, 1));
+    return {
+      id: landmark.id,
+      color: NUMERIA_REGION_COLORS[index],
+      position: normal.clone().multiplyScalar(RADIUS + .015),
+      quaternion: new Quaternion().setFromUnitVectors(UP, normal),
+      rotation: index * .58,
+    };
+  }), []);
+  return <group>{regions.map((region, index) => <group key={region.id} position={region.position} quaternion={region.quaternion}>
+    <group rotation={[0, region.rotation, 0]}>
+    <mesh position={[0, .055, 0]} scale={[1 + index % 2 * .08, 1, .82 + index % 3 * .07]}>
+      <cylinderGeometry args={[.98, .9, .11, 11]} />
+      <meshStandardMaterial color={region.color} roughness={.92} flatShading transparent opacity={dimmed ? .45 : .92} />
+    </mesh>
+    <mesh position={[0, .116, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[1 + index % 2 * .08, .82 + index % 3 * .07, 1]}>
+      <ringGeometry args={[.72, .94, 11]} />
+      <meshBasicMaterial color="#fff2c9" transparent opacity={dimmed ? .22 : .48} />
+    </mesh>
+    </group>
+  </group>)}</group>;
 }
 
 function Forest({ count }: { count: number }) {

@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import type { SubjectWorldId } from "./subjectRoute";
 import { PlanetCarousel } from "./PlanetCarousel";
+import { SpacePlaygroundDressings } from "./SpacePlaygroundDressings";
 import type { OrbitDecorationCounts } from "./worldOrbit";
 
 export type WorldsConstellationSceneProps = {
@@ -59,6 +60,7 @@ function Constellation(props: WorldsConstellationSceneProps) {
     <directionalLight position={[-4, 5, 6]} intensity={2.35} color="#fff0d0" />
     <directionalLight position={[4, -1, 3]} intensity={1.05} color="#9ccde1" />
     <OrbitCameraFloat reducedMotion={props.reducedMotion} />
+    <SpacePlaygroundDressings quality={props.quality} reducedMotion={props.reducedMotion} selectedWorld={props.selectedWorld ?? "math"} />
     <PlanetCarousel selectedWorld={props.selectedWorld ?? "math"} reducedMotion={props.reducedMotion} onSelect={props.onSelect} onChoose={props.onChoose ?? (() => undefined)} />
     <RendererHealth onContextLost={props.onContextLost} onQualityChange={props.onQualityChange} quality={props.quality} />
   </>;

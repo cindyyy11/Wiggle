@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Sparkles } from "lucide-react";
 import { getConstellationStars, type ConstellationStar, type ConstellationStarId, type LearnerTwin } from "@wiggle/contracts";
 import styles from "./wiggleConstellation.module.css";
 
@@ -41,7 +42,7 @@ export function WiggleConstellation({ twin, newlyUnlocked }: WiggleConstellation
             onClick={() => setSelected(current => (current?.id === star.id ? null : star))}
           >
             <StarMark unlocked={star.unlocked} />
-            <span className={styles.label}>{star.title}{newlyUnlocked?.has(star.id) ? " ✨" : ""}</span>
+            <span className={styles.label}>{star.title}{newlyUnlocked?.has(star.id) ? <Sparkles aria-label="Newly unlocked" size={14} /> : null}</span>
           </button>
         ))}
       </div>

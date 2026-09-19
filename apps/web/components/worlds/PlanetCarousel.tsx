@@ -12,6 +12,8 @@ const noop = () => undefined;
 const SELECTED_SPIN_SPEED = 0.12;
 const SIDE_SPIN_SPEED = 0.075;
 const MAX_FRAME_DELTA = 0.05;
+export const LOCK_BADGE_SURFACE_Z = 3.82;
+export const LOCK_BADGE_CENTER_Y = -0.18;
 
 export function planetSpinStep(delta: number, offset: number, reducedMotion: boolean, pressed: boolean): number {
   if (reducedMotion || pressed) return 0;
@@ -52,7 +54,7 @@ function Planet({ world, offset, reducedMotion, onSelect, onChoose }: {
       </group> : null}
       </group>
     </group>
-    {mystery ? <group position={[0, 0, 0.72]} scale={offset === 0 ? 1.35 : 1}>
+    {mystery ? <group position={[0, LOCK_BADGE_CENTER_Y, LOCK_BADGE_SURFACE_Z]} scale={offset === 0 ? 1.05 : .82}>
       <mesh><boxGeometry args={[1.05, .8, .2]} /><meshStandardMaterial color="#fff7e7" roughness={.8} /></mesh>
       <mesh position={[0, .48, 0]}><torusGeometry args={[.36, .1, 8, 24, Math.PI]} /><meshStandardMaterial color="#fff7e7" /></mesh>
       <mesh position={[0, 0, .12]}><sphereGeometry args={[.1, 10, 8]} /><meshBasicMaterial color="#27395b" /></mesh>

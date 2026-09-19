@@ -26,6 +26,7 @@
 - [x] Replace the mostly green Maths terrain rule with full nearest-landmark region coverage.
 - [x] Use brighter green, yellow, blue, and coral colors with subtle per-face variation.
 - [x] Add a narrow warm-cream transition where two region influences are nearly equal.
+- [x] Increase region saturation and widen the organic cream seams so each Maths section reads clearly from the carousel.
 - [x] Confirm Numeria remains playable and locked planets keep their centered locks.
 
 ### Task 2: Verify

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { ArrowUpRight, Flame, Rocket, Sparkles } from "lucide-react";
 import type { ParentInsightsResponse } from "@wiggle/contracts";
 import { getConstellationStars, getTwinVisualState, newlyUnlockedStars, type ConstellationStarId } from "@wiggle/contracts";
 import { ApiClient } from "../../lib/api/client";
@@ -75,27 +76,28 @@ export function MyWiggleTwinScreen({ childId, client: suppliedClient }: MyWiggle
       <p className={styles.bubble} role="status">Lexi says: “{data.twin && topStar ? `${topStar.description}` : "One small step is a good place to start."}”</p>
     </div>
     {freshStars.length > 0 && topStar ? (
-      <p className={styles.discovery} role="status">✨ Your Twin discovered something! New star: <strong>{topStar.title}</strong></p>
+      <p className={styles.discovery} role="status"><Sparkles aria-hidden="true" size={18} /> Your Twin discovered something! New star: <strong>{topStar.title}</strong></p>
     ) : null}
     <TwinCheckIn />
     <section className={styles.stats} aria-label="Your progress">
-      <div className={styles.stat}><strong>{streak}</strong><span>Day streak 🔥</span></div>
+      <div className={styles.stat}><strong>{streak}</strong><span>Day streak <Flame aria-hidden="true" size={15} /></span></div>
       <div className={styles.stat}><strong>{data.completedMissions > 0 ? 1 : 0}</strong><span>Planets explored</span></div>
       <div className={styles.stat}><strong>{data.completedMissions}</strong><span>Missions completed</span></div>
       <div className={styles.stat}><strong>{unlockedCount}</strong><span>Stars unlocked</span></div>
       <div className={styles.stat}><strong>{subjectsProgressing}</strong><span>Subjects progressing</span></div>
     </section>
     {nextStep ? <section className={styles.nextStep} aria-label="What to try next">
+      <Rocket className={styles.nextStepIcon} aria-hidden="true" size={24} />
       <h2>What can I try?</h2>
       <p>{nextStep.description}</p>
-      <a className={styles.nextStepLink} href={nextStep.href}>{nextStep.actionLabel} ↗</a>
+      <a className={styles.nextStepLink} href={nextStep.href}>{nextStep.actionLabel} <ArrowUpRight aria-hidden="true" size={17} /></a>
     </section> : null}
     <section className={styles.achievements} aria-label="Recent discoveries">
       <h2>Recent discoveries</h2>
       {unlockedCount > 0 ? <ul>{stars.filter(star => star.unlocked).map(star => <li key={star.id}>{star.title}</li>)}</ul> : <p className={styles.empty}>Keep exploring missions to discover your first star.</p>}
     </section>
     <WiggleConstellation twin={data.twin} newlyUnlocked={new Set(freshStars)} />
-    <a className={styles.primary} href="/">Continue exploring ↗</a>
+    <a className={styles.primary} href="/">Continue exploring <ArrowUpRight aria-hidden="true" size={18} /></a>
     <p className={styles.footer}>This page shows how your missions are going. It isn’t a test or a grade.</p>
   </main>;
 }

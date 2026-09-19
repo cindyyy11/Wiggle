@@ -87,7 +87,7 @@
 .stat span { font-size: 12px; opacity: .8; }
 
 .nextStep { position: relative; max-width: 480px; margin: 0 auto 24px; padding: 16px 20px; background: var(--cream); border: 2px dashed var(--sage); border-radius: 22px; text-align: center; overflow: visible; }
-.nextStep::before { content: "🚀"; position: absolute; top: -14px; right: 18px; font-size: 22px; transform: rotate(14deg); }
+.nextStepIcon { position: absolute; top: -14px; right: 18px; color: #285c85; transform: rotate(14deg); }
 .nextStep h2 { margin: 0 0 6px; font-size: 15px; text-transform: uppercase; letter-spacing: 1.2px; }
 .nextStep p { margin: 0 0 12px; font-size: 14px; }
 .nextStepLink { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 20px; border-radius: 999px; background: var(--sage); color: #173e5e; font-weight: 800; font-size: 14px; text-decoration: none; transition: transform .15s ease, filter .15s ease; }

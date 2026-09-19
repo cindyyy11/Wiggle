@@ -2,7 +2,7 @@
 import type { ReactElement } from "react";
 import { cleanup, renderHook } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
-import { Numeria } from "./Numeria";
+import { NUMERIA_REGION_COLORS, NUMERIA_REGION_COUNT, Numeria } from "./Numeria";
 import { ScienceLandScenery } from "../science/ScienceLandScenery";
 
 afterEach(cleanup);
@@ -25,6 +25,12 @@ it("preserves ordinary Numeria destination clicks and ignores drags", () => {
   expect(onDestination).toHaveBeenCalledOnce();
 });
 
+it("uses four distinct colors for the four Maths regions", () => {
+  expect(NUMERIA_REGION_COLORS).toHaveLength(4);
+  expect(NUMERIA_REGION_COUNT).toBe(4);
+  expect(new Set(NUMERIA_REGION_COLORS).size).toBe(4);
+});
+
 it("uses saved science scenery and lets preview clicks bubble to the carousel", () => {
   const onDestination = vi.fn();
   const { result } = renderHook(() => Numeria({ quality: "low", dimmed: false, theme: "science", preview: true, onDestination }));
@@ -33,6 +39,6 @@ it("uses saved science scenery and lets preview clicks bubble to the carousel", 
   expect(onDestination).not.toHaveBeenCalled();
   expect(event.stopPropagation).not.toHaveBeenCalled();
   const children = (result.current.props as { children: ReactElement[] }).children;
-  expect(children[1].type).toBe(ScienceLandScenery);
+  expect(children.some(child => child?.type === ScienceLandScenery)).toBe(true);
   expect(terrain(result.current).geometry.getAttribute("color").array.length).toBeGreaterThan(0);
 });
