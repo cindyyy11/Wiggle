@@ -37,6 +37,17 @@ it.each(regions)("selects $name through the scene and opens its activity", (regi
   expect(within(dialog).getByRole("heading", { name: MATH_ACTIVITIES[region.id as MathRegionId].challenges[0].prompt })).toBeTruthy();
 });
 
+it("restarts walking when the active region is selected again after manual movement", () => {
+  render(<MathPlanetCanvas onBackToWorlds={vi.fn()} />);
+  const region = LANDMARKS.find((landmark) => landmark.id === "geometry-ridge")!;
+  act(() => state.props.onLandmarkSelect?.(region.id));
+  state.props.explorerInput!.current.destination = null;
+  act(() => state.props.onLandmarkSelect?.(region.id));
+  expect(state.props.explorerInput?.current.destination).toEqual(region.destination);
+  expect(state.props.destination).toEqual(region.destination);
+  expect(state.props.destination).not.toBe(region.destination);
+});
+
 it("selects from the HUD and ignores Lexi", () => {
   render(<MathPlanetCanvas onBackToWorlds={vi.fn()} />);
   fireEvent.click(screen.getByRole("button", { name: "Visit Crystal Crater" }));

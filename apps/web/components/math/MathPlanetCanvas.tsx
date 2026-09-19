@@ -25,6 +25,12 @@ export function MathPlanetCanvas({ quality, reducedMotion, onBackToWorlds, onSes
   // rendering it, as well as validating the chosen activity when opening it.
   const activitiesAvailable = LANDMARKS.every((landmark) => landmark.id === "lexi" || !!MATH_ACTIVITIES[landmark.id]);
 
+  function walkTo(next: Destination) {
+    const destination = { ...next };
+    input.current.destination = destination;
+    setDestination(destination);
+  }
+
   function selectRegion(id: LandmarkId) {
     if (session) return;
     if (id === "lexi") {
@@ -32,16 +38,13 @@ export function MathPlanetCanvas({ quality, reducedMotion, onBackToWorlds, onSes
       // landmark was selected. Keep Lexi outside the Maths controller and put
       // both controlled destination owners back on the active Maths region.
       const selectedLandmark = LANDMARKS.find((entry) => entry.id === selectedRegion);
-      if (selectedLandmark) {
-        input.current.destination = selectedLandmark.destination;
-        setDestination(selectedLandmark.destination);
-      }
+      if (selectedLandmark) walkTo(selectedLandmark.destination);
       return;
     }
     const landmark = LANDMARKS.find((entry) => entry.id === id);
     if (!landmark) return;
     setSelectedRegion(id);
-    setDestination(landmark.destination);
+    walkTo(landmark.destination);
     setMode("follow");
     setUnavailable(false);
     setCompletionMessage("");
