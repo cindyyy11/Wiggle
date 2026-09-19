@@ -66,3 +66,13 @@ it('dismisses an invitation and opens a subject-specific starter through touch',
   expect(screen.getByRole('button', { name: 'Discover Frog' })).toBeTruthy();
   expect(screen.queryByRole('button', { name: 'Test steel coin' })).toBeNull();
 });
+
+it('exposes the Animal Types starter as a dialog and closes it on Escape', () => {
+  render(<SciencePlanetCanvas {...defaults} quality="fallback" />);
+  fireEvent.click(screen.getByRole('button', { name: 'Visit Animal Types' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Explore Animal Types' }));
+  fireEvent.click(screen.getByRole('button', { name: /Let’s explore/ }));
+  expect(screen.getByRole('dialog', { name: 'Animal Types activity session' })).toBeTruthy();
+  fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+  expect(screen.queryByRole('dialog')).toBeNull();
+});
