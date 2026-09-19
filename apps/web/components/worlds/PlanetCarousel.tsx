@@ -62,20 +62,50 @@ function Planet({ world, offset, reducedMotion, onSelect, onChoose }: {
   </group>;
 }
 
+const GHOST_SPARKLES: readonly [number, number, number][] = [
+  [1.55, .62, .3], [-1.4, -.5, .55], [.35, 1.5, -.2],
+  [-.9, 1.05, .4], [1.15, -1.2, -.15], [-1.6, .2, -.4],
+];
+
 function MoreAdventuresGhost({ offset, reducedMotion }: { offset: number; reducedMotion: boolean }) {
   const group = useRef<Group>(null);
+  const core = useRef<Group>(null);
+  const glow = useRef<Group>(null);
+  const sparkles = useRef<Group>(null);
   const { viewport } = useThree();
   const radiusScale = Math.min(.9, viewport.width / 8.5);
   const spacing = Math.min(7.2, viewport.width * .86);
-  const scale = radiusScale * .5;
-  const [initialPosition] = useState<[number, number, number]>(() => [offset * spacing, -.25, -1.4]);
-  useFrame((_, delta) => {
+  const scale = radiusScale * .55;
+  const [initialPosition] = useState<[number, number, number]>(() => [offset * spacing, -.25, -1.6]);
+  useFrame(({ clock }, delta) => {
     if (!group.current) return;
     const blend = reducedMotion ? 1 : 1 - Math.exp(-14 * Math.min(delta, .05));
     group.current.position.x = MathUtils.lerp(group.current.position.x, offset * spacing, blend);
+    if (reducedMotion) return;
+    const t = clock.getElapsedTime();
+    const breathe = 1 + Math.sin(t * .8) * .04;
+    if (glow.current) glow.current.scale.setScalar(breathe);
+    if (core.current) core.current.rotation.y += delta * .05;
+    if (sparkles.current) {
+      sparkles.current.rotation.y += delta * .06;
+      sparkles.current.children.forEach((child, i) => {
+        child.position.y += Math.sin(t * 1.4 + i) * .0025;
+      });
+    }
   });
   return <group ref={group} position={initialPosition} scale={scale}>
-    <mesh><sphereGeometry args={[1, 24, 24]} /><meshStandardMaterial color="#c9d6e3" transparent opacity={.3} roughness={1} /></mesh>
+    <group ref={glow}>
+      <mesh><sphereGeometry args={[1.55, 24, 24]} /><meshBasicMaterial color="#b9d3f2" transparent opacity={.12} depthWrite={false} /></mesh>
+    </group>
+    <group ref={core}>
+      <mesh><sphereGeometry args={[1, 32, 32]} /><meshStandardMaterial color="#dbe6f7" emissive="#8fa9d6" emissiveIntensity={.35} transparent opacity={.55} roughness={.6} /></mesh>
+      <mesh rotation={[Math.PI / 2.4, .3, 0]}><torusGeometry args={[1.28, .02, 8, 48]} /><meshBasicMaterial color="#f4c95d" transparent opacity={.35} /></mesh>
+    </group>
+    <group ref={sparkles}>
+      {GHOST_SPARKLES.map((position, i) => <mesh key={i} position={position}>
+        <sphereGeometry args={[.045, 6, 6]} /><meshBasicMaterial color="#fff7e7" transparent opacity={.75} />
+      </mesh>)}
+    </group>
   </group>;
 }
 
