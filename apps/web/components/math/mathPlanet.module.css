@@ -1,0 +1,158 @@
+.hud {
+  max-width: 72rem;
+  margin: 0 auto;
+  color: #173e5e;
+  font-family: "Trebuchet MS", Arial, sans-serif;
+}
+
+.hudTopline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.eyebrow,
+.regionKicker {
+  margin: 0;
+  color: #8b473d;
+  font-size: .74rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.backButton,
+.topicButton,
+.exploreButton {
+  min-height: 44px;
+  border: 2px solid #173e5e;
+  color: #173e5e;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.backButton {
+  padding: .65rem 1rem;
+  border-radius: 999px;
+  background: #fff9ed;
+}
+
+.topicControls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .55rem;
+  margin-top: 1.2rem;
+}
+
+.topicButton {
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .55rem .75rem;
+  border-radius: .75rem;
+  background: #ffffffd9;
+  text-align: left;
+  transition: background .16s, border-color .16s, transform .16s;
+}
+
+.topicButton:hover { background: #e4f4f6; }
+
+.topicButton[aria-pressed="true"] {
+  background: #cceef1;
+  box-shadow: 0 0 0 3px #173e5e, 0 .4rem 0 #173e5e;
+  transform: translateY(-.18rem);
+}
+
+.topicName { white-space: nowrap; }
+
+.topicDot {
+  width: .75rem;
+  height: .75rem;
+  border: 1px solid #173e5e;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+
+.completeBadge {
+  padding: .16rem .4rem;
+  border-radius: 999px;
+  background: #d9f0e1;
+  color: #184b35;
+  font-size: .7rem;
+  font-weight: 800;
+}
+
+.regionCard {
+  max-width: 34rem;
+  margin-top: 1.25rem;
+  padding: clamp(1rem, 3vw, 1.6rem);
+  border: 3px solid #173e5e;
+  border-radius: 1.25rem;
+  background: #fffdf7e8;
+  box-shadow: .7rem .7rem 0 #e99f7299;
+}
+
+.regionCard h1 {
+  margin: .25rem 0 .45rem;
+  font: 400 clamp(2rem, 6vw, 3.75rem)/.95 Georgia, serif;
+  letter-spacing: -.05em;
+}
+
+.regionCard p { line-height: 1.45; }
+
+.instruction { color: #315b75; }
+
+.exploreButton {
+  padding: .75rem 1rem;
+  border-radius: .8rem;
+  background: #efb46f;
+  box-shadow: 0 .23rem 0 #9b5737;
+  transition: background .16s, transform .16s;
+}
+
+.exploreButton:hover { background: #f5cb8d; }
+
+.completionStatus {
+  margin: .85rem 0 0;
+  padding: .65rem .8rem;
+  border: 2px solid #27644c;
+  border-radius: .7rem;
+  background: #d9f0e1;
+  color: #184b35;
+  font-weight: 800;
+}
+
+.backButton:focus-visible,
+.topicButton:focus-visible,
+.exploreButton:focus-visible {
+  outline: 4px solid #173e5e;
+  outline-offset: 4px;
+}
+
+@media (max-width: 42rem) {
+  .hudTopline {
+    align-items: flex-start;
+    flex-direction: column-reverse;
+  }
+
+  .topicControls { gap: .45rem; }
+
+  .topicButton {
+    flex: 1 1 13rem;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 24rem) {
+  .topicButton { flex-basis: 100%; }
+  .regionCard h1 { font-size: 2.25rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .topicButton,
+  .exploreButton { transition: none; }
+
+  .topicButton[aria-pressed="true"] { transform: none; }
+}
