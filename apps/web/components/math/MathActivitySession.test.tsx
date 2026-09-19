@@ -33,6 +33,7 @@ describe("MathActivitySession", () => {
     expect(screen.getByText("Challenge 1 of 3")).toBeTruthy();
     expect(screen.getByRole("radio", { name: wrongAnswer }).getAttribute("aria-checked")).toBe("false");
     expect(screen.getByRole("button", { name: "Check answer" })).toHaveProperty("disabled", true);
+    expect(document.activeElement).toBe(screen.getAllByRole("radio")[0]);
 
     activity.challenges.forEach((expectedChallenge, index) => {
       expect(screen.getByRole("heading", { name: expectedChallenge.prompt })).toBeTruthy();
@@ -42,13 +43,17 @@ describe("MathActivitySession", () => {
       if (index < activity.challenges.length - 1) {
         const nextChallenge = activity.challenges[index + 1];
         expect(screen.getByText(`Challenge ${index + 2} of ${activity.challenges.length}`)).toBeTruthy();
-        expect(screen.getByRole("heading", { name: nextChallenge.prompt })).toBeTruthy();
+        const nextPrompt = screen.getByRole("heading", { name: nextChallenge.prompt });
+        expect(nextPrompt).toBeTruthy();
+        expect(document.activeElement).toBe(nextPrompt);
       }
     });
 
     expect(complete).toHaveBeenCalledOnce();
     expect(complete).toHaveBeenCalledWith(region);
-    expect(screen.getByRole("heading", { name: /wonderful exploring/i })).toBeTruthy();
+    const completionHeading = screen.getByRole("heading", { name: /wonderful exploring/i });
+    expect(completionHeading).toBeTruthy();
+    expect(document.activeElement).toBe(completionHeading);
     expect(screen.queryByRole("button", { name: "Check answer" })).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Back to Numeria" }));

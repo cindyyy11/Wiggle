@@ -1,7 +1,7 @@
 "use client";
 
 import { Gem } from "lucide-react";
-import { useRef, useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import styles from "./MathActivitySession.module.css";
 import {
   isCorrectMathAnswer,
@@ -108,6 +108,25 @@ export function MathActivitySession({ region, onComplete, onClose }: MathActivit
   const [correctCount, setCorrectCount] = useState(0);
   const [finished, setFinished] = useState(false);
   const completionNotified = useRef(false);
+  const firstOptionRef = useRef<HTMLInputElement>(null);
+  const promptRef = useRef<HTMLHeadingElement>(null);
+  const completionHeadingRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    if (finished) {
+      completionHeadingRef.current?.focus();
+      return;
+    }
+
+    if (feedback?.kind === "error") {
+      firstOptionRef.current?.focus();
+      return;
+    }
+
+    if (feedback?.kind === "success") {
+      promptRef.current?.focus();
+    }
+  }, [challengeIndex, feedback, finished]);
 
   if (!activity) return null;
 
@@ -149,7 +168,9 @@ export function MathActivitySession({ region, onComplete, onClose }: MathActivit
           <Gem />
         </div>
         <p className={styles.eyebrow}>Activity complete</p>
-        <h1 id="math-completion-title">Wonderful exploring!</h1>
+        <h1 id="math-completion-title" ref={completionHeadingRef} tabIndex={-1}>
+          Wonderful exploring!
+        </h1>
         <p>
           You made all {correctCount} discoveries in {currentActivity.name}.
         </p>
@@ -178,7 +199,9 @@ export function MathActivitySession({ region, onComplete, onClose }: MathActivit
         <ChallengeVisual visual={challenge.visual} />
       </div>
 
-      <h2 className={styles.prompt}>{challenge.prompt}</h2>
+      <h2 className={styles.prompt} ref={promptRef} tabIndex={-1}>
+        {challenge.prompt}
+      </h2>
 
       <div className={styles.options} role="radiogroup" aria-label="Answer choices">
         {challenge.options.map((option) => {
@@ -193,6 +216,7 @@ export function MathActivitySession({ region, onComplete, onClose }: MathActivit
                   setSelectedAnswer(option);
                   setFeedback(null);
                 }}
+                ref={option === challenge.options[0] ? firstOptionRef : undefined}
                 type="radio"
                 value={option}
               />
