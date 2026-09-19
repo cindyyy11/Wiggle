@@ -76,6 +76,7 @@ it("keeps the splash, then routes Numeria from either orbit control to MathPlane
     quality: "fallback",
   });
   expect((mathPlanetProps.current as { quality?: string }).quality).toBe("fallback");
+  expect(screen.getAllByRole("region", { name: "Mock Numeria" })).toHaveLength(1);
   fireEvent.click(screen.getByRole("button", { name: "Back to Worlds" }));
   expect(window.location.search).toBe("?child=owned");
   expect(screen.getByRole("region", { name: "Choose a subject world" })).toBeTruthy();

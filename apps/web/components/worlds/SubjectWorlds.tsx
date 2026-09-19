@@ -102,14 +102,14 @@ export function SubjectWorlds({ childId, client, quality, initialRoute }: Subjec
 
   if (!entered) return <WiggleSplash onEntered={() => setEntered(true)} />;
 
-  const content = route.world === "math" ? <section className={styles.worldContent} aria-label="Numeria">
+  const content = route.world === "math" ? <div className={styles.worldContent}>
     <MathPlanet
       quality={quality}
       onSessionOpenChange={setMathsOverlayOpen}
       onBackToWorlds={() => navigate({ world: null, child: currentChild })}
     />
     <p className={styles.routeStatus} role="status" aria-live="polite">{statusMessage}</p>
-  </section> : route.world === "science" ? <SciencePlanet
+  </div> : route.world === "science" ? <SciencePlanet
     selectedZone={route.zone}
     quality={quality}
     onZoneSelect={(zone) => navigate({ world: "science", zone, child: currentChild })}
