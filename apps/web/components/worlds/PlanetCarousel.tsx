@@ -62,10 +62,30 @@ function Planet({ world, offset, reducedMotion, onSelect, onChoose }: {
   </group>;
 }
 
+function MoreAdventuresGhost({ offset, reducedMotion }: { offset: number; reducedMotion: boolean }) {
+  const group = useRef<Group>(null);
+  const { viewport } = useThree();
+  const radiusScale = Math.min(.9, viewport.width / 8.5);
+  const spacing = Math.min(7.2, viewport.width * .86);
+  const scale = radiusScale * .5;
+  const [initialPosition] = useState<[number, number, number]>(() => [offset * spacing, -.25, -1.4]);
+  useFrame((_, delta) => {
+    if (!group.current) return;
+    const blend = reducedMotion ? 1 : 1 - Math.exp(-14 * Math.min(delta, .05));
+    group.current.position.x = MathUtils.lerp(group.current.position.x, offset * spacing, blend);
+  });
+  return <group ref={group} position={initialPosition} scale={scale}>
+    <mesh><sphereGeometry args={[1, 24, 24]} /><meshStandardMaterial color="#c9d6e3" transparent opacity={.3} roughness={1} /></mesh>
+  </group>;
+}
+
 export function PlanetCarousel({ selectedWorld, reducedMotion, onSelect, onChoose }: {
   selectedWorld: SubjectWorldId; reducedMotion: boolean;
   onSelect: (world: SubjectWorldId) => void; onChoose: (world: SubjectWorldId) => void;
 }) {
   const index = PLANET_ORDER.indexOf(selectedWorld);
-  return <>{PLANET_ORDER.map((world, position) => <Planet key={world} world={world} offset={position - index} reducedMotion={reducedMotion} onSelect={onSelect} onChoose={onChoose} />)}</>;
+  return <>
+    {PLANET_ORDER.map((world, position) => <Planet key={world} world={world} offset={position - index} reducedMotion={reducedMotion} onSelect={onSelect} onChoose={onChoose} />)}
+    <MoreAdventuresGhost offset={PLANET_ORDER.length - index} reducedMotion={reducedMotion} />
+  </>;
 }
