@@ -64,6 +64,72 @@ function Planet({ world, offset, reducedMotion, onSelect, onChoose }: {
   </group>;
 }
 
+export const ASTRONAUT_CENTER_Y = .18;
+// The rig below copies the in-world explorer's proportions, so it scales up from that size.
+export const ASTRONAUT_RIG_HEIGHT = .83;
+export const ASTRONAUT_SCALE = 4.4;
+// It floats off the left edge, so it turns toward the camera rather than facing straight down +Z.
+export const ASTRONAUT_FACING = .55;
+
+export function astronautDrift(time: number): { lift: number; tilt: number; turn: number } {
+  return { lift: Math.sin(time * .62) * .22, tilt: Math.sin(time * .45) * .12, turn: Math.sin(time * .28) * .18 };
+}
+
+const SUIT = "#fff7e7";
+const SLEEVE = "#d9efd7";
+const PACK = "#9dc99a";
+const VISOR = "#285c85";
+const GLINT = "#a9d9ee";
+const TRIM = "#f4c95d";
+const BOOT = "#ef8b78";
+
+function FloatingAstronaut({ offset, reducedMotion }: { offset: number; reducedMotion: boolean }) {
+  const group = useRef<Group>(null);
+  const body = useRef<Group>(null);
+  const { viewport } = useThree();
+  const radiusScale = Math.min(.9, viewport.width / 8.5);
+  const spacing = Math.min(7.2, viewport.width * .86);
+  const scale = radiusScale * ASTRONAUT_SCALE;
+  const [initialPosition] = useState<[number, number, number]>(() => [offset * spacing, ASTRONAUT_CENTER_Y, 1.1]);
+  const waveArm = useRef<Group>(null);
+  useFrame(({ clock }, delta) => {
+    if (!group.current) return;
+    const blend = reducedMotion ? 1 : 1 - Math.exp(-14 * Math.min(delta, .05));
+    group.current.position.x = MathUtils.lerp(group.current.position.x, offset * spacing, blend);
+    if (reducedMotion || !body.current) return;
+    const time = clock.getElapsedTime();
+    const drift = astronautDrift(time);
+    group.current.position.y = ASTRONAUT_CENTER_Y + drift.lift;
+    body.current.rotation.z = drift.tilt;
+    body.current.rotation.y = ASTRONAUT_FACING + drift.turn;
+    if (waveArm.current) waveArm.current.rotation.z = Math.sin(time * 2.1) * .22;
+  });
+  return <group ref={group} position={initialPosition} scale={scale}>
+    <group ref={body} rotation={[.06, ASTRONAUT_FACING, 0]} position={[0, -.42, 0]}>
+      <group position={[-.105, .19, 0]} rotation={[.24, 0, .16]}>
+        <mesh position={[0, -.08, 0]}><capsuleGeometry args={[.057, .105, 2, 6]} /><meshStandardMaterial color={SUIT} roughness={.92} /></mesh>
+        <mesh position={[0, -.15, .04]} rotation={[0, .2, 0]}><boxGeometry args={[.115, .08, .16]} /><meshStandardMaterial color={BOOT} roughness={.9} /></mesh>
+      </group>
+      <group position={[.105, .19, 0]} rotation={[-.1, 0, -.18]}>
+        <mesh position={[0, -.08, 0]}><capsuleGeometry args={[.057, .105, 2, 6]} /><meshStandardMaterial color={SUIT} roughness={.92} /></mesh>
+        <mesh position={[0, -.15, .04]} rotation={[0, -.2, 0]}><boxGeometry args={[.115, .08, .16]} /><meshStandardMaterial color={BOOT} roughness={.9} /></mesh>
+      </group>
+      <mesh position={[0, .31, 0]}><capsuleGeometry args={[.13, .14, 3, 8]} /><meshStandardMaterial color={SUIT} roughness={.9} /></mesh>
+      <mesh position={[0, .31, -.13]}><boxGeometry args={[.2, .24, .12]} /><meshStandardMaterial color={PACK} roughness={1} /></mesh>
+      <mesh position={[0, .33, .119]}><boxGeometry args={[.13, .095, .026]} /><meshStandardMaterial color={TRIM} roughness={.88} /></mesh>
+      <mesh position={[-.17, .27, 0]} rotation={[0, 0, -.42]}><capsuleGeometry args={[.05, .15, 2, 6]} /><meshStandardMaterial color={SLEEVE} roughness={.9} /></mesh>
+      <group ref={waveArm} position={[.13, .33, 0]}>
+        <mesh position={[.086, .076, 0]} rotation={[0, 0, -.85]}><capsuleGeometry args={[.05, .15, 2, 6]} /><meshStandardMaterial color={SLEEVE} roughness={.9} /></mesh>
+      </group>
+      <mesh position={[0, .55, 0]}><sphereGeometry args={[.205, 12, 9]} /><meshStandardMaterial color={SUIT} roughness={.72} /></mesh>
+      <mesh position={[0, .553, .118]} scale={[1, .78, .62]}><sphereGeometry args={[.166, 12, 8]} /><meshStandardMaterial color={VISOR} metalness={0} roughness={.42} /></mesh>
+      <mesh position={[-.062, .608, .2]} scale={[1, .3, .1]} rotation={[0, 0, -.3]}><sphereGeometry args={[.053, 8, 5]} /><meshBasicMaterial color={GLINT} /></mesh>
+      <mesh position={[.13, .72, 0]}><cylinderGeometry args={[.009, .009, .14, 4]} /><meshStandardMaterial color={PACK} roughness={.9} /></mesh>
+      <mesh position={[.13, .8, 0]}><sphereGeometry args={[.025, 6, 4]} /><meshBasicMaterial color={TRIM} /></mesh>
+    </group>
+  </group>;
+}
+
 const GHOST_SPARKLES: readonly [number, number, number][] = [
   [1.55, .62, .3], [-1.4, -.5, .55], [.35, 1.5, -.2],
   [-.9, 1.05, .4], [1.15, -1.2, -.15], [-1.6, .2, -.4],
@@ -120,6 +186,7 @@ export function PlanetCarousel({ selectedWorld, reducedMotion, onSelect, onChoos
 }) {
   const index = PLANET_ORDER.indexOf(selectedWorld);
   return <>
+    <FloatingAstronaut offset={-1 - index} reducedMotion={reducedMotion} />
     {PLANET_ORDER.map((world, position) => <Planet key={world} world={world} offset={position - index} reducedMotion={reducedMotion} onSelect={onSelect} onChoose={onChoose} />)}
     <MoreAdventuresGhost offset={PLANET_ORDER.length - index} reducedMotion={reducedMotion} />
   </>;

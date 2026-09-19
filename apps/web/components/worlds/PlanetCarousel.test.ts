@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LOCK_BADGE_CENTER_Y, LOCK_BADGE_SURFACE_Z, planetSpinStep } from "./PlanetCarousel";
+import { ASTRONAUT_CENTER_Y, ASTRONAUT_RIG_HEIGHT, ASTRONAUT_SCALE, LOCK_BADGE_CENTER_Y, LOCK_BADGE_SURFACE_Z, astronautDrift, planetSpinStep } from "./PlanetCarousel";
 
 describe("planetSpinStep", () => {
   it("turns the selected planet faster than side planets", () => {
@@ -20,4 +20,26 @@ describe("planetSpinStep", () => {
 it("places locked-world badges on the visible front surface", () => {
   expect(LOCK_BADGE_SURFACE_Z).toBeGreaterThan(3.5);
   expect(LOCK_BADGE_CENTER_Y).toBeCloseTo(-.18);
+});
+
+it("stands the astronaut tall enough to read beside a planet without outgrowing one", () => {
+  const height = ASTRONAUT_SCALE * ASTRONAUT_RIG_HEIGHT;
+  expect(height).toBeGreaterThan(2.6);
+  expect(height).toBeLessThan(4.4);
+});
+
+describe("astronautDrift", () => {
+  it("starts level so the first frame matches the resting pose", () => {
+    expect(astronautDrift(0)).toEqual({ lift: 0, tilt: 0, turn: 0 });
+  });
+
+  it("keeps the astronaut floating within a gentle range", () => {
+    for (let time = 0; time < 40; time += 0.13) {
+      const drift = astronautDrift(time);
+      expect(Math.abs(drift.lift)).toBeLessThanOrEqual(0.22);
+      expect(ASTRONAUT_CENTER_Y + drift.lift).toBeGreaterThan(-0.25);
+      expect(Math.abs(drift.tilt)).toBeLessThanOrEqual(0.12);
+      expect(Math.abs(drift.turn)).toBeLessThanOrEqual(0.34);
+    }
+  });
 });
