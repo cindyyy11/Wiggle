@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import type { SubjectWorldId } from "./subjectRoute";
-import { PlanetCarousel } from "./PlanetCarousel";
+import { PlanetCarousel, WORLDS_CAMERA_Z } from "./PlanetCarousel";
 import { SpacePlaygroundDressings } from "./SpacePlaygroundDressings";
 import type { OrbitDecorationCounts } from "./worldOrbit";
 
@@ -71,7 +71,7 @@ export default function WorldsConstellationScene(props: WorldsConstellationScene
     className="worlds-constellation-canvas"
     aria-hidden="true"
     dpr={props.quality === "low" ? 1 : [1, 1.5]}
-    camera={{ position: [0, .08, 9.4], fov: 46, near: .1, far: 30 }}
+    camera={{ position: [0, .08, WORLDS_CAMERA_Z], fov: 46, near: .1, far: 30 }}
     gl={{ antialias: props.quality === "high", alpha: true, powerPreference: "low-power", failIfMajorPerformanceCaveat: true }}
   >
     <Constellation {...props} />

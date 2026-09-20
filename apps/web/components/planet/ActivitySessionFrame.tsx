@@ -25,16 +25,20 @@ export function ActivitySessionFrame({ open, name, onClose, children }: Activity
     const focusables = () => {
       const candidates = Array.from(controls().querySelectorAll<HTMLElement>('button, [href], input, select, textarea, [tabindex]'))
         .filter(item => !item.matches(':disabled') && item.tabIndex >= 0 && !item.closest('[hidden], [inert]') && item.getClientRects().length > 0);
-      const radioGroups = new Map<string, HTMLInputElement[]>();
+      // Native radio grouping includes both the control name and its form
+      // owner. Keep a single enabled tab stop for each such group.
+      const radioGroups = new Map<string, Map<HTMLFormElement | null, HTMLInputElement[]>>();
       for (const item of candidates) {
         if (!(item instanceof HTMLInputElement) || item.type !== 'radio' || !item.name) continue;
-        const group = radioGroups.get(item.name) ?? [];
+        const groupsByForm = radioGroups.get(item.name) ?? new Map<HTMLFormElement | null, HTMLInputElement[]>();
+        const group = groupsByForm.get(item.form) ?? [];
         group.push(item);
-        radioGroups.set(item.name, group);
+        groupsByForm.set(item.form, group);
+        radioGroups.set(item.name, groupsByForm);
       }
       return candidates.filter(item => {
         if (!(item instanceof HTMLInputElement) || item.type !== 'radio' || !item.name) return true;
-        const group = radioGroups.get(item.name)!;
+        const group = radioGroups.get(item.name)!.get(item.form)!;
         return item === (group.find(radio => radio.checked) ?? group[0]);
       });
     };

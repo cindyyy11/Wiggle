@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ASTRONAUT_CENTER_Y, ASTRONAUT_RIG_HEIGHT, ASTRONAUT_SCALE, LOCK_BADGE_CENTER_Y, LOCK_BADGE_SURFACE_Z, astronautDrift, planetSpinStep } from "./PlanetCarousel";
+import { ASTRONAUT_CENTER_Y, ASTRONAUT_RIG_HEIGHT, ASTRONAUT_SCALE, LOCK_BADGE_CENTER_Y, LOCK_BADGE_SURFACE_Z, WORLDS_CAMERA_Z, astronautDrift, lockBadgeLocalX, planetSpinStep } from "./PlanetCarousel";
 
 describe("planetSpinStep", () => {
   it("turns the selected planet faster than side planets", () => {
@@ -20,6 +20,14 @@ describe("planetSpinStep", () => {
 it("places locked-world badges on the visible front surface", () => {
   expect(LOCK_BADGE_SURFACE_Z).toBeGreaterThan(3.5);
   expect(LOCK_BADGE_CENTER_Y).toBeCloseTo(-.18);
+});
+
+it("keeps the lock badge on the camera's line of sight to the planet centre", () => {
+  expect(lockBadgeLocalX(0)).toBeCloseTo(0);
+  const planetX = 6;
+  const badgeWorldZ = LOCK_BADGE_SURFACE_Z * .66;
+  const badgeWorldX = planetX + lockBadgeLocalX(planetX) * .66;
+  expect(badgeWorldX / (WORLDS_CAMERA_Z - badgeWorldZ)).toBeCloseTo(planetX / WORLDS_CAMERA_Z);
 });
 
 it("stands the astronaut tall enough to read beside a planet without outgrowing one", () => {

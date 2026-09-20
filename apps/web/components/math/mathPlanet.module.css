@@ -84,6 +84,17 @@
   font-weight: 800;
 }
 
+.screenReaderOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .regionCard {
   max-width: 34rem;
   margin-top: 1.25rem;

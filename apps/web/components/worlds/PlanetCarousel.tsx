@@ -16,6 +16,12 @@ const SIDE_SPIN_SPEED = 0.075;
 const MAX_FRAME_DELTA = 0.05;
 export const LOCK_BADGE_SURFACE_Z = 3.82;
 export const LOCK_BADGE_CENTER_Y = -0.18;
+export const WORLDS_CAMERA_Z = 9.4;
+
+// The badge floats in front of the planet, so on a side planet it must slide toward the camera's axis to stay over the planet's centre.
+export function lockBadgeLocalX(planetX: number): number {
+  return -planetX * LOCK_BADGE_SURFACE_Z / WORLDS_CAMERA_Z;
+}
 
 export function planetSpinStep(delta: number, offset: number, reducedMotion: boolean, pressed: boolean): number {
   if (reducedMotion || pressed) return 0;
@@ -28,6 +34,7 @@ function Planet({ world, offset, reducedMotion, onSelect, onChoose }: {
 }) {
   const group = useRef<Group>(null);
   const visual = useRef<Group>(null);
+  const lock = useRef<Group>(null);
   const pressed = useRef(false);
   const { viewport } = useThree();
   const mystery = SUBJECT_WORLDS.find(item => item.id === world)?.mystery ?? false;
@@ -39,6 +46,7 @@ function Planet({ world, offset, reducedMotion, onSelect, onChoose }: {
     if (!group.current) return;
     const blend = reducedMotion ? 1 : 1 - Math.exp(-14 * Math.min(delta, .05));
     group.current.position.x = MathUtils.lerp(group.current.position.x, offset * spacing, blend);
+    if (lock.current) lock.current.position.x = lockBadgeLocalX(group.current.position.x);
     const scale = radiusScale * (offset === 0 ? 1 : .66);
     group.current.scale.lerp({ x: scale, y: scale, z: scale }, blend);
     if (visual.current) visual.current.rotation.y += planetSpinStep(delta, offset, reducedMotion, pressed.current);
@@ -56,7 +64,7 @@ function Planet({ world, offset, reducedMotion, onSelect, onChoose }: {
       </group> : null}
       </group>
     </group>
-    {mystery ? <group position={[0, LOCK_BADGE_CENTER_Y, LOCK_BADGE_SURFACE_Z]} scale={offset === 0 ? 1.05 : .82}>
+    {mystery ? <group ref={lock} position={[lockBadgeLocalX(initialPosition[0]), LOCK_BADGE_CENTER_Y, LOCK_BADGE_SURFACE_Z]} scale={offset === 0 ? 1.05 : .82}>
       <mesh><boxGeometry args={[1.05, .8, .2]} /><meshStandardMaterial color="#fff7e7" roughness={.8} /></mesh>
       <mesh position={[0, .48, 0]}><torusGeometry args={[.36, .1, 8, 24, Math.PI]} /><meshStandardMaterial color="#fff7e7" /></mesh>
       <mesh position={[0, 0, .12]}><sphereGeometry args={[.1, 10, 8]} /><meshBasicMaterial color="#27395b" /></mesh>

@@ -50,7 +50,8 @@ export function MathHud({ selectedRegion, completedRegions, onRegionSelect, onEx
           <Icon aria-hidden="true" size={18} />
           <span className={styles.topicName}>{topic.name}</span>
           <span className={styles.topicDot} style={{ backgroundColor: topic.color }} aria-hidden="true" />
-          <span id={completionDescriptionId} className={styles.completeBadge} hidden={!complete}>Complete</span>
+          <span id={completionDescriptionId} className={styles.screenReaderOnly}>{complete ? "Complete" : null}</span>
+          {complete ? <span className={styles.completeBadge} aria-hidden="true">Complete</span> : null}
         </button>;
       })}
     </nav>

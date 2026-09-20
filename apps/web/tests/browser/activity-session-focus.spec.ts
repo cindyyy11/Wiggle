@@ -31,6 +31,7 @@ test("activity focus wraps around the native radio group in every question state
   await dialog.getByRole("radio", { name: wrongAnswer, exact: true }).check();
   await dialog.getByRole("button", { name: "Check answer", exact: true }).click();
   await expect(dialog.getByRole("alert")).toContainText("Try again.");
+  await expect(dialog.getByRole("button", { name: "Check answer", exact: true })).toBeDisabled();
   await expectFocus(page, firstOption);
   await expectWrapsBothWays(page, close, firstOption);
 

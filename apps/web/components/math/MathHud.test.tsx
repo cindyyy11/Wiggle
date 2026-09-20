@@ -24,10 +24,11 @@ it("lets learners visit regions and explore the selected activity", () => {
   const completedRegion = screen.getByRole("button", { name: "Visit Fraction Forest" });
   expect(completedRegion.getAttribute("aria-pressed")).toBe("true");
   expect(completedRegion.getAttribute("aria-describedby")).toBe("math-region-fraction-forest-completion");
-  expect(document.getElementById("math-region-fraction-forest-completion")?.textContent).toBe("Complete");
+  const completionDescription = document.getElementById("math-region-fraction-forest-completion");
+  expect(completionDescription?.textContent).toBe("Complete");
+  expect(completionDescription?.className).toContain("screenReaderOnly");
   expect(screen.getByRole("button", { name: "Visit Number Valley" }).hasAttribute("aria-describedby")).toBe(false);
   expect(screen.getByRole("heading", { name: "Fraction Forest" })).toBeTruthy();
-  expect(screen.getByText("Complete")).toBeTruthy();
 
   fireEvent.click(screen.getByRole("button", { name: "Visit Number Valley" }));
   expect(onRegionSelect).toHaveBeenCalledWith("number-valley");
