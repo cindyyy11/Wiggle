@@ -2,14 +2,23 @@
 
 import { useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { Group, Quaternion, Vector3 } from "three";
+import { Group, Mesh, MeshBasicMaterial, Quaternion, Vector3 } from "three";
 import { INITIAL_DESTINATION, RADIUS, surfacePoint, type InputRef } from "./world";
+
+const SCALE = 1.3;
+const WALK_SPEED = .42;
+const RUN_SPEED = 1.3;
+const FLY_SPEED = .95;
+const FLY_RUN_SPEED = 1.7;
+const FLY_LIFT = .5;
 
 export function Astronaut({ input, reducedMotion }: { input: InputRef; reducedMotion: boolean }) {
   const explorer = useRef<Group>(null);
   const leftLeg = useRef<Group>(null); const rightLeg = useRef<Group>(null);
+  const leftArm = useRef<Group>(null); const rightArm = useRef<Group>(null);
+  const shadow = useRef<Mesh>(null); const thruster = useRef<Mesh>(null);
   const { camera } = useThree();
-  const motion = useMemo(() => ({ normal: new Vector3(...surfacePoint(INITIAL_DESTINATION, 1)), target: new Vector3(), east: new Vector3(), north: new Vector3(), forward: new Vector3(), up: new Vector3(0, 1, 0), orientation: new Quaternion(), facing: new Quaternion(), step: 0, hopTime: -1 }), []);
+  const motion = useMemo(() => ({ normal: new Vector3(...surfacePoint(INITIAL_DESTINATION, 1)), target: new Vector3(), east: new Vector3(), north: new Vector3(), forward: new Vector3(), up: new Vector3(0, 1, 0), orientation: new Quaternion(), facing: new Quaternion(), step: 0, hopTime: -1, lift: 0, clock: 0 }), []);
 
   useFrame((_, rawDelta) => {
     if (!explorer.current) return;
@@ -19,7 +28,8 @@ export function Astronaut({ input, reducedMotion }: { input: InputRef; reducedMo
     const horizontal = state.horizontal + Number(state.keys.has("arrowright") || state.keys.has("d")) - Number(state.keys.has("arrowleft") || state.keys.has("a"));
     const vertical = state.vertical + Number(state.keys.has("arrowup") || state.keys.has("w")) - Number(state.keys.has("arrowdown") || state.keys.has("s"));
     const sprinting = state.keys.has("shift") || state.running;
-    const speed = sprinting ? .95 : .42;
+    const flying = !!state.pointerFlight && !state.paused;
+    const speed = flying ? (sprinting ? FLY_RUN_SPEED : FLY_SPEED) : sprinting ? RUN_SPEED : WALK_SPEED;
     let moving = false;
     if (horizontal || vertical) {
       state.destination = null;
@@ -49,24 +59,34 @@ export function Astronaut({ input, reducedMotion }: { input: InputRef; reducedMo
       hop = Math.sin(Math.min(1, motion.hopTime / .65) * Math.PI) * (reducedMotion ? .08 : .33);
       if (motion.hopTime >= .65) motion.hopTime = -1;
     }
-    explorer.current.position.copy(motion.normal).multiplyScalar(RADIUS + .03 + hop);
+    motion.clock += delta;
+    motion.lift += ((flying ? FLY_LIFT : 0) - motion.lift) * (1 - Math.exp(-5 * delta));
+    const airborne = motion.lift / FLY_LIFT;
+    const bob = reducedMotion ? 0 : Math.sin(motion.clock * 3.2) * .05 * airborne;
+    explorer.current.position.copy(motion.normal).multiplyScalar(RADIUS + .03 + hop + motion.lift + bob);
     explorer.current.quaternion.setFromUnitVectors(motion.up, motion.normal);
     explorer.current.position.toArray(state.position);
-    if (moving) motion.step += delta * (sprinting ? 16 : 10);
-    const stride = moving && !reducedMotion ? Math.sin(motion.step) * .42 : 0;
-    if (leftLeg.current) leftLeg.current.rotation.x = stride;
-    if (rightLeg.current) rightLeg.current.rotation.x = -stride;
+    if (moving) motion.step += delta * (sprinting ? 20 : 10);
+    const stride = moving && !reducedMotion ? Math.sin(motion.step) * (sprinting ? .7 : .42) * (1 - airborne) : 0;
+    if (leftLeg.current) leftLeg.current.rotation.x = stride + airborne * .35;
+    if (rightLeg.current) rightLeg.current.rotation.x = -stride + airborne * .35;
+    const swing = moving && !reducedMotion ? Math.sin(motion.step) * (sprinting ? .55 : .25) * (1 - airborne) : 0;
+    if (leftArm.current) { leftArm.current.rotation.z = -.2 + airborne * 1.25; leftArm.current.rotation.x = swing; leftArm.current.position.set(-.17 - airborne * .08, .31 + airborne * .07, 0); }
+    if (rightArm.current) { rightArm.current.rotation.z = .2 - airborne * 1.25; rightArm.current.rotation.x = -swing; rightArm.current.position.set(.17 + airborne * .08, .31 + airborne * .07, 0); }
+    if (shadow.current) { shadow.current.position.y = .025 - (motion.lift + bob) / SCALE; shadow.current.scale.setScalar(1 - airborne * .35); }
+    if (thruster.current) { thruster.current.scale.setScalar(airborne * (reducedMotion ? 1 : .85 + Math.sin(motion.clock * 26) * .15)); (thruster.current.material as MeshBasicMaterial).opacity = airborne * .9; }
   });
 
-  return <group ref={explorer} name="Wiggle explorer" position={surfacePoint(INITIAL_DESTINATION, RADIUS + .03)} scale={.83}>
-    <mesh position={[0, .025, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[.2, 14]} /><meshBasicMaterial color="#285c85" transparent opacity={.16} depthWrite={false} /></mesh>
+  return <group ref={explorer} name="Wiggle explorer" position={surfacePoint(INITIAL_DESTINATION, RADIUS + .03)} scale={SCALE}>
+    <mesh ref={shadow} position={[0, .025, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[.2, 14]} /><meshBasicMaterial color="#285c85" transparent opacity={.16} depthWrite={false} /></mesh>
     <group ref={leftLeg} position={[-.073, .19, 0]}><mesh position={[0, -.08, 0]}><capsuleGeometry args={[.057, .105, 2, 6]} /><meshStandardMaterial color="#fff7e7" roughness={.92} /></mesh><mesh position={[0, -.15, .04]}><boxGeometry args={[.115, .08, .16]} /><meshStandardMaterial color="#ef8b78" roughness={.9} /></mesh></group>
     <group ref={rightLeg} position={[.073, .19, 0]}><mesh position={[0, -.08, 0]}><capsuleGeometry args={[.057, .105, 2, 6]} /><meshStandardMaterial color="#fff7e7" roughness={.92} /></mesh><mesh position={[0, -.15, .04]}><boxGeometry args={[.115, .08, .16]} /><meshStandardMaterial color="#ef8b78" roughness={.9} /></mesh></group>
     <mesh position={[0, .31, 0]}><capsuleGeometry args={[.13, .14, 3, 8]} /><meshStandardMaterial color="#fff7e7" roughness={.9} /></mesh>
     <mesh position={[0, .31, -.13]}><boxGeometry args={[.2, .24, .12]} /><meshStandardMaterial color="#9dc99a" roughness={1} /></mesh>
     <mesh position={[0, .33, .119]}><boxGeometry args={[.13, .095, .026]} /><meshStandardMaterial color="#f4c95d" roughness={.88} /></mesh>
-    <mesh position={[-.17, .31, 0]} rotation={[0, 0, -.2]}><capsuleGeometry args={[.05, .15, 2, 6]} /><meshStandardMaterial color="#d9efd7" roughness={.9} /></mesh>
-    <mesh position={[.17, .31, 0]} rotation={[0, 0, .2]}><capsuleGeometry args={[.05, .15, 2, 6]} /><meshStandardMaterial color="#d9efd7" roughness={.9} /></mesh>
+    <group ref={leftArm} position={[-.17, .31, 0]} rotation={[0, 0, -.2]}><mesh><capsuleGeometry args={[.05, .15, 2, 6]} /><meshStandardMaterial color="#d9efd7" roughness={.9} /></mesh></group>
+    <group ref={rightArm} position={[.17, .31, 0]} rotation={[0, 0, .2]}><mesh><capsuleGeometry args={[.05, .15, 2, 6]} /><meshStandardMaterial color="#d9efd7" roughness={.9} /></mesh></group>
+    <mesh ref={thruster} position={[0, -.1, 0]} rotation={[Math.PI, 0, 0]} scale={0}><coneGeometry args={[.1, .3, 8]} /><meshBasicMaterial color="#ffd76a" transparent opacity={0} depthWrite={false} /></mesh>
     <mesh position={[0, .55, 0]}><sphereGeometry args={[.205, 12, 9]} /><meshStandardMaterial color="#fff7e7" roughness={.72} /></mesh>
     <mesh position={[0, .557, .113]} scale={[1, .78, .56]}><sphereGeometry args={[.174, 12, 8]} /><meshStandardMaterial color="#285c85" metalness={0} roughness={.42} /></mesh>
     <mesh position={[-.062, .62, .188]} scale={[1, .3, .1]} rotation={[0, 0, -.3]}><sphereGeometry args={[.053, 8, 5]} /><meshBasicMaterial color="#a9d9ee" /></mesh>

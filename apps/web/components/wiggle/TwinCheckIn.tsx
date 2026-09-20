@@ -1,13 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ComponentType } from "react";
+import { ArrowUpRight, Frown, Meh, Mic, Smile } from "lucide-react";
 import { useLexiVoice } from "../../features/voice/useLexiVoice";
 import { speakIfUnmuted } from "../../features/voice/voicePreference";
 import styles from "./twinCheckIn.module.css";
 
 type Mood = "great" | "okay" | "tricky";
 
-const MOOD_LABELS: Readonly<Record<Mood, string>> = { great: "😊 Great", okay: "😐 Okay", tricky: "😣 Tricky" };
+const MOODS: Readonly<Record<Mood, { label: string; Icon: ComponentType<{ "aria-hidden"?: "true"; size?: number }> }>> = {
+  great: { label: "Great", Icon: Smile },
+  okay: { label: "Okay", Icon: Meh },
+  tricky: { label: "Tricky", Icon: Frown },
+};
 
 /** Warm, twin-voice replies — never a score, never saved as a learning signal (see module doc below). */
 const MOOD_REPLIES: Readonly<Record<Mood, string>> = {
@@ -47,18 +52,19 @@ export function TwinCheckIn() {
   return <section className={styles.checkIn} aria-label="How are you feeling?">
     <p className={styles.prompt}>How are you feeling about missions today?</p>
     <div className={styles.moods}>
-      {(Object.keys(MOOD_LABELS) as Mood[]).map(key => (
-        <button key={key} type="button" aria-pressed={mood === key} onClick={() => choose(key)}>{MOOD_LABELS[key]}</button>
-      ))}
+      {(Object.keys(MOODS) as Mood[]).map(key => {
+        const { label, Icon } = MOODS[key];
+        return <button key={key} type="button" aria-pressed={mood === key} onClick={() => choose(key)}><Icon aria-hidden="true" size={18} />{label}</button>;
+      })}
       {voice.supported && <button
         type="button"
         aria-pressed={voice.phase === "listening"}
         onClick={() => (voice.phase === "listening" ? voice.stop() : voice.start())}
       >
-        {voice.phase === "listening" ? "Listening… tap to stop" : "🎤 Or tell me"}
+        <Mic aria-hidden="true" size={18} />{voice.phase === "listening" ? "Listening… tap to stop" : "Or tell me"}
       </button>}
     </div>
     {mood ? <p role="status" className={styles.response}>{MOOD_REPLIES[mood]}</p> : null}
-    {mood === "tricky" ? <a className={styles.gentleLink} href="/">Let's try something else for now ↗</a> : null}
+    {mood === "tricky" ? <a className={styles.gentleLink} href="/">Let's try something else for now<ArrowUpRight aria-hidden="true" size={16} /></a> : null}
   </section>;
 }

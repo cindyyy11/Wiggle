@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { playSplashChimeOnce } from "../../features/audio/splashChime";
 import styles from "./SubjectWorlds.module.css";
 
 const SPLASH_DISPLAY_MS = 900;
@@ -12,6 +13,7 @@ export function WiggleSplash({ onEntered }: { onEntered: () => void }) {
   onEnteredRef.current = onEntered;
 
   useEffect(() => {
+    playSplashChimeOnce();
     const leaveTimer = window.setTimeout(() => setLeaving(true), SPLASH_DISPLAY_MS);
     const enterTimer = window.setTimeout(() => onEnteredRef.current(), SPLASH_DISPLAY_MS + SPLASH_EXIT_DELAY_MS);
     return () => {

@@ -14,7 +14,7 @@ export interface NextStep {
 }
 
 /** Destinations that exist but are never offered as a "Go to …" suggestion. */
-const EXCLUDED_MISSION_NAMES = new Set(["Magnet Lab"]);
+const EXCLUDED_MISSION_NAMES = new Set(["Magnet Lab", "Fraction Forest"]);
 
 /**
  * Turns "you're close to a star" into something the child can actually click — the

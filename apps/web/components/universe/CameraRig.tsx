@@ -3,10 +3,13 @@
 import { useEffect, useMemo, useRef, useState, type ComponentRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei/core/OrbitControls";
-import { PerspectiveCamera, Vector3 } from "three";
+import { PerspectiveCamera, TOUCH, Vector3 } from "three";
 import { activityCameraFrame, type ActivityView } from "./activityCamera";
 import { createFollowFrame, transportFollowCamera } from "./cameraMotion";
 import { MISSION_DESTINATION, RADIUS, surfacePoint, type CameraMode, type InputRef } from "./world";
+
+// One finger sliding over the planet flies the explorer, so only two fingers steer the camera.
+const ONE_FINGER_FLIES = { ONE: -1 as unknown as TOUCH, TWO: TOUCH.DOLLY_ROTATE };
 
 export function CameraRig({ mode, input, reducedMotion, activityView, resetViewKey, theme }: { mode: CameraMode; input: InputRef; reducedMotion: boolean; activityView?: ActivityView; resetViewKey?: number; theme?: "math" | "science" }) {
   const controls = useRef<ComponentRef<typeof OrbitControls>>(null);
@@ -86,5 +89,5 @@ export function CameraRig({ mode, input, reducedMotion, activityView, resetViewK
     orbit.update();
     firstFrame.current = false;
   });
-  return <OrbitControls ref={controls} makeDefault enabled={!guided} enablePan={false} enableRotate={!guided} enableZoom={!guided} enableDamping={!reducedMotion && !guided} dampingFactor={.09} rotateSpeed={.65} zoomSpeed={.65} minDistance={guided ? 1 : mode === "globe" ? 7.2 : 1.7} maxDistance={guided ? 25 : mode === "globe" ? (narrow ? 30 : 17) : 5.3} minPolarAngle={.12} maxPolarAngle={mode === "globe" ? Math.PI - .12 : Math.PI / 2 - .12} onStart={() => { transition.current = false; }} />;
+  return <OrbitControls ref={controls} makeDefault enabled={!guided} enablePan={false} touches={ONE_FINGER_FLIES} enableRotate={!guided} enableZoom={!guided} enableDamping={!reducedMotion && !guided} dampingFactor={.09} rotateSpeed={.65} zoomSpeed={.65} minDistance={guided ? 1 : mode === "globe" ? 7.2 : 1.7} maxDistance={guided ? 25 : mode === "globe" ? (narrow ? 30 : 17) : 5.3} minPolarAngle={.12} maxPolarAngle={mode === "globe" ? Math.PI - .12 : Math.PI / 2 - .12} onStart={() => { transition.current = false; }} />;
 }

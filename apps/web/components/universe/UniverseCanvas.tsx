@@ -2,7 +2,7 @@
 
 import React, { Component, useCallback, useEffect, useId, useRef, useState, type ReactNode, type CSSProperties, type PointerEvent } from "react";
 import dynamic from "next/dynamic";
-import { Sparkle } from "lucide-react";
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Gem, Hand, Sparkle, Triangle, TreePine } from "lucide-react";
 import { LANDMARKS, MISSION_DESTINATION, createExplorerInput, resolveQuality, type CameraMode, type Destination, type LandmarkId, type PizzaPresentation, type QualityPreference, type SceneQuality } from "./world";
 import { ExplorationHud } from "./ExplorationHud";
 import { useWiggleSound } from "../../features/audio/useWiggleSound";
@@ -95,7 +95,7 @@ export function UniverseCanvas({ explorerInput, controlsDisabled = false, resetV
   useEffect(() => { if (destination !== undefined) input.current.destination = destination; }, [destination]);
   useEffect(() => {
     const current = input.current;
-    const clear = () => { current.keys.clear(); current.horizontal = 0; current.vertical = 0; current.running = false; current.hop = false; activePointer.current = null; setRunning(false); };
+    const clear = () => { current.keys.clear(); current.horizontal = 0; current.vertical = 0; current.running = false; current.pointerFlight = false; current.hop = false; activePointer.current = null; setRunning(false); };
     window.addEventListener("blur", clear);
     document.addEventListener("visibilitychange", clear);
     return () => { clear(); window.removeEventListener("blur", clear); document.removeEventListener("visibilitychange", clear); };
@@ -148,7 +148,7 @@ export function UniverseCanvas({ explorerInput, controlsDisabled = false, resetV
     </div>
     {!mapVisible && hand?.enabled ? <div className={styles.handOverlay} aria-live="polite">
       {handFrame?.pointer && handFrame.isTracking ? <span className={styles.handCursor} data-testid="hand-cursor" style={{ "--hand-x": `${(handFrame.pointer.x + 1) * 50}%`, "--hand-y": `${(1 - handFrame.pointer.y) * 50}%` } as CSSProperties} aria-hidden="true"><Sparkle size={16} /></span> : null}
-      <p className={styles.handStatus}>{hand.status === "starting" ? "Opening camera…" : hand.status === "unavailable" ? "Camera unavailable. You can still use the slice buttons." : handFrame?.isTracking ? "Hand ready" : "Show me your hand 👋"}</p>
+      <p className={styles.handStatus}>{hand.status === "starting" ? "Opening camera…" : hand.status === "unavailable" ? "Camera unavailable. You can still use the slice buttons." : handFrame?.isTracking ? "Hand ready" : <><Hand aria-hidden="true" size={14} /> Show me your hand</>}</p>
       {handDebug ? <output className={styles.handDebug} aria-label="Hand tracking debug">gesture: {hand.gesture ?? "none"} · pointer: {handFrame?.pointer ? `${handFrame.pointer.x.toFixed(2)}, ${handFrame.pointer.y.toFixed(2)}` : "none"} · tracking: {String(handFrame?.isTracking ?? false)}</output> : null}
     </div> : null}
     {mapVisible && pizza?.visible ? <div className={styles.mapPizza} role="img" aria-label={`Pizza with ${pizza.selectedSlices.length} of four equal slices selected`}><div>{[0, 1, 2, 3].map(index => <span key={index} data-selected={pizza.selectedSlices.includes(index)} />)}</div></div> : null}
@@ -158,10 +158,10 @@ export function UniverseCanvas({ explorerInput, controlsDisabled = false, resetV
         const key = event.key.toLowerCase();
         if (MOVEMENT_KEYS.includes(key)) { event.preventDefault(); input.current.keys.add(key); if (key === " ") input.current.hop = true; }
       }} onKeyUp={event => input.current.keys.delete(event.key.toLowerCase())}>
-        {([{ label: "Walk forward", text: "↑", x: 0, y: 1, area: "up" }, { label: "Walk left", text: "←", x: -1, y: 0, area: "left" }, { label: "Walk back", text: "↓", x: 0, y: -1, area: "down" }, { label: "Walk right", text: "→", x: 1, y: 0, area: "right" }]).map(direction => <button type="button" key={direction.area} style={{ gridArea: direction.area }} aria-label={direction.label} onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); activePointer.current = event.pointerId; input.current.horizontal = direction.x; input.current.vertical = direction.y; input.current.destination = null; }} onPointerUp={stopDirection} onPointerCancel={stopDirection} onLostPointerCapture={stopDirection} onClick={event => { if (event.detail === 0) { const [x, y, z] = input.current.position; const latitude = Math.atan2(y, Math.hypot(x, z)); const longitude = Math.atan2(x, z); input.current.destination = { latitude: latitude + direction.y * .12, longitude: longitude + direction.x * .12 }; } }}>{direction.text}</button>)}
+        {([{ label: "Walk forward", Icon: ArrowUp, x: 0, y: 1, area: "up" }, { label: "Walk left", Icon: ArrowLeft, x: -1, y: 0, area: "left" }, { label: "Walk back", Icon: ArrowDown, x: 0, y: -1, area: "down" }, { label: "Walk right", Icon: ArrowRight, x: 1, y: 0, area: "right" }]).map(direction => <button type="button" key={direction.area} style={{ gridArea: direction.area }} aria-label={direction.label} onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); activePointer.current = event.pointerId; input.current.horizontal = direction.x; input.current.vertical = direction.y; input.current.destination = null; }} onPointerUp={stopDirection} onPointerCancel={stopDirection} onLostPointerCapture={stopDirection} onClick={event => { if (event.detail === 0) { const [x, y, z] = input.current.position; const latitude = Math.atan2(y, Math.hypot(x, z)); const longitude = Math.atan2(x, z); input.current.destination = { latitude: latitude + direction.y * .12, longitude: longitude + direction.x * .12 }; } }}><direction.Icon aria-hidden="true" size={22} /></button>)}
       </div>
       <button type="button" className={styles.run} aria-pressed={running} title="Run: walk faster" onClick={() => { input.current.running = !running; setRunning(!running); }}>Run</button>
-      <button type="button" className={styles.hop} onClick={() => { input.current.hop = true; }}>Hop <span aria-hidden="true">↑</span></button>
+      <button type="button" className={styles.hop} onClick={() => { input.current.hop = true; }}>Hop <ArrowUp aria-hidden="true" size={16} /></button>
       {hud ? null : <div className={styles.zoom} role="group" aria-label="Zoom"><button type="button" aria-label="Zoom in" onClick={() => { input.current.zoom -= 1; }}>+</button><button type="button" aria-label="Zoom out" onClick={() => { input.current.zoom += 1; }}>−</button></div>}
     </div> : mapVisible ? <p className={styles.mapNote}>A quieter view. The same little adventures.</p> : null}
     {pizza?.visible ? <div className={styles.sliceControls} role="group" aria-label="Pizza slices">{[0, 1, 2, 3].map(index => <button type="button" key={index} aria-pressed={pizza.selectedSlices.includes(index)} onClick={() => pizza.onSliceSelect?.(index)}>Slice {index + 1}</button>)}</div> : null}
@@ -171,7 +171,7 @@ export function UniverseCanvas({ explorerInput, controlsDisabled = false, resetV
 }
 
 function NumeriaMap() {
-  return <div className={styles.map} role="img" aria-label="Numeria map: Fraction Forest, Number Valley, Geometry Ridge and Crystal Crater. Choose a destination using the buttons."><div className={styles.mapPlanet}><span className={styles.mapForest}>♧<small>FRACTION FOREST</small></span><span className={styles.mapRidge}>△<small>GEOMETRY RIDGE</small></span><span className={styles.mapCrater}>◇<small>CRYSTAL CRATER</small></span><span className={styles.mapValley}>123<small>NUMBER VALLEY</small></span><span className={styles.mapExplorer}>✦</span></div><div className={styles.mapOrbit} /></div>;
+  return <div className={styles.map} role="img" aria-label="Numeria map: Fraction Forest, Number Valley, Geometry Ridge and Crystal Crater. Choose a destination using the buttons."><div className={styles.mapPlanet}><span className={styles.mapForest}><TreePine aria-hidden="true" size={18} /><small>FRACTION FOREST</small></span><span className={styles.mapRidge}><Triangle aria-hidden="true" size={18} /><small>GEOMETRY RIDGE</small></span><span className={styles.mapCrater}><Gem aria-hidden="true" size={18} /><small>CRYSTAL CRATER</small></span><span className={styles.mapValley}>123<small>NUMBER VALLEY</small></span><span className={styles.mapExplorer}><Sparkle aria-hidden="true" size={18} /></span></div><div className={styles.mapOrbit} /></div>;
 }
 
 export default UniverseCanvas;

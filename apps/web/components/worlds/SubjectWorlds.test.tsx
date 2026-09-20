@@ -208,3 +208,28 @@ it("tells the Twin launcher when the child is in Science", async () => {
   fireEvent.click(screen.getByRole("button", { name: "Ready for a mission whenever you are!" }));
   await screen.findByText(/Science is full of surprises today!/);
 });
+
+it("switches planets with the mouse wheel, one planet per scroll, and stops at either end", () => {
+  vi.useFakeTimers();
+  render(<SubjectWorlds initialRoute={{ world: null }} quality="fallback" />);
+  enterWorlds();
+  const worlds = screen.getByRole("region", { name: "Subject worlds" });
+  expect(screen.getByRole("heading", { name: "Numeria" })).toBeTruthy();
+
+  fireEvent.wheel(worlds, { deltaY: -100 });
+  expect(screen.getByRole("heading", { name: "Numeria" })).toBeTruthy();
+
+  fireEvent.wheel(worlds, { deltaY: 100 });
+  expect(screen.getByRole("heading", { name: "Science Planet" })).toBeTruthy();
+
+  fireEvent.wheel(worlds, { deltaY: 80 });
+  expect(screen.getByRole("heading", { name: "Science Planet" })).toBeTruthy();
+
+  act(() => vi.advanceTimersByTime(600));
+  fireEvent.wheel(worlds, { deltaY: 100 });
+  expect(screen.getByRole("heading", { name: "???" })).toBeTruthy();
+
+  act(() => vi.advanceTimersByTime(600));
+  fireEvent.wheel(worlds, { deltaY: -100 });
+  expect(screen.getByRole("heading", { name: "Science Planet" })).toBeTruthy();
+});

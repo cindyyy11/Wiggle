@@ -14,6 +14,7 @@ import { WiggleTwinAvatar } from "../wiggle/WiggleTwinAvatar";
 import type { MissionInputCommands } from "../../features/gestures/commands";
 import type { HandTrackingState } from "../../features/gestures/useHandTracking";
 import styles from "./mission.module.css";
+import { ArrowUpRight } from "lucide-react";
 
 export type MissionPhase = "standard" | "stuck" | "simulation" | "activity" | "complete";
 export interface FractionMissionProps {
@@ -41,7 +42,7 @@ export function FractionMission(props: FractionMissionProps) {
       {props.phase === "complete" ? <CompletionMoment correctness={props.correctness} onReturn={props.onClose} onReality={() => props.onLexiRequest({ tool: "create_reality_mission" })} realityCompleted={props.realityCompleted} twinState={props.twinState} newStar={props.newStar} /> : null}
       {props.phase === "standard" || props.phase === "activity" ? <>
         <span className={styles.kicker}>FRACTION FOREST · 01</span>
-        {props.phase === "activity" ? <><LessonMorph mode={props.mode} /><PizzaActivity selectedSlices={props.selectedSlices} mode={props.mode} onCheck={props.onCheck} /></> : <><h2>Make three quarters</h2><p>Three quarters means how many of four equal pieces?</p><div className={styles.answers} role="group" aria-label="Choose an answer">{[1, 2, 3].map(answer => <button key={answer} aria-pressed={props.answer === answer} onClick={() => props.onAnswer(answer)}>{answer} of 4</button>)}</div><button className={styles.primary} onClick={props.onCheck}>Check my answer <span aria-hidden="true">↗</span></button></>}
+        {props.phase === "activity" ? <><LessonMorph mode={props.mode} /><PizzaActivity selectedSlices={props.selectedSlices} mode={props.mode} onCheck={props.onCheck} /></> : <><h2>Make three quarters</h2><p>Three quarters means how many of four equal pieces?</p><div className={styles.answers} role="group" aria-label="Choose an answer">{[1, 2, 3].map(answer => <button key={answer} aria-pressed={props.answer === answer} onClick={() => props.onAnswer(answer)}>{answer} of 4</button>)}</div><button className={styles.primary} onClick={props.onCheck}>Check my answer <ArrowUpRight aria-hidden="true" size={16} /></button></>}
         <div className={styles.modes} role="group" aria-label="Learning mode">{([{ label: "Standard", strategy: "standard", mode: "standard" }, { label: "Visual", strategy: "visual", mode: "visual" }, { label: "Gesture", strategy: "gesture", mode: "gesture" }, { label: "Tiny steps", strategy: "chunked", mode: "chunk" }] as const).map(item => <button key={item.strategy} aria-pressed={props.mode === item.mode} onClick={() => props.onSelect(item.strategy)}>{item.label}</button>)}</div>
         <button className={styles.quiet} onClick={props.onStuck}>I'm stuck</button>
       </> : null}

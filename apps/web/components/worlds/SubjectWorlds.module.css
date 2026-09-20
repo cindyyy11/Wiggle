@@ -18,7 +18,7 @@
 .carouselHint span{font-size:12px;color:#c9d9ee}
 .carouselArrow{pointer-events:auto;position:absolute;top:43%;display:grid;place-items:center;width:48px;height:48px;border:1px solid #527087;border-radius:10px;background:#091522;box-shadow:inset 0 1px rgb(255 255 255 / 8%),0 8px 24px rgb(0 0 0 / 28%);color:#edf5f7;cursor:pointer;transition:transform 160ms ease,border-color 160ms ease,background 160ms ease}
 .carouselArrow:not(:disabled):hover{transform:translateY(-2px);border-color:#8dd9e7;background:#0d1c2b}.carouselArrow:not(:disabled):active{transform:translateY(1px)}.carouselArrow:disabled{opacity:.28;cursor:default}.arrowPrevious{left:5%}.arrowNext{right:5%}
-.ghostHint{width:max-content;padding:9px 16px;border:1px solid #f4c95d80;border-radius:999px;background:#0b1a2ae3;color:#fff7e7;font-size:14px;font-weight:800;letter-spacing:.01em;white-space:nowrap;text-align:center;box-shadow:0 10px 24px #00000059,0 0 0 4px #f4c95d1f,inset 0 1px rgb(255 255 255/10%);animation:moreWorldsFloat 2.6s ease-in-out infinite}
+.ghostHint{font-family:"Trebuchet MS",Arial,sans-serif;display:inline-flex;align-items:center;gap:7px;width:max-content;padding:9px 16px;border:1px solid #f4c95d80;border-radius:999px;background:#0b1a2ae3;color:#fff7e7;font-size:14px;font-weight:800;letter-spacing:.01em;white-space:nowrap;text-align:center;box-shadow:0 10px 24px #00000059,0 0 0 4px #f4c95d1f,inset 0 1px rgb(255 255 255/10%);animation:moreWorldsFloat 2.6s ease-in-out infinite}
 @keyframes moreWorldsFloat{0%,100%{transform:translateY(0) scale(1);opacity:.92}50%{transform:translateY(-6px) scale(1.035);opacity:1}}
 @media(max-width:680px){.ghostHint{font-size:12px;padding:7px 12px}}
 @media(prefers-reduced-motion:reduce){.moreWorldsHint{animation:none}}

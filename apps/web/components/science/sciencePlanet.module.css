@@ -1,4 +1,4 @@
-.spaceWorld { background: radial-gradient(ellipse at 55% 40%, #7577c5 0%, #394b89 48%, #21365f 100%); }
+.spaceWorld { composes: deepSpace from "../universe/deepSpace.module.css"; }
 .adventure { position: absolute; inset: 0; pointer-events: none; }
 .adventureHeader { position: absolute; top: 18px; left: 24px; right: 24px; display: flex; align-items: center; flex-wrap: wrap; gap: 12px; background: #24385ee8; padding: 10px 14px; border-radius: 22px; }
 .adventureHeader h1 { margin: 4px 0; font-size: 26px; }
@@ -53,8 +53,9 @@
 .spaceHud .startButton { background: #ffe17d; border: 0; box-shadow: none; border-radius: 24px; padding: 10px 22px; }
 .spaceHud .comingSoon { border: 0; padding: 6px; background: none; color: #d9dbff; }
 .spaceHud .completionStatus { border: 0; padding: 6px; background: none; color: #c9daf7; font-size: 12px; }
-.spaceHud .backButton { background: none; color: #fff4c4; border: 0; border-radius: 0; min-height: 44px; padding: 0; font: 700 14px "Trebuchet MS", sans-serif; text-decoration: underline; text-underline-offset: 4px; cursor: pointer; }
-.spaceHud .backButton:hover { text-decoration-thickness: 2px; }
+.spaceHud .backButton { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px 0 12px; border: 1px solid #ffffff2e; border-radius: 999px; background: #1c2c52d9; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: #fffaf2; font: 700 14px "Trebuchet MS", sans-serif; box-shadow: 0 8px 24px #0b1a2a33; cursor: pointer; }
+.spaceHud .backButton::before { content: "‹"; font-size: 22px; line-height: 1; margin-top: -2px; }
+.spaceHud .backButton:hover { background: #2a3f75; border-color: #ffffff59; color: #fffaf2; }
 .walkHint { position: absolute; top: 150px; left: 28px; max-width: 230px; font-size: 12px; line-height: 1.5; }
 .spaceHud button:focus-visible { outline: 3px solid #ffdf76; outline-offset: 4px; }
 @media (min-width: 1200px) {

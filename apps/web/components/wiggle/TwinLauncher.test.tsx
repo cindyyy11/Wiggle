@@ -104,6 +104,22 @@ describe("TwinLauncher", () => {
     expect(window.localStorage.getItem("wiggle:voice-muted")).toBe("1");
   });
 
+  it("greets once, then guides with a tip when the child points at a control", async () => {
+    window.sessionStorage.clear();
+    render(<div><button aria-label="Zoom in">+</button><TwinLauncher childId="child-1" client={fakeClient(twin)} /></div>);
+    expect(screen.getByRole("tooltip").textContent).toMatch(/I am Wiggle/);
+    fireEvent.pointerOver(screen.getByRole("button", { name: "Zoom in" }));
+    expect(screen.getByRole("tooltip").textContent).toMatch(/closer/);
+    fireEvent.pointerOver(document.body);
+    expect(screen.getByRole("tooltip").textContent).toMatch(/I am Wiggle/);
+  });
+
+  it("hides the guide bubble while the panel is open", async () => {
+    render(<TwinLauncher childId="child-1" client={fakeClient(twin)} />);
+    openLauncher();
+    expect(screen.queryByRole("tooltip")).toBeNull();
+  });
+
   it("falls back gracefully when the backend is unavailable", async () => {
     const failingClient = { twin: async () => { throw new Error("offline"); } } as unknown as ApiClient;
     render(<TwinLauncher childId="child-1" client={failingClient} />);

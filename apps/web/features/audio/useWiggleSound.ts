@@ -19,9 +19,9 @@ export type WiggleSoundName =
   | "magnetPull"
   | "magnetStay";
 
-const MUTE_KEY = "wiggle:muted";
+export const MUTE_KEY = "wiggle:muted";
 
-function tone(context: AudioContext, { frequency, start, duration, gain = 0.09, type = "sine" as OscillatorType }: {
+export function tone(context: AudioContext, { frequency, start, duration, gain = 0.09, type = "sine" as OscillatorType }: {
   frequency: number; start: number; duration: number; gain?: number; type?: OscillatorType;
 }) {
   const oscillator = context.createOscillator();

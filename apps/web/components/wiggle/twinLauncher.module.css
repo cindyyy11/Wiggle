@@ -1,20 +1,35 @@
 /* apps/web/components/wiggle/twinLauncher.module.css */
-.launcher{position:fixed;right:20px;bottom:20px;z-index:40;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
-.button{position:relative;border:0;width:98px;height:104px;padding:0;background:transparent;cursor:pointer;overflow:visible;animation:launcherFloat 4.5s ease-in-out infinite;transition:transform .15s ease}
+.launcher{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));z-index:40;display:flex;flex-direction:column;align-items:flex-end;gap:12px;font-family:"Trebuchet MS",Arial,sans-serif}
+.button{position:relative;border:0;width:132px;height:150px;padding:0;background:transparent;color:inherit;cursor:pointer;overflow:visible;animation:launcherFloat 4.5s ease-in-out infinite;transition:transform .15s ease}
 .button:hover{transform:scale(1.06)}
-.button:focus-visible{outline:3px solid #173e5e;outline-offset:6px;border-radius:50%}
-.sparkle{position:absolute;top:-2px;left:6px;width:12px;height:12px;background:#f4c95d;clip-path:polygon(50% 0%,63% 38%,100% 50%,63% 62%,50% 100%,37% 62%,0% 50%,37% 38%);animation:sparkleTwinkle 2.6s ease-in-out infinite}
-.twinPeek{position:absolute;left:48%;bottom:0;transform:translateX(-58%) rotate(-8deg);line-height:0;pointer-events:none}
+.button:focus-visible{outline:3px solid #8dd9e7;outline-offset:4px;border-radius:50%}
+.halo{position:absolute;left:10px;right:10px;top:26px;bottom:22px;border-radius:50%;border:1px solid #ffffff33;background:radial-gradient(circle at 50% 40%,#a9d9ee55 0,#1c2c52d9 68%);box-shadow:0 12px 30px #0b1a2a66,0 0 0 4px #a9d9ee1f;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.sparkle{position:absolute;top:6px;left:14px;width:16px;height:16px;background:#f4c95d;clip-path:polygon(50% 0%,63% 38%,100% 50%,63% 62%,50% 100%,37% 62%,0% 50%,37% 38%);animation:sparkleTwinkle 2.6s ease-in-out infinite}
+.twinPeek{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);line-height:0;pointer-events:none}
+.tag{position:absolute;left:50%;bottom:0;transform:translateX(-50%);display:inline-flex;align-items:center;gap:5px;min-height:28px;padding:0 12px;border:1px solid #ffffff33;border-radius:999px;background:#1c2c52f2;color:#fffaf2;font:800 12px/1 "Trebuchet MS",Arial,sans-serif;letter-spacing:.02em;box-shadow:0 6px 16px #0b1a2a55;pointer-events:none}
+.tag svg{color:#f4c95d}
+.guide{position:relative;display:flex;align-items:flex-start;gap:9px;max-width:min(280px,calc(100vw - 32px));margin:0 8px 0 0;padding:11px 15px 11px 12px;border-radius:18px;background:#fff7e7;color:#173e5e;font-size:14px;font-weight:700;line-height:1.4;box-shadow:0 14px 30px #0b1a2a66;pointer-events:none;animation:guidePop .22s ease-out}
+.guide svg{flex:none;margin-top:1px;color:#e0894b}
+.guide::after{content:"";position:absolute;right:48px;bottom:-9px;width:18px;height:18px;background:#fff7e7;transform:rotate(45deg);border-radius:0 0 4px 0}
+.panel{position:relative;width:min(320px,calc(100vw - 32px));padding:16px;border:1px solid #ffffff2e;border-radius:22px;background:#1c2c52ee;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:#fffaf2;box-shadow:0 18px 40px #0b1a2a66;animation:guidePop .2s ease-out}
+.panel h2{display:flex;align-items:center;gap:7px;margin:0 34px 10px 0;font-size:18px;letter-spacing:-.01em}
+.panel h2 svg{color:#f4c95d}
+.panel h2:focus{outline:none}
+.panel p{margin:0;font-size:14px;line-height:1.45}
+.message{font-weight:700}
+.suggestion{display:flex;align-items:flex-start;gap:8px;margin-top:10px!important;padding:10px 12px;border-radius:14px;background:#ffffff14;color:#e2edff}
+.suggestion svg{flex:none;margin-top:2px;color:#f4c95d}
+.hint{display:flex;align-items:center;gap:7px;margin-top:10px!important;font-size:12px!important;color:#c9daf7}
+.hint svg{flex:none}
+.actions{display:grid;gap:8px;margin-top:14px}
+.actions button,.actions a{min-height:44px;border:1px solid #ffffff2e;border-radius:999px;padding:0 16px;background:#ffffff14;color:#fffaf2;font:800 13px/1 "Trebuchet MS",Arial,sans-serif;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;transition:background .15s ease,border-color .15s ease}
+.actions button:hover,.actions a:hover{background:#ffffff26;border-color:#ffffff59}
+.actions .primaryAction{border-color:transparent;background:#ffe17d;color:#203450}
+.actions .primaryAction:hover{background:#ffecaa;border-color:transparent}
+.actions button:focus-visible,.actions a:focus-visible,.close:focus-visible{outline:3px solid #8dd9e7;outline-offset:3px}
+.close{position:absolute;top:12px;right:12px;width:32px;height:32px;border:1px solid #ffffff2e;border-radius:50%;background:#ffffff14;color:#fffaf2;padding:0;display:grid;place-items:center;cursor:pointer;transition:background .15s ease}
+.close:hover{background:#ffffff2e}
 @keyframes launcherFloat{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-5px) rotate(1.5deg)}}
 @keyframes sparkleTwinkle{0%,100%{opacity:.35;transform:scale(.8) rotate(0deg)}50%{opacity:1;transform:scale(1.15) rotate(20deg)}}
-.panel{position:relative;width:min(300px,calc(100vw - 40px));padding:16px 16px 14px;border:1px solid #285c8540;border-radius:18px;background:#fff7e7;color:#285c85;box-shadow:0 18px 38px #285c8524}
-.panel h2{margin:0 26px 8px 0;font-size:19px;letter-spacing:-.02em}
-.panel h2:focus{outline:none}
-.panel p{margin:0;font-size:13px;line-height:1.45}
-.suggestion{margin-top:8px!important;font-size:12px!important}
-.actions{display:grid;gap:6px;margin-top:12px}
-.actions button,.actions a{min-height:44px;border:1px solid #285c8540;border-radius:999px;padding:0 14px;background:#fff7e7;color:#285c85;font-size:12px;font-weight:800;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:6px}
-.actions button:hover,.actions a:hover{background:#e4f4f6}
-.close{position:absolute;top:10px;right:10px;width:28px;height:28px;border:1px solid #285c8540;border-radius:50%;background:#fff7e7;color:#285c85;font-size:18px;line-height:1;padding:0;display:grid;place-items:center;cursor:pointer;transition:background .15s ease}
-.close:hover{background:#e4f4f6}
-@media(prefers-reduced-motion:reduce){.button,.actions button,.actions a{transition:none;animation:none}.sparkle{animation:none}}
+@keyframes guidePop{from{opacity:0;transform:translateY(6px) scale(.96)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(prefers-reduced-motion:reduce){.button,.actions button,.actions a,.close{transition:none;animation:none}.button:hover{transform:none}.sparkle,.guide,.panel{animation:none}}

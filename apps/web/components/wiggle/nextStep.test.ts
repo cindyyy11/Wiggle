@@ -71,4 +71,14 @@ describe("getNextStep", () => {
     };
     expect(getNextStep(onlyMovementLocked, "child-1")).toBeNull();
   });
+
+  it("never suggests Fraction Forest, even when a Numeria star is the only locked one", () => {
+    const onlyTinyStepLocked: LearnerTwin = {
+      ...mastered,
+      strategyEffectiveness: { ...mastered.strategyEffectiveness, chunking: 0.5 },
+    };
+    expect(getNextStep(onlyTinyStepLocked, "child-1")).toBeNull();
+    const tinyStepNearest: LearnerTwin = { ...base, strategyEffectiveness: { ...base.strategyEffectiveness, chunking: 0.65 }, modalityEffectiveness: { ...base.modalityEffectiveness, visual: 0.1 } };
+    expect(getNextStep(tinyStepNearest, "child-1")?.missionName).not.toBe("Fraction Forest");
+  });
 });

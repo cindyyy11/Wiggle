@@ -45,13 +45,20 @@ describe("MyWiggleTwinScreen", () => {
   });
 
   it("suggests a different place on the next visit instead of repeating itself", async () => {
-    const { unmount } = render(<MyWiggleTwinScreen childId="child-1" client={fakeClient(baseTwin)} />);
+    const twoIdeas: ParentInsightsResponse = { ...baseTwin, twin: { ...baseTwin.twin, mastery: { fractions: 0.1 }, initiationFriction: 0.5 } };
+    const { unmount } = render(<MyWiggleTwinScreen childId="child-1" client={fakeClient(twoIdeas)} />);
     const first = await screen.findByRole("link", { name: /Go to .+/ });
     const firstHref = first.getAttribute("href");
     unmount();
-    render(<MyWiggleTwinScreen childId="child-1" client={fakeClient(baseTwin)} />);
+    render(<MyWiggleTwinScreen childId="child-1" client={fakeClient(twoIdeas)} />);
     const second = await screen.findByRole("link", { name: /Go to .+/ });
     expect(second.getAttribute("href")).not.toBe(firstHref);
+  });
+
+  it("never offers a Go to Fraction Forest link", async () => {
+    render(<MyWiggleTwinScreen childId="child-1" client={fakeClient(baseTwin)} />);
+    await screen.findByText("My Wiggle Twin");
+    expect(screen.queryByRole("link", { name: /Fraction Forest/ })).toBeNull();
   });
 
   it("starts a one-day streak on first visit", async () => {

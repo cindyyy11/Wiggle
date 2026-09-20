@@ -54,7 +54,7 @@ function createTerrain(detail: number, theme: NumeriaTheme) {
   return geometry;
 }
 
-export function Numeria({ quality, dimmed, onDestination, theme = "math", preview = false }: { quality: "high" | "low"; dimmed: boolean; onDestination: (destination: Destination) => void; theme?: NumeriaTheme; preview?: boolean }) {
+export function Numeria({ quality, dimmed, onDestination, onFly, theme = "math", preview = false }: { quality: "high" | "low"; dimmed: boolean; onDestination: (destination: Destination) => void; onFly?: (destination: Destination | null) => void; theme?: NumeriaTheme; preview?: boolean }) {
   const geometry = useMemo(() => createTerrain(quality === "high" ? 4 : 3, theme), [quality, theme]);
   useEffect(() => () => geometry.dispose(), [geometry]);
   const move = (event: ThreeEvent<MouseEvent>) => {
@@ -63,8 +63,12 @@ export function Numeria({ quality, dimmed, onDestination, theme = "math", previe
     event.stopPropagation();
     onDestination(destinationFromPoint(event.point.x, event.point.y, event.point.z));
   };
+  const fly = (event: ThreeEvent<PointerEvent>) => {
+    if (preview || !onFly || (event.pointerType === "mouse" && event.buttons !== 0)) return;
+    onFly(destinationFromPoint(event.point.x, event.point.y, event.point.z));
+  };
   return <group>
-    <mesh geometry={geometry} onClick={move}>
+    <mesh geometry={geometry} onClick={move} onPointerMove={fly} onPointerOut={() => onFly?.(null)}>
       <meshStandardMaterial vertexColors flatShading roughness={1} color={dimmed ? "#bdd5c4" : theme === "math" ? "#fffdf7" : "#fff7e7"} />
     </mesh>
     {theme === "math" ? <MathRegionPlateaus dimmed={dimmed} /> : null}

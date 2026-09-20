@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Volume2, VolumeX, X } from "lucide-react";
+import { ArrowUpRight, Lightbulb, MousePointerClick, Rocket, Sparkles, UserRound, Volume2, VolumeX, X } from "lucide-react";
 import type { LearnerTwin, TwinVisualState } from "@wiggle/contracts";
 import { getTwinVisualState, twinVisualCopy } from "@wiggle/contracts";
 import { ApiClient } from "../../lib/api/client";
@@ -12,7 +12,12 @@ import { getLastSeenTwin, saveSeenTwin } from "./twinMemory";
 import { getNextStep, type NextStep } from "./nextStep";
 import { getLastSuggestedMission, saveSuggestedMission } from "./nextStepMemory";
 import { WiggleTwinAvatar } from "./WiggleTwinAvatar";
+import { useWiggleGuide } from "./useWiggleGuide";
 import styles from "./twinLauncher.module.css";
+
+const GREETING = "Hi, I am Wiggle! Point at anything and I will tell you about it.";
+const GREETING_KEY = "wiggle:guide-greeted";
+const GREETING_MS = 7000;
 
 export type TwinLauncherContext = "science" | null;
 
@@ -43,6 +48,8 @@ export function TwinLauncher({ childId, client: suppliedClient, context = null }
   const launcherButton = useRef<HTMLButtonElement>(null);
   const panel = useRef<HTMLElement>(null);
   const lastSpoken = useRef("");
+  const [greeting, setGreeting] = useState(false);
+  const tip = useWiggleGuide(!open);
 
   const applyTwin = (twin: LearnerTwin, persist: boolean) => {
     const previous = getLastSeenTwin(childId);
@@ -75,6 +82,16 @@ export function TwinLauncher({ childId, client: suppliedClient, context = null }
   }, [client, childId]);
 
   useEffect(() => { if (open) heading.current?.focus(); }, [open]);
+
+  useEffect(() => {
+    try {
+      if (window.sessionStorage.getItem(GREETING_KEY)) return;
+      window.sessionStorage.setItem(GREETING_KEY, "1");
+    } catch { /* Greeting is a nicety; showing it again is harmless. */ }
+    setGreeting(true);
+    const timer = window.setTimeout(() => setGreeting(false), GREETING_MS);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const scienceLine = context === "science" ? " Science is full of surprises today!" : "";
 
@@ -126,18 +143,9 @@ export function TwinLauncher({ childId, client: suppliedClient, context = null }
     setVoiceMuted(next);
   };
 
+  const bubble = tip ?? (greeting ? GREETING : null);
+
   return <div className={styles.launcher}>
-    <button
-      ref={launcherButton}
-      type="button"
-      className={styles.button}
-      aria-label={open ? "Close my Wiggle Twin" : twinVisualCopy[state]}
-      aria-expanded={open}
-      onClick={toggle}
-    >
-      <span className={styles.sparkle} aria-hidden="true" />
-      <span className={styles.twinPeek} aria-hidden="true"><WiggleTwinAvatar state={state} size={84} /></span>
-    </button>
     {open ? <section
       ref={panel}
       className={styles.panel}
@@ -145,14 +153,29 @@ export function TwinLauncher({ childId, client: suppliedClient, context = null }
       onKeyDown={event => { if (event.key === "Escape") close(); }}
     >
       <button type="button" className={styles.close} aria-label="Close" onClick={close}><X aria-hidden="true" size={18} /></button>
-      <h2 ref={heading} tabIndex={-1}>My Wiggle Twin</h2>
-      <p role="status">{message}{scienceLine}</p>
-      {nextStep ? <p className={styles.suggestion}>What can I try? {nextStep.description}</p> : null}
+      <h2 ref={heading} tabIndex={-1}><Sparkles aria-hidden="true" size={17} />My Wiggle Twin</h2>
+      <p role="status" className={styles.message}>{message}{scienceLine}</p>
+      {nextStep ? <p className={styles.suggestion}><Lightbulb aria-hidden="true" size={16} /><span>What can I try? {nextStep.description}</span></p> : null}
+      <p className={styles.hint}><MousePointerClick aria-hidden="true" size={15} />Point at anything and I will tell you what it does.</p>
       <div className={styles.actions}>
+        {nextStep ? <a className={styles.primaryAction} href={nextStep.href}><Rocket aria-hidden="true" size={16} />{nextStep.actionLabel}</a> : null}
+        <a href={`/twin?child=${encodeURIComponent(childId)}`}><UserRound aria-hidden="true" size={16} />See my whole Twin<ArrowUpRight aria-hidden="true" size={15} /></a>
         <button type="button" aria-pressed={muted} onClick={toggleMuted}>{muted ? <VolumeX aria-hidden="true" size={16} /> : <Volume2 aria-hidden="true" size={16} />}<span>{muted ? "Sound off" : "Sound on"}</span></button>
-        {nextStep ? <a href={nextStep.href}>{nextStep.actionLabel}</a> : null}
-        <a href={`/twin?child=${encodeURIComponent(childId)}`}>See my whole Twin</a>
       </div>
-    </section> : null}
+    </section> : bubble ? <p key={bubble} role="tooltip" className={styles.guide}><Lightbulb aria-hidden="true" size={18} />{bubble}</p> : null}
+    <button
+      ref={launcherButton}
+      type="button"
+      className={styles.button}
+      aria-label={open ? "Close my Wiggle Twin" : twinVisualCopy[state]}
+      aria-expanded={open}
+      data-wiggle-tip="Tap me to hear how I am doing and get an idea to try."
+      onClick={toggle}
+    >
+      <span className={styles.halo} aria-hidden="true" />
+      <span className={styles.sparkle} aria-hidden="true" />
+      <span className={styles.twinPeek} aria-hidden="true"><WiggleTwinAvatar state={state} size={108} /></span>
+      <span className={styles.tag} aria-hidden="true"><Sparkles size={13} />Wiggle</span>
+    </button>
   </div>;
 }

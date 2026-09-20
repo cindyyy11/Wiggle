@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useState, type CSSProperties } from "react";
-import { ArrowUpRight, Gem, Triangle, type LucideIcon } from "lucide-react";
+import { ArrowUpRight, Gem, Sparkles, Triangle, type LucideIcon } from "lucide-react";
 import type { CameraMode, Landmark, LandmarkId } from "./world";
 import { LANDMARKS } from "./world";
 import styles from "./explorationHud.module.css";
@@ -9,6 +9,7 @@ import styles from "./explorationHud.module.css";
 const LANDMARK_ICONS: Partial<Record<LandmarkId, LucideIcon>> = {
   "geometry-ridge": Triangle,
   "crystal-crater": Gem,
+  lexi: Sparkles,
 };
 
 type ExplorationHudProps = {

@@ -21,6 +21,7 @@ import {
 import { WiggleSplash } from "./WiggleSplash";
 import { WorldsConstellation } from "./WorldsConstellation";
 import { WorldSelector } from "./WorldSelector";
+import { INITIAL_WHEEL_STATE, wheelSlide } from "./wheelSlide";
 import { useWiggleSound } from "../../features/audio/useWiggleSound";
 import styles from "./SubjectWorlds.module.css";
 
@@ -48,14 +49,25 @@ export function SubjectWorlds({ childId, client, quality, initialRoute }: Subjec
   const [selectedWorld, setSelectedWorld] = useState<SubjectWorldId>("math");
   const swipeStart = useRef<{ x: number; y: number } | null>(null);
   const suppressClick = useRef(false);
+  const wheel = useRef(INITIAL_WHEEL_STATE);
   const sound = useWiggleSound();
   const chooseWorld = (world: SubjectWorldId) => { setSelectedWorld(world); setStatusMessage(""); };
-  const slide = (direction: number) => {
+  const slideTarget = (direction: number) => {
     const order = SUBJECT_WORLD_ORDER;
-    const next = order[Math.max(0, Math.min(order.length - 1, order.indexOf(selectedWorld) + direction))];
+    return order[Math.max(0, Math.min(order.length - 1, order.indexOf(selectedWorld) + direction))];
+  };
+  const slide = (direction: number) => {
+    const next = slideTarget(direction);
     if (next !== selectedWorld) sound.play("slideWhoosh");
     setSelectedWorld(next);
     setStatusMessage("");
+  };
+  const onWheel = (event: React.WheelEvent) => {
+    const result = wheelSlide(wheel.current, event, Date.now());
+    // Scrolling past either end does nothing, so it must not start the cooldown that would swallow the next real scroll.
+    const blocked = result.direction !== 0 && slideTarget(result.direction) === selectedWorld;
+    wheel.current = blocked ? { ...result.state, lockedUntil: wheel.current.lockedUntil } : result.state;
+    if (result.direction && !blocked) slide(result.direction);
   };
   const [statusMessage, setStatusMessage] = useState("");
   const currentChild = childId ?? route.child;
@@ -115,7 +127,7 @@ export function SubjectWorlds({ childId, client, quality, initialRoute }: Subjec
     onZoneSelect={(zone) => navigate({ world: "science", zone, child: currentChild })}
     onBackToWorlds={() => navigate({ world: null, child: currentChild })}
     onSessionOpenChange={setScienceOverlayOpen}
-  /> : <section className={styles.worldsView} aria-label="Subject worlds">
+  /> : <section className={styles.worldsView} aria-label="Subject worlds" onWheel={onWheel}>
     <div className={styles.constellationLayer}
       onPointerDownCapture={event => { if (event.button !== 0) return; swipeStart.current = { x: event.clientX, y: event.clientY }; suppressClick.current = false; }}
       onPointerUpCapture={event => {

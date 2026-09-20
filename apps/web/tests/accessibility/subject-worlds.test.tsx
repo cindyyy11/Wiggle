@@ -29,22 +29,24 @@ it("keeps all subject-orbit actions available through native controls when WebGL
   expect(screen.getByRole("region", { name: "Magnet Lab mission" })).toBeTruthy();
 });
 
-it("announces locked worlds without moving focus away from the selector", () => {
+it("keeps coming-soon planets disabled and silent without moving focus away from the selector", () => {
   vi.useFakeTimers();
   render(<SubjectWorlds initialRoute={{ world: null }} quality="fallback" />);
 
   enterWorlds();
   fireEvent.click(screen.getByRole("button", { name: "Next planet" }));
+  const next = screen.getByRole("button", { name: "Next planet" });
+  next.focus();
   for (let step = 0; step < 2; step++) {
     fireEvent.click(screen.getByRole("button", { name: "Next planet" }));
-    const locked = screen.getByRole("button", { name: "??? (coming soon)" });
-    locked.focus();
+    const locked = screen.getByRole("button", { name: "??? (coming soon)" }) as HTMLButtonElement;
+    expect(locked.disabled).toBe(true);
+    expect(locked.getAttribute("aria-describedby")).toBe("world-lock-status");
     fireEvent.click(locked);
 
-    expect(document.activeElement).toBe(locked);
-    expect(locked.getAttribute("aria-describedby")).toBe("world-lock-status");
     expect(screen.getByRole("region", { name: "Choose a subject world" })).toBeTruthy();
     expect(window.location.search).toBe("");
-    expect(screen.getAllByRole("status").some((status) => status.textContent?.includes("??? is coming soon"))).toBe(true);
+    expect(screen.getByRole("status").textContent).toBe("");
+    if (step === 0) expect(document.activeElement).toBe(next);
   }
 });

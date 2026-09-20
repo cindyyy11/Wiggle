@@ -86,6 +86,7 @@ export function MathPlanetCanvas({ quality, reducedMotion, onBackToWorlds, onSes
     <div inert={session !== null} aria-hidden={session ? true : undefined}>
       <UniverseCanvas
         theme="math"
+        className={styles.spaceWorld}
         quality={quality}
         reducedMotion={reducedMotion}
         mode={mode}

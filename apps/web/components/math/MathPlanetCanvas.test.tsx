@@ -110,9 +110,13 @@ it("marks only the completed region and announces it after returning", () => {
   const announcement = screen.getByText("Wonderful exploring! Number Valley complete.");
   expect(announcement.getAttribute("aria-live")).toBe("polite");
   expect(screen.getByText("1 of 4 regions complete")).toBeTruthy();
-  expect(within(screen.getByRole("button", { name: "Visit Number Valley" })).getByText("Complete")).toBeTruthy();
+  const completed = screen.getByRole("button", { name: "Visit Number Valley" });
+  expect(document.getElementById(completed.getAttribute("aria-describedby") ?? "")?.textContent).toBe("Complete");
+  expect(within(completed).getAllByText("Complete").filter((node) => node.getAttribute("aria-hidden") === "true")).toHaveLength(1);
   for (const region of regions.filter((entry) => entry.id !== "number-valley")) {
-    expect(within(screen.getByRole("button", { name: `Visit ${region.name}` })).queryByText("Complete")).toBeNull();
+    const other = screen.getByRole("button", { name: `Visit ${region.name}` });
+    expect(other.getAttribute("aria-describedby")).toBeNull();
+    expect(within(other).queryByText("Complete")).toBeNull();
   }
 });
 

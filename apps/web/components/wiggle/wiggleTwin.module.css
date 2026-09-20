@@ -38,6 +38,18 @@
 .avatar[data-state="overwhelmed"] .eyeGroup,
 .avatar[data-state="needs_reset"] .eyeGroup { animation: none; transform: scaleY(.72); }
 
+.shadow { transform-box: fill-box; transform-origin: center; animation: shadowBreathe 3.2s ease-in-out infinite; }
+.avatar[data-state="ready"] .shadow,
+.avatar[data-state="progressing"] .shadow { animation-duration: 2.6s; }
+.avatar[data-state="overwhelmed"] .shadow,
+.avatar[data-state="needs_reset"] .shadow { animation-duration: 5s; }
+.avatar[data-state="mastered"] .shadow { animation-duration: .9s; animation-iteration-count: 1; }
+
+.pupils { animation: lookAround 8s ease-in-out infinite; }
+.avatar[data-state="overwhelmed"] .pupils,
+.avatar[data-state="needs_reset"] .pupils { animation: none; }
+.antennaGlow { transform-box: fill-box; transform-origin: center; animation: tipPulse 2.2s ease-in-out infinite; }
+
 .hand { transform-origin: top center; animation: wiggleHand 2.4s ease-in-out infinite; }
 .handRight { animation-delay: .5s; }
 .avatar[data-state="overwhelmed"] .hand,
@@ -59,7 +71,10 @@
 
 .resetBadge { animation: fadeIn .4s ease-out; }
 
-@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+@keyframes bob { 0%, 100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-7px) rotate(1deg); } }
+@keyframes shadowBreathe { 0%, 100% { opacity: .26; transform: scaleX(1); } 50% { opacity: .14; transform: scaleX(.84); } }
+@keyframes lookAround { 0%, 38%, 100% { transform: translate(0, 0); } 46%, 62% { transform: translate(3px, -1px); } 70%, 86% { transform: translate(-3px, 1px); } }
+@keyframes tipPulse { 0%, 100% { opacity: .55; transform: scale(.85); } 50% { opacity: 1; transform: scale(1.15); } }
 @keyframes celebrate { 0% { transform: translateY(0) scale(1); } 30% { transform: translateY(-18px) scale(1.05); } 55% { transform: translateY(0) scale(.98); } 75% { transform: translateY(-6px) scale(1.02); } 100% { transform: translateY(0) scale(1); } }
 @keyframes glowPulse { 0%, 100% { opacity: .55; transform: scale(1); } 50% { opacity: .85; transform: scale(1.08); } }
 @keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 96% { transform: scaleY(.12); } }
@@ -70,7 +85,7 @@
 @keyframes fadeIn { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: scale(1); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .glow, .body, .eyeGroup, .hand, .sparkle, .listenRing, .mouth, .resetBadge {
+  .glow, .body, .eyeGroup, .hand, .sparkle, .listenRing, .mouth, .resetBadge, .shadow, .pupils, .antennaGlow {
     animation: none !important;
     transform: none !important;
   }

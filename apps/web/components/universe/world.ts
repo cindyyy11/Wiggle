@@ -15,9 +15,9 @@ export const RADIUS = 3;
 export const LANDMARKS: readonly Landmark[] = [
   { id: "fraction-forest", name: "Fraction Forest", subtitle: "Little pieces. Big discoveries.", color: "#9dc99a", destination: { latitude: .62, longitude: -.52 }, symbol: "¼" },
   { id: "number-valley", name: "Number Valley", subtitle: "Every number has a place.", color: "#f4c95d", destination: { latitude: -.16, longitude: .43 }, symbol: "123" },
-  { id: "geometry-ridge", name: "Geometry Ridge", subtitle: "A world of shapes awaits.", color: "#a9d9ee", destination: { latitude: .71, longitude: .72 }, symbol: "△" },
-  { id: "crystal-crater", name: "Crystal Crater", subtitle: "Follow your curiosity.", color: "#ef8b78", destination: { latitude: -.25, longitude: -.73 }, symbol: "◇" },
-  { id: "lexi", name: "Lexi's beacon", subtitle: "A little light to guide you.", color: "#f4c95d", destination: { latitude: .27, longitude: -.05 }, symbol: "✧" },
+  { id: "geometry-ridge", name: "Geometry Ridge", subtitle: "A world of shapes awaits.", color: "#a9d9ee", destination: { latitude: .71, longitude: .72 }, symbol: "" },
+  { id: "crystal-crater", name: "Crystal Crater", subtitle: "Follow your curiosity.", color: "#ef8b78", destination: { latitude: -.25, longitude: -.73 }, symbol: "" },
+  { id: "lexi", name: "Lexi's beacon", subtitle: "A little light to guide you.", color: "#f4c95d", destination: { latitude: .27, longitude: -.05 }, symbol: "" },
 ];
 export const INITIAL_DESTINATION: Destination = { latitude: .12, longitude: .08 };
 export const MISSION_DESTINATION = LANDMARKS[0].destination;
@@ -49,6 +49,7 @@ export type ExplorerInput = {
   vertical: number;
   hop: boolean;
   running: boolean;
+  pointerFlight?: boolean;
   destination: Destination | null;
   position: [number, number, number];
   zoom: number;
