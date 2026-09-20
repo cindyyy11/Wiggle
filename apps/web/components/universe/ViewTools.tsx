@@ -17,7 +17,7 @@ export function ViewTools({ mode, input, onToggleMode, onReset, zoom = true }: V
   const ModeIcon = globe ? LocateFixed : Globe;
 
   return <div className={styles.tools}>
-    <button type="button" className={styles.tool} onClick={onToggleMode}>
+    <button type="button" className={styles.tool} title={globe ? "Follow explorer" : "View whole planet"} onClick={onToggleMode}>
       <ModeIcon aria-hidden="true" size={18} />
       <span className={styles.label}>{globe ? "Follow explorer" : "View whole planet"}</span>
     </button>

@@ -62,7 +62,7 @@ export function MathHud({ selectedRegion, completedRegions, onRegionSelect, onEx
       <p>{region.subtitle}</p>
       <p className={styles.instruction}>{region.instruction}</p>
       <button className={styles.exploreButton} type="button" onClick={onExplore}>Explore {region.name}</button>
-      <p className={styles.completionStatus} role="status" aria-live="polite">
+      <p className={completedCount === 0 ? `${styles.completionStatus} ${styles.quiet}` : styles.completionStatus} role="status" aria-live="polite">
         {completedCount} of {REGION_IDS.length} regions complete
       </p>
     </section>

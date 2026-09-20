@@ -1,15 +1,15 @@
 .tools {
   position: absolute;
   top: 132px;
-  right: 28px;
+  right: 16px;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  width: 196px;
+  grid-template-columns: 1fr;
+  width: 52px;
   gap: 2px;
-  padding: 6px;
-  border: 1px solid #ffffff2e;
-  border-radius: 24px;
+  padding: 4px;
+  border-radius: 26px;
   background: #1c2c52d9;
+  box-shadow: 0 8px 24px #0b1a2a33;
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   pointer-events: auto;
@@ -19,39 +19,35 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
   min-height: 44px;
   min-width: 44px;
   padding: 0;
   border: 0;
-  border-radius: 18px;
+  border-radius: 22px;
   background: transparent;
   color: #fff8ee;
-  font: 700 13px "Trebuchet MS", Arial, sans-serif;
   cursor: pointer;
   transition: background .16s;
 }
 
 .tools .tool:hover { background: #ffffff1f; }
 .tools .tool:focus-visible { outline: 3px solid #ffdf76; outline-offset: -3px; }
-.tools > .tool { grid-column: 1 / -1; justify-content: flex-start; padding: 0 12px; margin-bottom: 4px; box-shadow: 0 1px 0 #ffffff1f; border-radius: 18px 18px 6px 6px; }
 .round, .zoom { display: contents; }
+.label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 
 @media (min-width: 1400px) {
   .tools { top: 76px; }
 }
 
 @media (max-width: 680px) {
-  .tools { top: 132px; right: 14px; width: 52px; grid-template-columns: 1fr; }
-  .tools > .tool { justify-content: center; padding: 0; margin-bottom: 0; box-shadow: none; border-radius: 18px; }
-  .label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
+  .tools { top: 132px; right: 14px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
