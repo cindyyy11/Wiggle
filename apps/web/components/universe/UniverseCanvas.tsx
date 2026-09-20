@@ -95,7 +95,7 @@ export function UniverseCanvas({ explorerInput, controlsDisabled = false, resetV
   useEffect(() => { if (destination !== undefined) input.current.destination = destination; }, [destination]);
   useEffect(() => {
     const current = input.current;
-    const clear = () => { current.keys.clear(); current.horizontal = 0; current.vertical = 0; current.running = false; current.pointerFlight = false; current.hop = false; activePointer.current = null; setRunning(false); };
+    const clear = () => { current.keys.clear(); current.horizontal = 0; current.vertical = 0; current.running = false; current.hop = false; activePointer.current = null; setRunning(false); };
     window.addEventListener("blur", clear);
     document.addEventListener("visibilitychange", clear);
     return () => { clear(); window.removeEventListener("blur", clear); document.removeEventListener("visibilitychange", clear); };

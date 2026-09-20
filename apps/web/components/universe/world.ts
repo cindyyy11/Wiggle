@@ -49,9 +49,10 @@ export type ExplorerInput = {
   vertical: number;
   hop: boolean;
   running: boolean;
-  pointerFlight?: boolean;
   destination: Destination | null;
   position: [number, number, number];
+  /** Unit tangent the explorer is facing, written each frame so the camera can follow behind. */
+  heading?: [number, number, number];
   zoom: number;
 };
 export type InputRef = MutableRefObject<ExplorerInput>;

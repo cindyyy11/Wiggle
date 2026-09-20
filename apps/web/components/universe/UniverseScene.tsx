@@ -41,7 +41,7 @@ export default function UniverseScene(props: UniverseSceneProps) {
     <hemisphereLight args={["#fff7e7", "#79adc3", 1.2]} />
     <directionalLight position={[-4, 8, 6]} intensity={2.35} color="#fff7e7" />
     <directionalLight position={[5, 2, -3]} intensity={1.15} color="#a9d9ee" />
-    <Numeria theme={props.theme} quality={quality} dimmed={mode === "mission"} onFly={destination => { if (input.current.paused) return; input.current.pointerFlight = !!destination; if (destination) input.current.destination = destination; }} onDestination={destination => { if (!input.current.paused) { input.current.destination = destination; onDestinationChange?.(destination); } }} />
+    <Numeria theme={props.theme} quality={quality} dimmed={mode === "mission"} onDestination={destination => { if (!input.current.paused) { input.current.destination = destination; onDestinationChange?.(destination); } }} />
     {props.theme === "science" ? <ExplorerContext.Provider value={input}>{props.sceneContent}</ExplorerContext.Provider> : <Landmarks selected={selectedLandmark} onSelect={onLandmarkSelect} reducedMotion={reducedMotion} mission={mode === "mission"} pizza={pizza} interactionTargets={interactionTargets} />}
     {pizza?.visible && pizza.hand ? <GestureInteractionLayer {...pizza.hand} targets={interactionTargets} onAction={pizza.onGestureAction} /> : null}
     <Astronaut input={input} reducedMotion={reducedMotion} />

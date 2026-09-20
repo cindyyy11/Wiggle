@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PerspectiveCamera, Ray, Sphere, Vector3 } from "three";
-import { createFollowFrame, transportFollowCamera } from "./cameraMotion";
+import { arcLerp, CHASE_AHEAD, CHASE_HEIGHT, chaseFrame, createFollowFrame, transportFollowCamera } from "./cameraMotion";
 import { RADIUS } from "./world";
 
 describe("surface-relative follow camera", () => {
@@ -48,5 +48,52 @@ describe("surface-relative follow camera", () => {
       expect(camera.position.distanceTo(target)).toBeCloseTo(distance, 9);
       expect(camera.position.clone().sub(target).dot(explorer.clone().normalize())).toBeGreaterThan(0);
     }
+  });
+});
+
+describe("arcLerp", () => {
+  it("swings around the planet instead of cutting through it", () => {
+    const camera = new Vector3(0, 0, 8);
+    const goal = new Vector3(0, 0, -8);
+    let closest = Infinity;
+    for (let frame = 0; frame < 60; frame++) { arcLerp(camera, goal, .1); closest = Math.min(closest, camera.length()); }
+    expect(closest).toBeGreaterThan(7.9);
+    expect(camera.distanceTo(goal)).toBeLessThan(.5);
+  });
+
+  it("eases the distance from the planet toward the goal", () => {
+    const camera = new Vector3(0, 0, 10);
+    arcLerp(camera, new Vector3(0, 0, 6), .5);
+    expect(camera.length()).toBeCloseTo(8);
+  });
+});
+
+describe("chaseFrame", () => {
+  const pose = () => ({ position: new Vector3(), target: new Vector3(), up: new Vector3() });
+  const spots = [[0, 1, 0], [1, 0, 0], [0, -1, 0], [0, 0, -1], [.6, -.5, .6], [-.7, .2, -.7]].map(([x, y, z]) => new Vector3(x, y, z).normalize().multiplyScalar(RADIUS + .05));
+
+  it("puts the camera behind and above the explorer, looking at the ground ahead, everywhere on the planet", () => {
+    for (const explorer of spots) {
+      const normal = explorer.clone().normalize();
+      const heading = new Vector3(0, 1, 0).addScaledVector(normal, -normal.y);
+      if (heading.lengthSq() < .01) heading.set(1, 0, 0).addScaledVector(normal, -normal.x);
+      heading.normalize();
+      const frame = chaseFrame(explorer, heading, CHASE_AHEAD, 1, pose());
+      const back = frame.position.clone().sub(explorer);
+      expect(back.dot(heading)).toBeLessThan(0);
+      expect(back.dot(normal)).toBeGreaterThan(CHASE_HEIGHT - .01);
+      expect(frame.position.length()).toBeGreaterThan(RADIUS + 1);
+      expect(frame.target.length()).toBeCloseTo(explorer.length());
+      expect(frame.target.clone().sub(explorer).dot(heading)).toBeGreaterThan(0);
+      expect(frame.up.distanceTo(normal)).toBeLessThan(1e-6);
+    }
+  });
+
+  it("scales the whole offset with zoom", () => {
+    const explorer = spots[0];
+    const heading = new Vector3(1, 0, 0);
+    const near = chaseFrame(explorer, heading, 0, .7, pose()).position.distanceTo(explorer);
+    const far = chaseFrame(explorer, heading, 0, 1.25, pose()).position.distanceTo(explorer);
+    expect(far / near).toBeCloseTo(1.25 / .7);
   });
 });
