@@ -32,7 +32,8 @@
 .tools .tool:hover { background: #2b4073; border-color: #ffffff77; }
 .tools .tool:focus-visible { outline: 3px solid #ffdf76; outline-offset: 3px; }
 
-.zoom { display: flex; gap: 8px; }
+.round, .zoom { display: flex; gap: 8px; }
+.tools .round .tool { padding: 0; }
 .tools .zoom .tool { padding: 0; }
 .tools > .tool { min-width: 192px; justify-content: flex-start; }
 
@@ -52,6 +53,7 @@
     clip-path: inset(50%);
     white-space: nowrap;
   }
+  .round { flex-direction: column; }
   .zoom { flex-direction: column; }
 }
 

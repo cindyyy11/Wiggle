@@ -18,7 +18,8 @@ export function Astronaut({ input, reducedMotion }: { input: InputRef; reducedMo
     if (state.paused) { state.keys.clear(); state.horizontal = 0; state.vertical = 0; state.hop = false; state.destination = null; }
     const horizontal = state.horizontal + Number(state.keys.has("arrowright") || state.keys.has("d")) - Number(state.keys.has("arrowleft") || state.keys.has("a"));
     const vertical = state.vertical + Number(state.keys.has("arrowup") || state.keys.has("w")) - Number(state.keys.has("arrowdown") || state.keys.has("s"));
-    const speed = state.keys.has("shift") || state.running ? .75 : .42;
+    const sprinting = state.keys.has("shift") || state.running;
+    const speed = sprinting ? .95 : .42;
     let moving = false;
     if (horizontal || vertical) {
       state.destination = null;
@@ -51,7 +52,7 @@ export function Astronaut({ input, reducedMotion }: { input: InputRef; reducedMo
     explorer.current.position.copy(motion.normal).multiplyScalar(RADIUS + .03 + hop);
     explorer.current.quaternion.setFromUnitVectors(motion.up, motion.normal);
     explorer.current.position.toArray(state.position);
-    if (moving) motion.step += delta * 10;
+    if (moving) motion.step += delta * (sprinting ? 16 : 10);
     const stride = moving && !reducedMotion ? Math.sin(motion.step) * .42 : 0;
     if (leftLeg.current) leftLeg.current.rotation.x = stride;
     if (rightLeg.current) rightLeg.current.rotation.x = -stride;

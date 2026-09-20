@@ -92,6 +92,22 @@ describe("Numeria quality and accessible controls", () => {
     expect(sceneState.input?.current.running).toBe(false);
   });
 
+  it("walks with the keyboard without focusing the movement pad, but not while typing", async () => {
+    render(<UniverseCanvas />);
+    await screen.findByTestId("scene");
+    fireEvent.keyDown(document.body, { key: "w" });
+    fireEvent.keyDown(document.body, { key: "Shift" });
+    expect(sceneState.input?.current.keys.has("w")).toBe(true);
+    expect(sceneState.input?.current.keys.has("shift")).toBe(true);
+    fireEvent.keyUp(document.body, { key: "w" });
+    expect(sceneState.input?.current.keys.has("w")).toBe(false);
+    const field = document.createElement("input");
+    document.body.appendChild(field);
+    fireEvent.keyDown(field, { key: "a" });
+    expect(sceneState.input?.current.keys.has("a")).toBe(false);
+    field.remove();
+  });
+
   it("retains controlled pizza selection in fallback and emits the same slice commands", () => {
     const toggle = vi.fn();
     render(<UniverseCanvas quality="fallback" pizza={{ visible: true, selectedSlices: [0, 1, 2], onSliceSelect: toggle }} />);

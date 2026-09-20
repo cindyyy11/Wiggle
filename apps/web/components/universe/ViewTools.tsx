@@ -21,13 +21,12 @@ export function ViewTools({ mode, input, onToggleMode, onReset, zoom = true }: V
       <ModeIcon aria-hidden="true" size={18} />
       <span className={styles.label}>{globe ? "Follow explorer" : "View whole planet"}</span>
     </button>
-    <button type="button" className={styles.tool} aria-label="Reset view" onClick={onReset}>
-      <RotateCcw aria-hidden="true" size={18} />
-      <span className={styles.label} aria-hidden="true">Reset view</span>
-    </button>
-    {zoom ? <div className={styles.zoom} role="group" aria-label="Zoom">
-      <button type="button" className={styles.tool} aria-label="Zoom in" onClick={() => { input.current.zoom -= 1; }}><Plus aria-hidden="true" size={20} /></button>
-      <button type="button" className={styles.tool} aria-label="Zoom out" onClick={() => { input.current.zoom += 1; }}><Minus aria-hidden="true" size={20} /></button>
-    </div> : null}
+    <div className={styles.round}>
+      <button type="button" className={styles.tool} aria-label="Reset view" title="Reset view" onClick={onReset}><RotateCcw aria-hidden="true" size={18} /></button>
+      {zoom ? <div className={styles.zoom} role="group" aria-label="Zoom">
+        <button type="button" className={styles.tool} aria-label="Zoom in" title="Zoom in" onClick={() => { input.current.zoom -= 1; }}><Plus aria-hidden="true" size={20} /></button>
+        <button type="button" className={styles.tool} aria-label="Zoom out" title="Zoom out" onClick={() => { input.current.zoom += 1; }}><Minus aria-hidden="true" size={20} /></button>
+      </div> : null}
+    </div>
   </div>;
 }

@@ -17,6 +17,8 @@ class GraphicsBoundary extends Component<{ children: ReactNode; onFailure: () =>
   render() { return this.state.failed ? null : this.props.children; }
 }
 
+const MOVEMENT_KEYS = ["arrowup", "arrowdown", "arrowleft", "arrowright", "w", "a", "s", "d", " ", "shift"];
+
 export interface UniverseCanvasProps {
   explorerInput?: import('./world').InputRef;
   controlsDisabled?: boolean;
@@ -56,6 +58,7 @@ export function UniverseCanvas({ explorerInput, controlsDisabled = false, resetV
   const localInput = useRef(createExplorerInput());
   const input = explorerInput ?? localInput;
   const activePointer = useRef<number | null>(null);
+  const padRef = useRef<HTMLDivElement>(null);
   const instructionsId = useId();
   const mode = controlledMode ?? localMode;
   const selectedLandmark = controlledLandmark ?? localLandmark;
@@ -98,6 +101,27 @@ export function UniverseCanvas({ explorerInput, controlsDisabled = false, resetV
     return () => { clear(); window.removeEventListener("blur", clear); document.removeEventListener("visibilitychange", clear); };
   }, []);
 
+  useEffect(() => {
+    if (mapVisible || controlsDisabled) return;
+    const current = input.current;
+    const ignored = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      return event.ctrlKey || event.metaKey || event.altKey || !!padRef.current?.contains(target) || !!target?.closest?.("input, textarea, select, [contenteditable='true']");
+    };
+    const down = (event: KeyboardEvent) => {
+      const key = event.key.toLowerCase();
+      if (!MOVEMENT_KEYS.includes(key) || ignored(event)) return;
+      if (key === " " && (event.target as HTMLElement | null)?.closest?.("button, a, summary, [role='button']")) return;
+      if (key !== "shift") event.preventDefault();
+      current.keys.add(key);
+      if (key === " " && !event.repeat) current.hop = true;
+    };
+    const up = (event: KeyboardEvent) => { current.keys.delete(event.key.toLowerCase()); };
+    window.addEventListener("keydown", down);
+    window.addEventListener("keyup", up);
+    return () => { window.removeEventListener("keydown", down); window.removeEventListener("keyup", up); current.keys.clear(); };
+  }, [mapVisible, controlsDisabled, input]);
+
   const sound = useWiggleSound();
   const changeMode = (next: CameraMode) => { setLocalMode(next); onModeChange?.(next); };
   const selectLandmark = useCallback((id: LandmarkId) => {
@@ -130,13 +154,13 @@ export function UniverseCanvas({ explorerInput, controlsDisabled = false, resetV
     {mapVisible && pizza?.visible ? <div className={styles.mapPizza} role="img" aria-label={`Pizza with ${pizza.selectedSlices.length} of four equal slices selected`}><div>{[0, 1, 2, 3].map(index => <span key={index} data-selected={pizza.selectedSlices.includes(index)} />)}</div></div> : null}
     {hud ?? <ExplorationHud mode={mode} mapVisible={mapVisible} selectedLandmark={selectedLandmark} landmark={landmark} help={help} onHelpChange={setHelp} onModeChange={changeMode} onToggleMap={() => { setUserMap(!mapVisible); if (mapVisible) { setFailed(false); setQuality("low"); } }} onSelectLandmark={selectLandmark} onMissionStart={onMissionStart ? startMission : undefined} instructionsId={instructionsId} missionVisible={mode === "mission" || !!pizza?.visible} onWorldsRequest={onWorldsRequest} worldsDisabled={worldsDisabled} worldsDisabledMessage={worldsDisabledMessage} />}
     {!mapVisible && !controlsDisabled ? <div className={styles.explorerControls}>
-      <div className={styles.movementPad} tabIndex={0} role="group" aria-label="Move explorer. Arrow keys or WASD to walk, Shift to run, Space to hop." onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) input.current.keys.clear(); }} onKeyDown={event => {
+      <div ref={padRef} className={styles.movementPad} tabIndex={0} role="group" aria-label="Move explorer. Arrow keys or WASD to walk, Shift to run, Space to hop." onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) input.current.keys.clear(); }} onKeyDown={event => {
         const key = event.key.toLowerCase();
-        if (["arrowup", "arrowdown", "arrowleft", "arrowright", "w", "a", "s", "d", " ", "shift"].includes(key)) { event.preventDefault(); input.current.keys.add(key); if (key === " ") input.current.hop = true; }
+        if (MOVEMENT_KEYS.includes(key)) { event.preventDefault(); input.current.keys.add(key); if (key === " ") input.current.hop = true; }
       }} onKeyUp={event => input.current.keys.delete(event.key.toLowerCase())}>
         {([{ label: "Walk forward", text: "↑", x: 0, y: 1, area: "up" }, { label: "Walk left", text: "←", x: -1, y: 0, area: "left" }, { label: "Walk back", text: "↓", x: 0, y: -1, area: "down" }, { label: "Walk right", text: "→", x: 1, y: 0, area: "right" }]).map(direction => <button type="button" key={direction.area} style={{ gridArea: direction.area }} aria-label={direction.label} onPointerDown={event => { event.currentTarget.setPointerCapture(event.pointerId); activePointer.current = event.pointerId; input.current.horizontal = direction.x; input.current.vertical = direction.y; input.current.destination = null; }} onPointerUp={stopDirection} onPointerCancel={stopDirection} onLostPointerCapture={stopDirection} onClick={event => { if (event.detail === 0) { const [x, y, z] = input.current.position; const latitude = Math.atan2(y, Math.hypot(x, z)); const longitude = Math.atan2(x, z); input.current.destination = { latitude: latitude + direction.y * .12, longitude: longitude + direction.x * .12 }; } }}>{direction.text}</button>)}
       </div>
-      <button type="button" className={styles.run} aria-pressed={running} onClick={() => { input.current.running = !running; setRunning(!running); }}>Run</button>
+      <button type="button" className={styles.run} aria-pressed={running} title="Run: walk faster" onClick={() => { input.current.running = !running; setRunning(!running); }}>Run</button>
       <button type="button" className={styles.hop} onClick={() => { input.current.hop = true; }}>Hop <span aria-hidden="true">↑</span></button>
       {hud ? null : <div className={styles.zoom} role="group" aria-label="Zoom"><button type="button" aria-label="Zoom in" onClick={() => { input.current.zoom -= 1; }}>+</button><button type="button" aria-label="Zoom out" onClick={() => { input.current.zoom += 1; }}>−</button></div>}
     </div> : mapVisible ? <p className={styles.mapNote}>A quieter view. The same little adventures.</p> : null}
