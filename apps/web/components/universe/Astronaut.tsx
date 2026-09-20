@@ -36,10 +36,14 @@ export function Astronaut({ input, reducedMotion }: { input: InputRef; reducedMo
   useFrame((_, rawDelta) => {
     if (!explorer.current) return;
     const delta = Math.min(rawDelta, .05); const state = input.current;
-    if (state.teleport) { motion.normal.set(...surfacePoint(state.teleport, 1)); state.teleport = null; motion.hopTime = -1; motion.speed = 0; state.destination = null; }
+    if (state.teleport) {
+      motion.normal.set(...surfacePoint(state.teleport, 1));
+      state.teleport = null; motion.hopTime = -1; motion.speed = 0; state.destination = null;
+    }
     if (state.paused) { state.keys.clear(); state.horizontal = 0; state.vertical = 0; state.hop = false; state.destination = null; }
-    const horizontal = state.horizontal + Number(state.keys.has("arrowright") || state.keys.has("d")) - Number(state.keys.has("arrowleft") || state.keys.has("a"));
-    const vertical = state.vertical + Number(state.keys.has("arrowup") || state.keys.has("w")) - Number(state.keys.has("arrowdown") || state.keys.has("s"));
+    const held = (...keys: string[]) => Number(keys.some(key => state.keys.has(key)));
+    const horizontal = state.horizontal + held("arrowright", "d") - held("arrowleft", "a");
+    const vertical = state.vertical + held("arrowup", "w") - held("arrowdown", "s");
     const sprinting = state.keys.has("shift") || state.running;
 
     // The heading stays a unit tangent of the sphere wherever the explorer walks.
@@ -67,7 +71,8 @@ export function Astronaut({ input, reducedMotion }: { input: InputRef; reducedMo
       const length = Math.max(1, Math.hypot(horizontal, vertical));
       motion.speed = sprinting ? RUN_SPEED : WALK_SPEED;
       motion.aim.copy(motion.east).multiplyScalar(horizontal).addScaledVector(motion.north, vertical).normalize();
-      motion.normal.addScaledVector(motion.east, horizontal * motion.speed * delta / length).addScaledVector(motion.north, vertical * motion.speed * delta / length).normalize();
+      const keyStep = motion.speed * delta / length;
+      motion.normal.addScaledVector(motion.east, horizontal * keyStep).addScaledVector(motion.north, vertical * keyStep).normalize();
       turnToward(motion.aim, KEY_TURN_EASE);
     } else if (state.destination) {
       motion.target.set(...surfacePoint(state.destination, 1));
@@ -123,21 +128,78 @@ export function Astronaut({ input, reducedMotion }: { input: InputRef; reducedMo
     }
   });
 
-  return <group ref={explorer} name="Wiggle explorer" position={surfacePoint(INITIAL_DESTINATION, RADIUS + .03)} scale={SCALE}>
-    <mesh position={[0, .025, 0]} rotation={[-Math.PI / 2, 0, 0]}><circleGeometry args={[.2, 14]} /><meshBasicMaterial color="#285c85" transparent opacity={.16} depthWrite={false} /></mesh>
-    <group ref={body}>
-    <group ref={leftLeg} position={[-.073, .19, 0]}><mesh position={[0, -.08, 0]}><capsuleGeometry args={[.057, .105, 2, 6]} /><meshStandardMaterial color="#fff7e7" roughness={.92} /></mesh><mesh position={[0, -.15, .04]}><boxGeometry args={[.115, .08, .16]} /><meshStandardMaterial color="#ef8b78" roughness={.9} /></mesh></group>
-    <group ref={rightLeg} position={[.073, .19, 0]}><mesh position={[0, -.08, 0]}><capsuleGeometry args={[.057, .105, 2, 6]} /><meshStandardMaterial color="#fff7e7" roughness={.92} /></mesh><mesh position={[0, -.15, .04]}><boxGeometry args={[.115, .08, .16]} /><meshStandardMaterial color="#ef8b78" roughness={.9} /></mesh></group>
-    <mesh position={[0, .31, 0]}><capsuleGeometry args={[.13, .14, 3, 8]} /><meshStandardMaterial color="#fff7e7" roughness={.9} /></mesh>
-    <mesh position={[0, .31, -.13]}><boxGeometry args={[.2, .24, .12]} /><meshStandardMaterial color="#9dc99a" roughness={1} /></mesh>
-    <mesh position={[0, .33, .119]}><boxGeometry args={[.13, .095, .026]} /><meshStandardMaterial color="#f4c95d" roughness={.88} /></mesh>
-    <group ref={leftArm} position={[-.17, .31, 0]} rotation={[0, 0, -.2]}><mesh><capsuleGeometry args={[.05, .15, 2, 6]} /><meshStandardMaterial color="#d9efd7" roughness={.9} /></mesh></group>
-    <group ref={rightArm} position={[.17, .31, 0]} rotation={[0, 0, .2]}><mesh><capsuleGeometry args={[.05, .15, 2, 6]} /><meshStandardMaterial color="#d9efd7" roughness={.9} /></mesh></group>
-    <mesh position={[0, .55, 0]}><sphereGeometry args={[.205, 12, 9]} /><meshStandardMaterial color="#fff7e7" roughness={.72} /></mesh>
-    <mesh position={[0, .557, .113]} scale={[1, .78, .56]}><sphereGeometry args={[.174, 12, 8]} /><meshStandardMaterial color="#285c85" metalness={0} roughness={.42} /></mesh>
-    <mesh position={[-.062, .62, .188]} scale={[1, .3, .1]} rotation={[0, 0, -.3]}><sphereGeometry args={[.053, 8, 5]} /><meshBasicMaterial color="#a9d9ee" /></mesh>
-    <mesh position={[.13, .72, 0]}><cylinderGeometry args={[.009, .009, .14, 4]} /><meshStandardMaterial color="#9dc99a" roughness={.9} /></mesh>
-    <mesh position={[.13, .8, 0]}><sphereGeometry args={[.025, 6, 4]} /><meshBasicMaterial color="#f4c95d" /></mesh>
+  return (
+    <group ref={explorer} name="Wiggle explorer" position={surfacePoint(INITIAL_DESTINATION, RADIUS + .03)} scale={SCALE}>
+      <mesh position={[0, .025, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[.2, 14]} />
+        <meshBasicMaterial color="#285c85" transparent opacity={.16} depthWrite={false} />
+      </mesh>
+      <group ref={body}>
+        <group ref={leftLeg} position={[-.073, .19, 0]}>
+          <mesh position={[0, -.08, 0]}>
+            <capsuleGeometry args={[.057, .105, 2, 6]} />
+            <meshStandardMaterial color="#fff7e7" roughness={.92} />
+          </mesh>
+          <mesh position={[0, -.15, .04]}>
+            <boxGeometry args={[.115, .08, .16]} />
+            <meshStandardMaterial color="#ef8b78" roughness={.9} />
+          </mesh>
+        </group>
+        <group ref={rightLeg} position={[.073, .19, 0]}>
+          <mesh position={[0, -.08, 0]}>
+            <capsuleGeometry args={[.057, .105, 2, 6]} />
+            <meshStandardMaterial color="#fff7e7" roughness={.92} />
+          </mesh>
+          <mesh position={[0, -.15, .04]}>
+            <boxGeometry args={[.115, .08, .16]} />
+            <meshStandardMaterial color="#ef8b78" roughness={.9} />
+          </mesh>
+        </group>
+        <mesh position={[0, .31, 0]}>
+          <capsuleGeometry args={[.13, .14, 3, 8]} />
+          <meshStandardMaterial color="#fff7e7" roughness={.9} />
+        </mesh>
+        <mesh position={[0, .31, -.13]}>
+          <boxGeometry args={[.2, .24, .12]} />
+          <meshStandardMaterial color="#9dc99a" roughness={1} />
+        </mesh>
+        <mesh position={[0, .33, .119]}>
+          <boxGeometry args={[.13, .095, .026]} />
+          <meshStandardMaterial color="#f4c95d" roughness={.88} />
+        </mesh>
+        <group ref={leftArm} position={[-.17, .31, 0]} rotation={[0, 0, -.2]}>
+          <mesh>
+            <capsuleGeometry args={[.05, .15, 2, 6]} />
+            <meshStandardMaterial color="#d9efd7" roughness={.9} />
+          </mesh>
+        </group>
+        <group ref={rightArm} position={[.17, .31, 0]} rotation={[0, 0, .2]}>
+          <mesh>
+            <capsuleGeometry args={[.05, .15, 2, 6]} />
+            <meshStandardMaterial color="#d9efd7" roughness={.9} />
+          </mesh>
+        </group>
+        <mesh position={[0, .55, 0]}>
+          <sphereGeometry args={[.205, 12, 9]} />
+          <meshStandardMaterial color="#fff7e7" roughness={.72} />
+        </mesh>
+        <mesh position={[0, .557, .113]} scale={[1, .78, .56]}>
+          <sphereGeometry args={[.174, 12, 8]} />
+          <meshStandardMaterial color="#285c85" metalness={0} roughness={.42} />
+        </mesh>
+        <mesh position={[-.062, .62, .188]} scale={[1, .3, .1]} rotation={[0, 0, -.3]}>
+          <sphereGeometry args={[.053, 8, 5]} />
+          <meshBasicMaterial color="#a9d9ee" />
+        </mesh>
+        <mesh position={[.13, .72, 0]}>
+          <cylinderGeometry args={[.009, .009, .14, 4]} />
+          <meshStandardMaterial color="#9dc99a" roughness={.9} />
+        </mesh>
+        <mesh position={[.13, .8, 0]}>
+          <sphereGeometry args={[.025, 6, 4]} />
+          <meshBasicMaterial color="#f4c95d" />
+        </mesh>
+      </group>
     </group>
-  </group>;
+  );
 }

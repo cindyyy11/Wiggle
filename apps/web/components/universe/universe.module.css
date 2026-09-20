@@ -1,93 +1,1254 @@
-.universe{--cream:#fff7e7;--pale-blue:#a9d9ee;--navy:#285c85;--accessible-navy:#173e5e;--sage:#9dc99a;--coral:#ef8b78;--mustard:#f4c95d;--ink:#285c85;--muted:#426f8d;--hud-surface:#fff7e7;--wiggle-blue:#a9d9ee;--wiggle-green:#9dc99a;--wiggle-yellow:#f4c95d;--wiggle-coral:#ef8b78;--ease-out:cubic-bezier(0.23, 1, 0.32, 1);--ease-in-out:cubic-bezier(0.77, 0, 0.175, 1);position:relative;isolation:isolate;min-height:100svh;height:100svh;overflow:hidden;background:linear-gradient(158deg,#a9d9ee 0%,#d8eff3 56%,#fff7e7 100%);color:var(--ink);font-family:"Trebuchet MS",Arial,sans-serif;box-sizing:border-box}
-.universe:is([data-camera-mode="follow"],[data-camera-mode="mission"]){--hud-surface:#fff7e7}
-.worldTitle{position:relative;width:fit-content;isolation:isolate}.orbitCaption{isolation:isolate;z-index:2}
-.worldTitle::before,.orbitCaption::before{content:"";position:absolute;inset:-10px -12px;background:var(--hud-surface);border-radius:12px;z-index:-1;pointer-events:none}
-.universe *{box-sizing:border-box}.universe button,.universe a{-webkit-tap-highlight-color:transparent}.universe button{font:inherit;color:inherit;cursor:pointer;min-height:44px;border:1px solid #ffffff22;background:#152139;transition:background .16s,border-color .16s}.universe button:hover{background:#283853;border-color:#ffffff77}.universe button:focus-visible,.universe a:focus-visible,.movementPad:focus-visible{outline:3px solid #fbdb8d;outline-offset:5px}.stars{position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(circle at 12% 33%,#a9bbd3 1px,transparent 1.5px),radial-gradient(circle at 67% 74%,#7489ad 1px,transparent 1.5px),radial-gradient(circle at 86% 22%,#99acd0 .75px,transparent 1.5px);background-size:213px 187px,307px 281px,419px 317px;opacity:.55}.heading{position:absolute;inset:32px 42px auto;z-index:2;pointer-events:none}.wordmark{font-size:30px;font-weight:900;letter-spacing:-2px;display:inline-flex;gap:8px;color:var(--ink);text-decoration:none;pointer-events:auto}.wordmark span{font-size:22px;color:#b7e1c6;align-self:flex-start;letter-spacing:0}.worldTitle{margin-top:54px}.worldTitle>span,.eyebrow,.destinations>p,.orbitCaption{font-size:10px;font-weight:700;letter-spacing:2.5px}.worldTitle>span{color:#bac8cf}.worldTitle h1{font-family:Georgia,"Times New Roman",serif;font-size:clamp(42px,5vw,74px);font-weight:400;letter-spacing:-3px;margin:10px 0}.worldTitle p{font-size:14px;color:var(--muted);margin:12px 0;line-height:1.6}.scene{position:absolute;inset:0}.scene canvas{touch-action:none}.cameraControls{position:absolute;right:36px;top:30px;display:flex;gap:8px;z-index:3}.cameraControls button{border-radius:50%;width:46px;height:46px;font-size:20px;background:#0e1a30e8}.cameraControls button[aria-pressed=true]{background:#e0e9da;color:#172b2e;border-color:#e0e9da}.cameraControls button span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.orbitCaption{position:absolute;right:37px;top:112px;display:flex;flex-direction:column;gap:15px;color:#b5bdcf;font-size:9px;letter-spacing:1.2px}.orbitCaption small{font-size:8px;padding:4px 5px;border:1px solid #9ba9bd42;border-radius:4px;margin-left:4px;color:#9ba9bd}.destinations{position:absolute;left:42px;top:340px;display:grid;gap:8px;width:235px;z-index:2}.destinations>p{color:#8f9db5;margin:0 0 13px;font-size:9px;letter-spacing:2px}.destinations button{display:flex;gap:12px;align-items:center;text-align:left;background:#0b1427b8;border-color:transparent;border-radius:12px;padding:8px 13px 8px 9px;font-size:12px;min-height:51px}.destinations button[aria-pressed=true]{border-color:#ffffff2c;background:#1a2b3bd9}.regionSymbol{width:31px;height:31px;display:grid;place-items:center;border-radius:50%;background:color-mix(in srgb,var(--region) 15%,#102232);color:var(--region);font-family:Georgia,serif;font-size:20px}.regionArrow{margin-left:auto;color:var(--region)}.destinationCard{position:absolute;right:36px;bottom:37px;width:280px;background:#152338e8;border:1px solid #ffffff28;border-radius:20px;padding:23px;z-index:2;box-shadow:0 15px 50px #02061333}.eyebrow{font-size:8px;color:var(--region);letter-spacing:1.8px}.destinationCard h2{font-family:Georgia,serif;font-size:29px;font-weight:400;margin:12px 0 9px;line-height:1.15}.destinationCard p{font-size:12px;color:#b9c7d8;line-height:1.6;margin:0 0 19px}.universe .missionButton{display:flex;justify-content:space-between;align-items:center;padding:0 15px;width:100%;min-height:48px;border:0;border-radius:10px;background:#d9edc8;color:#1b352e;font-size:12px;font-weight:700}.universe .missionButton:hover{background:#edffdd}.missionButton span{font-size:23px}.explorerControls{position:absolute;bottom:32px;left:42px;display:flex;align-items:flex-end;gap:14px;z-index:2}.movementPad{display:grid;grid-template-areas:". up ." "left down right";grid-template-columns:44px 44px 44px;gap:4px;border-radius:12px;touch-action:none}.movementPad button{border-radius:10px;font-size:19px;background:#142039dc}.hop{border-radius:28px;padding:0 19px;height:48px;font-size:12px!important}.hop span{font-size:17px;margin-left:12px}.zoom{display:flex;gap:4px;margin-left:10px}.zoom button{border-radius:50%;width:44px;font-size:23px;background:#152139da}.help{position:absolute;right:36px;top:95px;max-width:340px;border:1px solid #b9c9df55;background:#142238;padding:22px;border-radius:17px;z-index:5;box-shadow:0 16px 40px #0005}.help h2{font:24px Georgia,serif;margin:0 0 12px}.help p{font-size:13px;line-height:1.7;color:#c7d2e4}.help button{padding:0 18px;border-radius:10px}.live{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}.loading{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:14px;color:#c2d8d4}.map{position:absolute;left:51%;top:48%;width:min(44vw,500px);aspect-ratio:1;transform:translate(-50%,-50%)}.mapPlanet{position:absolute;inset:0;border-radius:50%;overflow:hidden;background:#326966;border:5px solid #7cb5aa;box-shadow:inset -24px -28px 0 #0d4145,0 0 0 14px #94dcd20b,0 0 100px #6cdccc16}.mapPlanet>span{position:absolute;display:flex;align-items:center;justify-content:center;flex-direction:column;font:50px Georgia,serif}.mapPlanet small{font:700 8px "Trebuchet MS",sans-serif;letter-spacing:1px;line-height:1.7;margin-top:8px}.mapForest{left:4%;top:12%;width:51%;height:46%;background:#83c99e;color:#174239;border-radius:50% 35% 50% 20%;transform:rotate(-8deg)}.mapRidge{right:4%;top:4%;width:40%;height:48%;background:#a1d7e1;color:#235469;border-radius:30% 80% 40% 60%}.mapCrater{left:3%;bottom:4%;width:47%;height:41%;background:#9380b7;color:#f1e7ff;border-radius:35% 60% 20% 80%}.mapValley{right:5%;bottom:6%;width:42%;height:42%;background:#d7b277;color:#573c2d;border-radius:55% 30% 80% 20%;font-size:32px!important}.mapPlanet .mapExplorer{left:46%;top:44%;color:#fff6c9;font-size:28px}.mapOrbit{position:absolute;inset:-22% -28%;border:1px solid #9eb7d526;border-radius:50%;transform:rotate(-25deg);z-index:-1}.mapNote{position:absolute;left:42px;bottom:30px;font-size:12px;color:#a7b9c9}.sliceControls{position:absolute;left:50%;bottom:30px;transform:translateX(-50%);display:flex;gap:6px;z-index:4}.sliceControls button{padding:4px 12px;border-radius:12px;font-size:12px}.sliceControls button[aria-pressed=true]{background:#d9edc8;color:#1b352e}
-@media(min-width:1500px){.destinations{top:370px}.worldTitle{margin-top:76px}.destinationCard{width:315px}.heading{inset:40px 55px auto}}
-@media(max-width:900px){.universe{min-height:100svh}.heading{inset:24px 23px auto}.wordmark{font-size:27px}.worldTitle{margin-top:30px}.worldTitle h1{font-size:49px}.worldTitle p{max-width:180px;font-size:12px}.worldTitle>span{font-size:8px}.cameraControls{top:22px;right:20px;gap:5px}.cameraControls button{width:44px;height:44px}.orbitCaption{right:22px;top:86px;font-size:8px;gap:11px}.destinations{left:22px;top:auto;bottom:175px;width:205px;gap:3px}.destinations>p{display:none}.destinations button{min-height:44px;font-size:11px;padding:5px 8px}.regionSymbol{width:28px;height:28px}.destinationCard{right:22px;bottom:25px;width:245px;padding:20px}.explorerControls{left:22px;bottom:25px;gap:8px}.zoom{display:none}.hop{padding:0 13px}.map{width:47vw;left:54%;top:43%}}
-@media(max-width:600px){.universe{min-height:844px;height:100svh}.heading{inset:20px 20px auto}.wordmark{font-size:25px}.wordmark span{font-size:18px}.worldTitle{margin-top:32px}.worldTitle h1{font-size:48px;margin:8px 0;letter-spacing:-2px}.worldTitle>span{font-size:7px;letter-spacing:2px}.worldTitle p{font-size:11px;max-width:200px;margin-top:7px}.cameraControls{top:17px;right:16px;gap:4px}.cameraControls button{width:40px;min-height:44px;font-size:18px}.orbitCaption{top:99px;right:18px;max-width:100px;font-size:7px;line-height:1.8;gap:5px}.orbitCaption small{font-size:6px;margin:0;padding:2px}.destinations{left:16px;right:16px;bottom:206px;width:auto;grid-template-columns:1fr 1fr;gap:4px}.destinations button{background:#112037eb;font-size:10px;gap:7px;padding:5px 8px}.destinations button:last-child{display:none}.regionArrow{font-size:13px}.regionSymbol{font-size:17px;width:25px;height:25px;flex-shrink:0}.destinationCard{left:16px;right:16px;bottom:91px;width:auto;min-height:98px;padding:15px 16px;display:grid;grid-template-columns:1fr 130px;column-gap:10px;align-items:center;border-radius:15px}.destinationCard .eyebrow{grid-column:1;font-size:7px;letter-spacing:1.2px}.destinationCard h2{grid-column:1;font-size:23px;margin:6px 0 5px}.destinationCard p{grid-column:1;font-size:10px;margin:0}.universe .missionButton{grid-column:2;grid-row:1 / 4;font-size:10px;gap:7px;padding:8px 12px;min-height:49px}.missionButton span{font-size:19px}.explorerControls{left:16px;right:16px;bottom:16px;justify-content:space-between}.movementPad{grid-template-areas:"left up down right";grid-template-columns:repeat(4,44px);gap:5px}.hop{height:44px;min-width:93px}.help{right:16px;left:16px;top:74px;max-width:none}.map{width:72vw;left:50%;top:43%}.mapPlanet small{font-size:6px}.mapPlanet>span{font-size:38px}.mapValley{font-size:24px!important}.mapNote{left:0;right:0;bottom:33px;text-align:center;font-size:11px}.sliceControls{bottom:315px;width:calc(100% - 32px);justify-content:center}.sliceControls button{font-size:11px;padding:5px 11px}}
-@media(prefers-reduced-motion:reduce){.universe *{transition:none!important;animation:none!important}}
-.mapPizza{position:absolute;left:48%;top:48%;width:260px;height:260px;transform:translate(-50%,-50%);padding:14px;background:#c99551;border:7px solid #edc584;border-radius:50%;box-shadow:0 18px 0 #8d653e,0 28px 45px #0005;z-index:1}.mapPizza>div{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;height:100%;border-radius:50%;overflow:hidden}.mapPizza span{background:radial-gradient(circle at 45% 40%,#af523f 0 12%,transparent 13%),radial-gradient(circle at 76% 74%,#af523f 0 11%,transparent 12%),#eaca87;opacity:.5;transition:opacity .16s,background .16s}.mapPizza span[data-selected=true]{background:radial-gradient(circle at 45% 40%,#af523f 0 12%,transparent 13%),radial-gradient(circle at 76% 74%,#af523f 0 11%,transparent 12%),#f5de9e;opacity:1;box-shadow:inset 0 0 0 4px #ecffb0}.universe:has(.mapPizza) .map{opacity:.12}.universe[data-camera-mode=mission] .mapPlanet{filter:brightness(.6)}
-@media(max-width:600px){.universe[data-camera-mode=mission] .scene{transform:translateY(-120px)}.mapPizza{top:275px;left:50%;width:155px;height:155px;border-width:4px;padding:7px;box-shadow:0 10px 0 #8d653e,0 18px 35px #0005}.mapPizza>div{gap:5px}}
-.run{min-width:44px;height:44px;padding:0 10px;border-radius:50%;font-size:11px!important}.universe .run[aria-pressed=true]{background:#d9edc8;color:#1b352e}
-.cameraControls .parentLink{display:grid;place-items:center;width:44px;min-height:44px;border:1px solid #ffffff22;border-radius:50%;font-size:10px;color:inherit;text-decoration:none;background:#0e1a30e8}.cameraControls .parentLink:hover{background:#283853}
-.cameraControls .parentLink:disabled{cursor:not-allowed;opacity:.6}.cameraControls .parentLink:disabled:hover{background:#0e1a30e8}
-@media(max-width:900px){.zoom{display:flex;position:absolute;left:0;bottom:110px}.zoom button{width:44px;height:44px}}
-@media(max-width:600px){.cameraControls button{width:44px}.destinations{bottom:206px}.destinations button{font-size:11px}.destinations button:last-child{display:flex;grid-column:1 / 3;justify-self:center;min-width:180px}.destinationCard p{font-size:11px}.universe .missionButton{font-size:11px}.zoom{left:auto;right:0;bottom:350px;margin:0;gap:4px}.zoom button{background:#112037ee}.sliceControls{bottom:356px}.map{top:41%;width:67vw}}
-.wordmarkImage{width:48px;height:48px;object-fit:contain;display:block}
-.universe button{transition:background 160ms var(--ease-out),border-color 160ms var(--ease-out),color 160ms var(--ease-out),transform 120ms var(--ease-out)}
-.universe button:active{transform:scale(.97)}
-@media (hover: hover) and (pointer: fine){.universe button:hover{transform:translateY(-2px)}}
-.wordmarkImage{animation:mark-float 3.6s var(--ease-in-out) infinite alternate}
-@keyframes mark-float{to{transform:translateY(-4px) rotate(-2deg)}}
-.regionSymbol{border:2px solid color-mix(in srgb,var(--wiggle-blue) 55%,transparent)}
-.destinations button[aria-pressed=true]{border-color:var(--wiggle-blue);box-shadow:inset 3px 0 0 var(--wiggle-blue)}
-.universe .missionButton{background:var(--wiggle-green)}
-.universe .missionButton:hover{background:color-mix(in srgb,var(--wiggle-green) 78%,white)}
-.mapPizza span[data-selected=true]{background:radial-gradient(circle at 45% 40%,var(--wiggle-coral) 0 12%,transparent 13%),radial-gradient(circle at 76% 74%,var(--wiggle-coral) 0 11%,transparent 12%),color-mix(in srgb,var(--wiggle-yellow) 75%,white);box-shadow:inset 0 0 0 4px var(--wiggle-yellow)}
-.universe .run[aria-pressed=true],.sliceControls button[aria-pressed=true]{background:var(--wiggle-green);color:#1b352e;border-color:var(--wiggle-green)}
-@media (prefers-reduced-motion: reduce){.wordmarkImage{animation:none}.universe button:active{transform:none}}
-.handOverlay{position:absolute;inset:0;z-index:3;pointer-events:none}.handCursor{position:absolute;left:var(--hand-x);top:var(--hand-y);display:grid;place-items:center;width:32px;height:32px;transform:translate(-50%,-50%);border:2px solid #fff7e7;border-radius:50%;background:#285c85d9;color:#f4c95d;font-size:16px;box-shadow:0 0 0 5px #f4c95d33}.handStatus{position:absolute;left:50%;top:18px;transform:translateX(-50%);margin:0;padding:7px 11px;border:1px solid #ffffff38;border-radius:999px;background:#0b1225d9;color:#fff7e7;font-size:11px}.handDebug{position:absolute;left:16px;bottom:16px;max-width:calc(100% - 32px);padding:7px 9px;border:1px solid #f4c95d88;border-radius:8px;background:#0b1225eb;color:#fff7e7;font:11px ui-monospace,SFMono-Regular,Menlo,monospace}
+.universe {
+  --cream: #fff7e7;
+  --pale-blue: #a9d9ee;
+  --navy: #285c85;
+  --accessible-navy: #173e5e;
+  --sage: #9dc99a;
+  --coral: #ef8b78;
+  --mustard: #f4c95d;
+  --ink: #285c85;
+  --muted: #426f8d;
+  --hud-surface: #fff7e7;
+  --wiggle-blue: #a9d9ee;
+  --wiggle-green: #9dc99a;
+  --wiggle-yellow: #f4c95d;
+  --wiggle-coral: #ef8b78;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  position: relative;
+  isolation: isolate;
+  min-height: 100svh;
+  height: 100svh;
+  overflow: hidden;
+  background: linear-gradient(158deg,#a9d9ee 0%,#d8eff3 56%,#fff7e7 100%);
+  color: var(--ink);
+  font-family: "Trebuchet MS",Arial,sans-serif;
+  box-sizing: border-box;
+}
+.universe:is([data-camera-mode="follow"],[data-camera-mode="mission"]) {
+  --hud-surface: #fff7e7;
+}
+.worldTitle {
+  position: relative;
+  width: fit-content;
+  isolation: isolate;
+}
+.orbitCaption {
+  isolation: isolate;
+  z-index: 2;
+}
+.worldTitle::before,
+.orbitCaption::before {
+  content: "";
+  position: absolute;
+  inset: -10px -12px;
+  background: var(--hud-surface);
+  border-radius: 12px;
+  z-index: -1;
+  pointer-events: none;
+}
+.universe * {
+  box-sizing: border-box;
+}
+.universe button,
+.universe a {
+  -webkit-tap-highlight-color: transparent;
+}
+.universe button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  min-height: 44px;
+  border: 1px solid #ffffff22;
+  background: #152139;
+  transition: background .16s,border-color .16s;
+}
+.universe button:hover {
+  background: #283853;
+  border-color: #ffffff77;
+}
+.universe button:focus-visible,
+.universe a:focus-visible,
+.movementPad:focus-visible {
+  outline: 3px solid #fbdb8d;
+  outline-offset: 5px;
+}
+.stars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(circle at 12% 33%,#a9bbd3 1px,transparent 1.5px),radial-gradient(circle at 67% 74%,#7489ad 1px,transparent 1.5px),radial-gradient(circle at 86% 22%,#99acd0 .75px,transparent 1.5px);
+  background-size: 213px 187px,307px 281px,419px 317px;
+  opacity: .55;
+}
+.heading {
+  position: absolute;
+  inset: 32px 42px auto;
+  z-index: 2;
+  pointer-events: none;
+}
+.wordmark {
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: -2px;
+  display: inline-flex;
+  gap: 8px;
+  color: var(--ink);
+  text-decoration: none;
+  pointer-events: auto;
+}
+.wordmark span {
+  font-size: 22px;
+  color: #b7e1c6;
+  align-self: flex-start;
+  letter-spacing: 0;
+}
+.worldTitle {
+  margin-top: 54px;
+}
+.worldTitle>span,
+.eyebrow,
+.destinations>p,
+.orbitCaption {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+}
+.worldTitle>span {
+  color: #bac8cf;
+}
+.worldTitle h1 {
+  font-family: Georgia,"Times New Roman",serif;
+  font-size: clamp(42px,5vw,74px);
+  font-weight: 400;
+  letter-spacing: -3px;
+  margin: 10px 0;
+}
+.worldTitle p {
+  font-size: 14px;
+  color: var(--muted);
+  margin: 12px 0;
+  line-height: 1.6;
+}
+.scene {
+  position: absolute;
+  inset: 0;
+}
+.scene canvas {
+  touch-action: none;
+}
+.cameraControls {
+  position: absolute;
+  right: 36px;
+  top: 30px;
+  display: flex;
+  gap: 8px;
+  z-index: 3;
+}
+.cameraControls button {
+  border-radius: 50%;
+  width: 46px;
+  height: 46px;
+  font-size: 20px;
+  background: #0e1a30e8;
+}
+.cameraControls button[aria-pressed=true] {
+  background: #e0e9da;
+  color: #172b2e;
+  border-color: #e0e9da;
+}
+.cameraControls button span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.orbitCaption {
+  position: absolute;
+  right: 37px;
+  top: 112px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  color: #b5bdcf;
+  font-size: 9px;
+  letter-spacing: 1.2px;
+}
+.orbitCaption small {
+  font-size: 8px;
+  padding: 4px 5px;
+  border: 1px solid #9ba9bd42;
+  border-radius: 4px;
+  margin-left: 4px;
+  color: #9ba9bd;
+}
+.destinations {
+  position: absolute;
+  left: 42px;
+  top: 340px;
+  display: grid;
+  gap: 8px;
+  width: 235px;
+  z-index: 2;
+}
+.destinations>p {
+  color: #8f9db5;
+  margin: 0 0 13px;
+  font-size: 9px;
+  letter-spacing: 2px;
+}
+.destinations button {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  text-align: left;
+  background: #0b1427b8;
+  border-color: transparent;
+  border-radius: 12px;
+  padding: 8px 13px 8px 9px;
+  font-size: 12px;
+  min-height: 51px;
+}
+.destinations button[aria-pressed=true] {
+  border-color: #ffffff2c;
+  background: #1a2b3bd9;
+}
+.regionSymbol {
+  width: 31px;
+  height: 31px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb,var(--region) 15%,#102232);
+  color: var(--region);
+  font-family: Georgia,serif;
+  font-size: 20px;
+}
+.regionArrow {
+  margin-left: auto;
+  color: var(--region);
+}
+.destinationCard {
+  position: absolute;
+  right: 36px;
+  bottom: 37px;
+  width: 280px;
+  background: #152338e8;
+  border: 1px solid #ffffff28;
+  border-radius: 20px;
+  padding: 23px;
+  z-index: 2;
+  box-shadow: 0 15px 50px #02061333;
+}
+.eyebrow {
+  font-size: 8px;
+  color: var(--region);
+  letter-spacing: 1.8px;
+}
+.destinationCard h2 {
+  font-family: Georgia,serif;
+  font-size: 29px;
+  font-weight: 400;
+  margin: 12px 0 9px;
+  line-height: 1.15;
+}
+.destinationCard p {
+  font-size: 12px;
+  color: #b9c7d8;
+  line-height: 1.6;
+  margin: 0 0 19px;
+}
+.universe .missionButton {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 15px;
+  width: 100%;
+  min-height: 48px;
+  border: 0;
+  border-radius: 10px;
+  background: #d9edc8;
+  color: #1b352e;
+  font-size: 12px;
+  font-weight: 700;
+}
+.universe .missionButton:hover {
+  background: #edffdd;
+}
+.missionButton span {
+  font-size: 23px;
+}
+.explorerControls {
+  position: absolute;
+  bottom: 32px;
+  left: 42px;
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  z-index: 2;
+}
+.movementPad {
+  display: grid;
+  grid-template-areas: ". up ." "left down right";
+  grid-template-columns: 44px 44px 44px;
+  gap: 4px;
+  border-radius: 12px;
+  touch-action: none;
+}
+.movementPad button {
+  border-radius: 10px;
+  font-size: 19px;
+  background: #142039dc;
+}
+.hop {
+  border-radius: 28px;
+  padding: 0 19px;
+  height: 48px;
+  font-size: 12px!important;
+}
+.hop span {
+  font-size: 17px;
+  margin-left: 12px;
+}
+.zoom {
+  display: flex;
+  gap: 4px;
+  margin-left: 10px;
+}
+.zoom button {
+  border-radius: 50%;
+  width: 44px;
+  font-size: 23px;
+  background: #152139da;
+}
+.help {
+  position: absolute;
+  right: 36px;
+  top: 95px;
+  max-width: 340px;
+  border: 1px solid #b9c9df55;
+  background: #142238;
+  padding: 22px;
+  border-radius: 17px;
+  z-index: 5;
+  box-shadow: 0 16px 40px #0005;
+}
+.help h2 {
+  font: 24px Georgia,serif;
+  margin: 0 0 12px;
+}
+.help p {
+  font-size: 13px;
+  line-height: 1.7;
+  color: #c7d2e4;
+}
+.help button {
+  padding: 0 18px;
+  border-radius: 10px;
+}
+.live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.loading {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%,-50%);
+  font-size: 14px;
+  color: #c2d8d4;
+}
+.map {
+  position: absolute;
+  left: 51%;
+  top: 48%;
+  width: min(44vw,500px);
+  aspect-ratio: 1;
+  transform: translate(-50%,-50%);
+}
+.mapPlanet {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  background: #326966;
+  border: 5px solid #7cb5aa;
+  box-shadow: inset -24px -28px 0 #0d4145,0 0 0 14px #94dcd20b,0 0 100px #6cdccc16;
+}
+.mapPlanet>span {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  font: 50px Georgia,serif;
+}
+.mapPlanet small {
+  font: 700 8px "Trebuchet MS",sans-serif;
+  letter-spacing: 1px;
+  line-height: 1.7;
+  margin-top: 8px;
+}
+.mapForest {
+  left: 4%;
+  top: 12%;
+  width: 51%;
+  height: 46%;
+  background: #83c99e;
+  color: #174239;
+  border-radius: 50% 35% 50% 20%;
+  transform: rotate(-8deg);
+}
+.mapRidge {
+  right: 4%;
+  top: 4%;
+  width: 40%;
+  height: 48%;
+  background: #a1d7e1;
+  color: #235469;
+  border-radius: 30% 80% 40% 60%;
+}
+.mapCrater {
+  left: 3%;
+  bottom: 4%;
+  width: 47%;
+  height: 41%;
+  background: #9380b7;
+  color: #f1e7ff;
+  border-radius: 35% 60% 20% 80%;
+}
+.mapValley {
+  right: 5%;
+  bottom: 6%;
+  width: 42%;
+  height: 42%;
+  background: #d7b277;
+  color: #573c2d;
+  border-radius: 55% 30% 80% 20%;
+  font-size: 32px!important;
+}
+.mapPlanet .mapExplorer {
+  left: 46%;
+  top: 44%;
+  color: #fff6c9;
+  font-size: 28px;
+}
+.mapOrbit {
+  position: absolute;
+  inset: -22% -28%;
+  border: 1px solid #9eb7d526;
+  border-radius: 50%;
+  transform: rotate(-25deg);
+  z-index: -1;
+}
+.mapNote {
+  position: absolute;
+  left: 42px;
+  bottom: 30px;
+  font-size: 12px;
+  color: #a7b9c9;
+}
+.sliceControls {
+  position: absolute;
+  left: 50%;
+  bottom: 30px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 6px;
+  z-index: 4;
+}
+.sliceControls button {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+}
+.sliceControls button[aria-pressed=true] {
+  background: #d9edc8;
+  color: #1b352e;
+}
+@media(min-width:1500px) {
+  .destinations {
+    top: 370px;
+  }
+  .worldTitle {
+    margin-top: 76px;
+  }
+  .destinationCard {
+    width: 315px;
+  }
+  .heading {
+    inset: 40px 55px auto;
+  }
+}
+@media(max-width:900px) {
+  .universe {
+    min-height: 100svh;
+  }
+  .heading {
+    inset: 24px 23px auto;
+  }
+  .wordmark {
+    font-size: 27px;
+  }
+  .worldTitle {
+    margin-top: 30px;
+  }
+  .worldTitle h1 {
+    font-size: 49px;
+  }
+  .worldTitle p {
+    max-width: 180px;
+    font-size: 12px;
+  }
+  .worldTitle>span {
+    font-size: 8px;
+  }
+  .cameraControls {
+    top: 22px;
+    right: 20px;
+    gap: 5px;
+  }
+  .cameraControls button {
+    width: 44px;
+    height: 44px;
+  }
+  .orbitCaption {
+    right: 22px;
+    top: 86px;
+    font-size: 8px;
+    gap: 11px;
+  }
+  .destinations {
+    left: 22px;
+    top: auto;
+    bottom: 175px;
+    width: 205px;
+    gap: 3px;
+  }
+  .destinations>p {
+    display: none;
+  }
+  .destinations button {
+    min-height: 44px;
+    font-size: 11px;
+    padding: 5px 8px;
+  }
+  .regionSymbol {
+    width: 28px;
+    height: 28px;
+  }
+  .destinationCard {
+    right: 22px;
+    bottom: 25px;
+    width: 245px;
+    padding: 20px;
+  }
+  .explorerControls {
+    left: 22px;
+    bottom: 25px;
+    gap: 8px;
+  }
+  .zoom {
+    display: none;
+  }
+  .hop {
+    padding: 0 13px;
+  }
+  .map {
+    width: 47vw;
+    left: 54%;
+    top: 43%;
+  }
+}
+@media(max-width:600px) {
+  .universe {
+    min-height: 844px;
+    height: 100svh;
+  }
+  .heading {
+    inset: 20px 20px auto;
+  }
+  .wordmark {
+    font-size: 25px;
+  }
+  .wordmark span {
+    font-size: 18px;
+  }
+  .worldTitle {
+    margin-top: 32px;
+  }
+  .worldTitle h1 {
+    font-size: 48px;
+    margin: 8px 0;
+    letter-spacing: -2px;
+  }
+  .worldTitle>span {
+    font-size: 7px;
+    letter-spacing: 2px;
+  }
+  .worldTitle p {
+    font-size: 11px;
+    max-width: 200px;
+    margin-top: 7px;
+  }
+  .cameraControls {
+    top: 17px;
+    right: 16px;
+    gap: 4px;
+  }
+  .cameraControls button {
+    width: 40px;
+    min-height: 44px;
+    font-size: 18px;
+  }
+  .orbitCaption {
+    top: 99px;
+    right: 18px;
+    max-width: 100px;
+    font-size: 7px;
+    line-height: 1.8;
+    gap: 5px;
+  }
+  .orbitCaption small {
+    font-size: 6px;
+    margin: 0;
+    padding: 2px;
+  }
+  .destinations {
+    left: 16px;
+    right: 16px;
+    bottom: 206px;
+    width: auto;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+  }
+  .destinations button {
+    background: #112037eb;
+    font-size: 10px;
+    gap: 7px;
+    padding: 5px 8px;
+  }
+  .destinations button:last-child {
+    display: none;
+  }
+  .regionArrow {
+    font-size: 13px;
+  }
+  .regionSymbol {
+    font-size: 17px;
+    width: 25px;
+    height: 25px;
+    flex-shrink: 0;
+  }
+  .destinationCard {
+    left: 16px;
+    right: 16px;
+    bottom: 91px;
+    width: auto;
+    min-height: 98px;
+    padding: 15px 16px;
+    display: grid;
+    grid-template-columns: 1fr 130px;
+    column-gap: 10px;
+    align-items: center;
+    border-radius: 15px;
+  }
+  .destinationCard .eyebrow {
+    grid-column: 1;
+    font-size: 7px;
+    letter-spacing: 1.2px;
+  }
+  .destinationCard h2 {
+    grid-column: 1;
+    font-size: 23px;
+    margin: 6px 0 5px;
+  }
+  .destinationCard p {
+    grid-column: 1;
+    font-size: 10px;
+    margin: 0;
+  }
+  .universe .missionButton {
+    grid-column: 2;
+    grid-row: 1 / 4;
+    font-size: 10px;
+    gap: 7px;
+    padding: 8px 12px;
+    min-height: 49px;
+  }
+  .missionButton span {
+    font-size: 19px;
+  }
+  .explorerControls {
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    justify-content: space-between;
+  }
+  .movementPad {
+    grid-template-areas: "left up down right";
+    grid-template-columns: repeat(4,44px);
+    gap: 5px;
+  }
+  .hop {
+    height: 44px;
+    min-width: 93px;
+  }
+  .help {
+    right: 16px;
+    left: 16px;
+    top: 74px;
+    max-width: none;
+  }
+  .map {
+    width: 72vw;
+    left: 50%;
+    top: 43%;
+  }
+  .mapPlanet small {
+    font-size: 6px;
+  }
+  .mapPlanet>span {
+    font-size: 38px;
+  }
+  .mapValley {
+    font-size: 24px!important;
+  }
+  .mapNote {
+    left: 0;
+    right: 0;
+    bottom: 33px;
+    text-align: center;
+    font-size: 11px;
+  }
+  .sliceControls {
+    bottom: 315px;
+    width: calc(100% - 32px);
+    justify-content: center;
+  }
+  .sliceControls button {
+    font-size: 11px;
+    padding: 5px 11px;
+  }
+}
+@media(prefers-reduced-motion:reduce) {
+  .universe * {
+    transition: none!important;
+    animation: none!important;
+  }
+}
+.mapPizza {
+  position: absolute;
+  left: 48%;
+  top: 48%;
+  width: 260px;
+  height: 260px;
+  transform: translate(-50%,-50%);
+  padding: 14px;
+  background: #c99551;
+  border: 7px solid #edc584;
+  border-radius: 50%;
+  box-shadow: 0 18px 0 #8d653e,0 28px 45px #0005;
+  z-index: 1;
+}
+.mapPizza>div {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+}
+.mapPizza span {
+  background: radial-gradient(circle at 45% 40%,#af523f 0 12%,transparent 13%),radial-gradient(circle at 76% 74%,#af523f 0 11%,transparent 12%),#eaca87;
+  opacity: .5;
+  transition: opacity .16s,background .16s;
+}
+.mapPizza span[data-selected=true] {
+  background: radial-gradient(circle at 45% 40%,#af523f 0 12%,transparent 13%),radial-gradient(circle at 76% 74%,#af523f 0 11%,transparent 12%),#f5de9e;
+  opacity: 1;
+  box-shadow: inset 0 0 0 4px #ecffb0;
+}
+.universe:has(.mapPizza) .map {
+  opacity: .12;
+}
+.universe[data-camera-mode=mission] .mapPlanet {
+  filter: brightness(.6);
+}
+@media(max-width:600px) {
+  .universe[data-camera-mode=mission] .scene {
+    transform: translateY(-120px);
+  }
+  .mapPizza {
+    top: 275px;
+    left: 50%;
+    width: 155px;
+    height: 155px;
+    border-width: 4px;
+    padding: 7px;
+    box-shadow: 0 10px 0 #8d653e,0 18px 35px #0005;
+  }
+  .mapPizza>div {
+    gap: 5px;
+  }
+}
+.run {
+  min-width: 44px;
+  height: 44px;
+  padding: 0 10px;
+  border-radius: 50%;
+  font-size: 11px!important;
+}
+.universe .run[aria-pressed=true] {
+  background: #d9edc8;
+  color: #1b352e;
+}
+.cameraControls .parentLink {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  min-height: 44px;
+  border: 1px solid #ffffff22;
+  border-radius: 50%;
+  font-size: 10px;
+  color: inherit;
+  text-decoration: none;
+  background: #0e1a30e8;
+}
+.cameraControls .parentLink:hover {
+  background: #283853;
+}
+.cameraControls .parentLink:disabled {
+  cursor: not-allowed;
+  opacity: .6;
+}
+.cameraControls .parentLink:disabled:hover {
+  background: #0e1a30e8;
+}
+@media(max-width:900px) {
+  .zoom {
+    display: flex;
+    position: absolute;
+    left: 0;
+    bottom: 110px;
+  }
+  .zoom button {
+    width: 44px;
+    height: 44px;
+  }
+}
+@media(max-width:600px) {
+  .cameraControls button {
+    width: 44px;
+  }
+  .destinations {
+    bottom: 206px;
+  }
+  .destinations button {
+    font-size: 11px;
+  }
+  .destinations button:last-child {
+    display: flex;
+    grid-column: 1 / 3;
+    justify-self: center;
+    min-width: 180px;
+  }
+  .destinationCard p {
+    font-size: 11px;
+  }
+  .universe .missionButton {
+    font-size: 11px;
+  }
+  .zoom {
+    left: auto;
+    right: 0;
+    bottom: 350px;
+    margin: 0;
+    gap: 4px;
+  }
+  .zoom button {
+    background: #112037ee;
+  }
+  .sliceControls {
+    bottom: 356px;
+  }
+  .map {
+    top: 41%;
+    width: 67vw;
+  }
+}
+.wordmarkImage {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  display: block;
+}
+.universe button {
+  transition: background 160ms var(--ease-out),border-color 160ms var(--ease-out),color 160ms var(--ease-out),transform 120ms var(--ease-out);
+}
+.universe button:active {
+  transform: scale(.97);
+}
+@media (hover: hover) and (pointer: fine) {
+  .universe button:hover {
+    transform: translateY(-2px);
+  }
+}
+.wordmarkImage {
+  animation: mark-float 3.6s var(--ease-in-out) infinite alternate;
+}
+@keyframes mark-float {
+  to {
+    transform: translateY(-4px) rotate(-2deg);
+  }
+}
+.regionSymbol {
+  border: 2px solid color-mix(in srgb,var(--wiggle-blue) 55%,transparent);
+}
+.destinations button[aria-pressed=true] {
+  border-color: var(--wiggle-blue);
+  box-shadow: inset 3px 0 0 var(--wiggle-blue);
+}
+.universe .missionButton {
+  background: var(--wiggle-green);
+}
+.universe .missionButton:hover {
+  background: color-mix(in srgb,var(--wiggle-green) 78%,white);
+}
+.mapPizza span[data-selected=true] {
+  background: radial-gradient(circle at 45% 40%,var(--wiggle-coral) 0 12%,transparent 13%),radial-gradient(circle at 76% 74%,var(--wiggle-coral) 0 11%,transparent 12%),color-mix(in srgb,var(--wiggle-yellow) 75%,white);
+  box-shadow: inset 0 0 0 4px var(--wiggle-yellow);
+}
+.universe .run[aria-pressed=true],
+.sliceControls button[aria-pressed=true] {
+  background: var(--wiggle-green);
+  color: #1b352e;
+  border-color: var(--wiggle-green);
+}
+@media (prefers-reduced-motion: reduce) {
+  .wordmarkImage {
+    animation: none;
+  }
+  .universe button:active {
+    transform: none;
+  }
+}
+.handOverlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+.handCursor {
+  position: absolute;
+  left: var(--hand-x);
+  top: var(--hand-y);
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  transform: translate(-50%,-50%);
+  border: 2px solid #fff7e7;
+  border-radius: 50%;
+  background: #285c85d9;
+  color: #f4c95d;
+  font-size: 16px;
+  box-shadow: 0 0 0 5px #f4c95d33;
+}
+.handStatus {
+  position: absolute;
+  left: 50%;
+  top: 18px;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 7px 11px;
+  border: 1px solid #ffffff38;
+  border-radius: 999px;
+  background: #0b1225d9;
+  color: #fff7e7;
+  font-size: 11px;
+}
+.handDebug {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  max-width: calc(100% - 32px);
+  padding: 7px 9px;
+  border: 1px solid #f4c95d88;
+  border-radius: 8px;
+  background: #0b1225eb;
+  color: #fff7e7;
+  font: 11px ui-monospace,SFMono-Regular,Menlo,monospace;
+}
 /* Daytime-cosmos surface layer: opaque, calm controls over the transparent 3D canvas. */
-.universe ::selection{background:var(--mustard);color:var(--navy)}
-.worldTitle::before,.orbitCaption::before{background:var(--cream);border:1px solid color-mix(in srgb,var(--navy) 38%,var(--pale-blue));box-shadow:0 8px 22px #285c8524}
-.universe button{border-color:color-mix(in srgb,var(--navy) 42%,var(--pale-blue));background:var(--cream);color:var(--navy)}
-.universe button:hover{background:#e4f4f6;border-color:var(--navy)}
-.universe button:focus-visible,.universe a:focus-visible,.movementPad:focus-visible{outline:2px solid var(--cream);outline-offset:2px;box-shadow:0 0 0 5px var(--navy)}
-.stars{background-image:radial-gradient(circle at 12% 33%,#fff7e7 1px,transparent 1.5px),radial-gradient(circle at 67% 74%,#76a9c2 1px,transparent 1.5px),radial-gradient(circle at 86% 22%,#fff7e7 .75px,transparent 1.5px);opacity:.46}
-.wordmark{color:var(--navy)}
-.wordmark span{color:var(--navy)}
-.worldTitle>span{color:var(--navy)}
-.worldTitle p{color:var(--muted)}
-.cameraControls button,.cameraControls .parentLink{background:var(--cream);border-color:color-mix(in srgb,var(--navy) 42%,var(--pale-blue));color:var(--navy);box-shadow:0 7px 18px #285c851c}
-.cameraControls button:hover,.cameraControls .parentLink:hover{background:#e4f4f6;border-color:var(--navy)}
-.cameraControls button[aria-pressed=true]{background:var(--pale-blue);color:var(--navy);border-color:var(--navy)}
-.orbitCaption{color:var(--navy)}
-.orbitCaption small{border-color:color-mix(in srgb,var(--navy) 28%,var(--cream));background:var(--pale-blue);color:var(--navy)}
-.destinations>p{color:var(--navy)}
-.destinations button{background:var(--cream);border-color:color-mix(in srgb,var(--navy) 26%,var(--pale-blue));box-shadow:0 7px 18px #285c8518}
-.destinations button[aria-pressed=true]{background:#e4f4f6;border-color:var(--navy);box-shadow:0 7px 18px #285c8526}
-.regionSymbol{background:var(--navy);border-color:var(--region);color:var(--cream)}
-.regionArrow{color:var(--navy)}
-.destinationCard{background:var(--cream);border-color:color-mix(in srgb,var(--region) 45%,var(--navy));box-shadow:0 14px 34px #285c8524}
-.eyebrow{color:var(--navy)}
-.destinationCard p{color:var(--muted)}
-.universe .missionButton{background:var(--sage);color:var(--accessible-navy);border:1px solid color-mix(in srgb,var(--navy) 42%,var(--sage));box-shadow:none}
-.universe .missionButton:hover{background:#b9dcae;border-color:var(--navy)}
-.movementPad button,.zoom button,.hop{background:var(--cream);border-color:color-mix(in srgb,var(--navy) 42%,var(--pale-blue));box-shadow:0 7px 18px #285c8518}
-.help{border-color:color-mix(in srgb,var(--navy) 36%,var(--pale-blue));background:var(--cream);color:var(--navy);box-shadow:0 14px 34px #285c8526}
-.help p{color:var(--muted)}
-.loading{color:var(--navy);background:var(--cream);border:1px solid color-mix(in srgb,var(--navy) 30%,var(--pale-blue));border-radius:12px;padding:12px 16px;box-shadow:0 8px 22px #285c8520}
-.mapPlanet{background:var(--pale-blue);border-color:var(--cream);box-shadow:inset -24px -28px 0 #6fa8c2,0 0 0 14px #fff7e799,0 0 54px #285c851c}
-.mapPlanet small{background:var(--cream);color:var(--navy);border-radius:4px;padding:1px 3px}
-.mapForest{background:var(--sage);color:var(--accessible-navy)}
-.mapRidge{background:#cdeef5;color:var(--navy)}
-.mapCrater{background:var(--coral);color:var(--accessible-navy)}
-.mapValley{background:var(--mustard);color:var(--navy)}
-.mapPlanet .mapExplorer{color:var(--cream);text-shadow:0 1px 0 var(--navy)}
-.mapOrbit{border-color:#285c8540}
-.mapNote{color:var(--navy)}
-.sliceControls button{background:var(--cream);border-color:color-mix(in srgb,var(--navy) 42%,var(--pale-blue));box-shadow:0 6px 14px #285c8518}
-.sliceControls button[aria-pressed=true],.universe .run[aria-pressed=true]{background:var(--sage);color:var(--accessible-navy);border-color:var(--navy)}
-.mapPizza{background:var(--mustard);border-color:var(--cream);box-shadow:0 14px 0 #d99e4f,0 24px 38px #285c8529}
-.mapPizza span{background:radial-gradient(circle at 45% 40%,var(--coral) 0 12%,transparent 13%),radial-gradient(circle at 76% 74%,var(--coral) 0 11%,transparent 12%),#f8dda0}
-.mapPizza span[data-selected=true]{background:radial-gradient(circle at 45% 40%,var(--coral) 0 12%,transparent 13%),radial-gradient(circle at 76% 74%,var(--coral) 0 11%,transparent 12%),var(--cream);box-shadow:inset 0 0 0 4px var(--mustard)}
-
-.universe[data-hud="custom"] .explorerControls { left: 28px; bottom: 28px; display: grid; grid-template-columns: auto 100px; grid-template-rows: 44px 44px; align-items: center; gap: 4px 6px; padding: 8px; border: 0; border-radius: 28px; background: #1c2c52d9; box-shadow: 0 8px 24px #0b1a2a33; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
-.universe[data-hud="custom"] .movementPad { grid-row: 1 / span 2; gap: 3px; }
+.universe ::selection {
+  background: var(--mustard);
+  color: var(--navy);
+}
+.worldTitle::before,
+.orbitCaption::before {
+  background: var(--cream);
+  border: 1px solid color-mix(in srgb,var(--navy) 38%,var(--pale-blue));
+  box-shadow: 0 8px 22px #285c8524;
+}
+.universe button {
+  border-color: color-mix(in srgb,var(--navy) 42%,var(--pale-blue));
+  background: var(--cream);
+  color: var(--navy);
+}
+.universe button:hover {
+  background: #e4f4f6;
+  border-color: var(--navy);
+}
+.universe button:focus-visible,
+.universe a:focus-visible,
+.movementPad:focus-visible {
+  outline: 2px solid var(--cream);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px var(--navy);
+}
+.stars {
+  background-image: radial-gradient(circle at 12% 33%,#fff7e7 1px,transparent 1.5px),radial-gradient(circle at 67% 74%,#76a9c2 1px,transparent 1.5px),radial-gradient(circle at 86% 22%,#fff7e7 .75px,transparent 1.5px);
+  opacity: .46;
+}
+.wordmark {
+  color: var(--navy);
+}
+.wordmark span {
+  color: var(--navy);
+}
+.worldTitle>span {
+  color: var(--navy);
+}
+.worldTitle p {
+  color: var(--muted);
+}
+.cameraControls button,
+.cameraControls .parentLink {
+  background: var(--cream);
+  border-color: color-mix(in srgb,var(--navy) 42%,var(--pale-blue));
+  color: var(--navy);
+  box-shadow: 0 7px 18px #285c851c;
+}
+.cameraControls button:hover,
+.cameraControls .parentLink:hover {
+  background: #e4f4f6;
+  border-color: var(--navy);
+}
+.cameraControls button[aria-pressed=true] {
+  background: var(--pale-blue);
+  color: var(--navy);
+  border-color: var(--navy);
+}
+.orbitCaption {
+  color: var(--navy);
+}
+.orbitCaption small {
+  border-color: color-mix(in srgb,var(--navy) 28%,var(--cream));
+  background: var(--pale-blue);
+  color: var(--navy);
+}
+.destinations>p {
+  color: var(--navy);
+}
+.destinations button {
+  background: var(--cream);
+  border-color: color-mix(in srgb,var(--navy) 26%,var(--pale-blue));
+  box-shadow: 0 7px 18px #285c8518;
+}
+.destinations button[aria-pressed=true] {
+  background: #e4f4f6;
+  border-color: var(--navy);
+  box-shadow: 0 7px 18px #285c8526;
+}
+.regionSymbol {
+  background: var(--navy);
+  border-color: var(--region);
+  color: var(--cream);
+}
+.regionArrow {
+  color: var(--navy);
+}
+.destinationCard {
+  background: var(--cream);
+  border-color: color-mix(in srgb,var(--region) 45%,var(--navy));
+  box-shadow: 0 14px 34px #285c8524;
+}
+.eyebrow {
+  color: var(--navy);
+}
+.destinationCard p {
+  color: var(--muted);
+}
+.universe .missionButton {
+  background: var(--sage);
+  color: var(--accessible-navy);
+  border: 1px solid color-mix(in srgb,var(--navy) 42%,var(--sage));
+  box-shadow: none;
+}
+.universe .missionButton:hover {
+  background: #b9dcae;
+  border-color: var(--navy);
+}
+.movementPad button,
+.zoom button,
+.hop {
+  background: var(--cream);
+  border-color: color-mix(in srgb,var(--navy) 42%,var(--pale-blue));
+  box-shadow: 0 7px 18px #285c8518;
+}
+.help {
+  border-color: color-mix(in srgb,var(--navy) 36%,var(--pale-blue));
+  background: var(--cream);
+  color: var(--navy);
+  box-shadow: 0 14px 34px #285c8526;
+}
+.help p {
+  color: var(--muted);
+}
+.loading {
+  color: var(--navy);
+  background: var(--cream);
+  border: 1px solid color-mix(in srgb,var(--navy) 30%,var(--pale-blue));
+  border-radius: 12px;
+  padding: 12px 16px;
+  box-shadow: 0 8px 22px #285c8520;
+}
+.mapPlanet {
+  background: var(--pale-blue);
+  border-color: var(--cream);
+  box-shadow: inset -24px -28px 0 #6fa8c2,0 0 0 14px #fff7e799,0 0 54px #285c851c;
+}
+.mapPlanet small {
+  background: var(--cream);
+  color: var(--navy);
+  border-radius: 4px;
+  padding: 1px 3px;
+}
+.mapForest {
+  background: var(--sage);
+  color: var(--accessible-navy);
+}
+.mapRidge {
+  background: #cdeef5;
+  color: var(--navy);
+}
+.mapCrater {
+  background: var(--coral);
+  color: var(--accessible-navy);
+}
+.mapValley {
+  background: var(--mustard);
+  color: var(--navy);
+}
+.mapPlanet .mapExplorer {
+  color: var(--cream);
+  text-shadow: 0 1px 0 var(--navy);
+}
+.mapOrbit {
+  border-color: #285c8540;
+}
+.mapNote {
+  color: var(--navy);
+}
+.sliceControls button {
+  background: var(--cream);
+  border-color: color-mix(in srgb,var(--navy) 42%,var(--pale-blue));
+  box-shadow: 0 6px 14px #285c8518;
+}
+.sliceControls button[aria-pressed=true],
+.universe .run[aria-pressed=true] {
+  background: var(--sage);
+  color: var(--accessible-navy);
+  border-color: var(--navy);
+}
+.mapPizza {
+  background: var(--mustard);
+  border-color: var(--cream);
+  box-shadow: 0 14px 0 #d99e4f,0 24px 38px #285c8529;
+}
+.mapPizza span {
+  background: radial-gradient(circle at 45% 40%,var(--coral) 0 12%,transparent 13%),radial-gradient(circle at 76% 74%,var(--coral) 0 11%,transparent 12%),#f8dda0;
+}
+.mapPizza span[data-selected=true] {
+  background: radial-gradient(circle at 45% 40%,var(--coral) 0 12%,transparent 13%),radial-gradient(circle at 76% 74%,var(--coral) 0 11%,transparent 12%),var(--cream);
+  box-shadow: inset 0 0 0 4px var(--mustard);
+}
+.universe[data-hud="custom"] .explorerControls {
+  left: 28px;
+  bottom: 28px;
+  display: grid;
+  grid-template-columns: auto 100px;
+  grid-template-rows: 44px 44px;
+  align-items: center;
+  gap: 4px 6px;
+  padding: 8px;
+  border: 0;
+  border-radius: 28px;
+  background: #1c2c52d9;
+  box-shadow: 0 8px 24px #0b1a2a33;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+.universe[data-hud="custom"] .movementPad {
+  grid-row: 1 / span 2;
+  gap: 3px;
+}
 .universe[data-hud="custom"] .movementPad button,
 .universe[data-hud="custom"] .hop,
-.universe[data-hud="custom"] .run { background: #ffffff14; color: #fff8ee; border: 0; box-shadow: none; }
+.universe[data-hud="custom"] .run {
+  background: #ffffff14;
+  color: #fff8ee;
+  border: 0;
+  box-shadow: none;
+}
 .universe[data-hud="custom"] .movementPad button:hover,
 .universe[data-hud="custom"] .hop:hover,
-.universe[data-hud="custom"] .run:hover { background: #ffffff2e; }
-.universe[data-hud="custom"] .run[aria-pressed="true"] { background: #b9f6ff; color: #203450; }
+.universe[data-hud="custom"] .run:hover {
+  background: #ffffff2e;
+}
+.universe[data-hud="custom"] .run[aria-pressed="true"] {
+  background: #b9f6ff;
+  color: #203450;
+}
 .universe[data-hud="custom"] .run,
-.universe[data-hud="custom"] .hop { width: 100%; min-width: 0; height: 44px; padding: 0; border-radius: 22px; font-size: 13px !important; font-weight: 700; }
-.universe[data-hud="custom"] .hop span { margin-left: 8px; }
+.universe[data-hud="custom"] .hop {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 0;
+  border-radius: 22px;
+  font-size: 13px !important;
+  font-weight: 700;
+}
+.universe[data-hud="custom"] .hop span {
+  margin-left: 8px;
+}
 @media (max-width: 600px) {
-  .universe[data-hud="custom"] .explorerControls { display: flex; left: 14px; right: auto; bottom: 14px; width: 208px; flex-wrap: wrap; justify-content: flex-start; gap: 6px; }
-  .universe[data-hud="custom"] .movementPad { grid-row: auto; }
-  .universe[data-hud="custom"] .run { width: 44px; }
-  .universe[data-hud="custom"] .hop { width: auto; min-width: 93px; padding: 0 13px; }
+  .universe[data-hud="custom"] .explorerControls {
+    display: flex;
+    left: 14px;
+    right: auto;
+    bottom: 14px;
+    width: 208px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 6px;
+  }
+  .universe[data-hud="custom"] .movementPad {
+    grid-row: auto;
+  }
+  .universe[data-hud="custom"] .run {
+    width: 44px;
+  }
+  .universe[data-hud="custom"] .hop {
+    width: auto;
+    min-width: 93px;
+    padding: 0 13px;
+  }
 }
