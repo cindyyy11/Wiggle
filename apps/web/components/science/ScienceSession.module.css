@@ -4,9 +4,10 @@
 .invitation h2 { margin: 0 0 7px; font-size: 20px; }
 .invitation p { margin: 0 0 16px; line-height: 1.5; font-size: 15px; }
 .inviteActions { display: flex; gap: 12px; flex-wrap: wrap; }
-.inviteActions button { min-height: 44px; border: 0; border-radius: 16px; padding: 10px 16px; background: #245a70; color: #fff; font-size: 14px; font-weight: 700; }
-.inviteActions button:last-child { background: transparent; color: #31536a; }
-.inviteActions button:hover { filter: brightness(1.1); }
+.invitation .inviteActions button { min-height: 44px; border: 0; border-radius: 16px; padding: 10px 16px; background: #245a70; color: #fff; font-size: 14px; font-weight: 700; }
+.invitation .inviteActions button:last-child { background: transparent; color: #31536a; }
+.invitation .inviteActions button:hover { background: #173e55; color: #fff; }
+.invitation .inviteActions button:last-child:hover { background: #245a701f; color: #203b58; }
 .inviteActions kbd { margin-left: 10px; padding: 3px 7px; border: 1px solid #badfe6; border-radius: 5px; font: inherit; }
 .guideFace { position: relative; flex: 0 0 66px; width: 66px; height: 72px; margin-top: 8px; border-radius: 24px 24px 32px 32px; background: #ef8294; box-shadow: inset -8px -7px 0 #cb587328; }
 .guideFace[data-guide="animals"] { background: #67c9e0; border-radius: 50% 50% 40% 50%; }
