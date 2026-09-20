@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { UniverseCanvas } from "../universe/UniverseCanvas";
+import { ViewTools } from "../universe/ViewTools";
 import { createExplorerInput, destinationFromPoint, type CameraMode, type CameraPose, type Destination, type QualityPreference } from "../universe/world";
 import type { ScienceZoneId } from "../worlds/subjectRoute";
 import { ScienceHud } from "./ScienceHud";
@@ -70,9 +71,7 @@ export function SciencePlanetCanvas(props: SciencePlanetCanvasProps) {
       sceneContent={<ScienceExplorerBridge onNearby={onNearby} onVisit={select} paused={!!session} />}
       hud={<div className={styles.spaceHud}>
         <ScienceHud {...props} selectedZone={selectedZone} onExplore={explore} onStartMagnetLab={explore} onZoneSelect={select} completionMessage={completed ? "Wonderful exploring! Magnet Lab complete." : props.completionMessage} />
-        <button type="button" className={styles.cameraButton} onClick={() => setMode(mode === "globe" ? "follow" : "globe")}>{mode === "globe" ? "Follow explorer" : "View whole planet"}</button>
-        <button type="button" className={styles.resetView} onClick={() => { setResetKey(key => key + 1); setMode("globe"); }}>Reset view</button>
-        <p className={styles.walkHint}>Tap the ground to walk · Arrow keys / WASD · Space to hop<br />Meet a guide, then press B to explore.</p>
+        <ViewTools mode={mode} input={input} zoom={available} onToggleMode={() => setMode(mode === "globe" ? "follow" : "globe")} onReset={() => { setResetKey(key => key + 1); setMode("globe"); }} />
         {shownInvitation ? <section className={sessionStyles.invitation} aria-label={scienceLand(shownInvitation).name + " invitation"}><div className={sessionStyles.guideFace} data-guide={shownInvitation} aria-hidden="true"><i /><i /></div><div><h2>{LAND_GUIDES[shownInvitation].name}</h2><p>{LAND_GUIDES[shownInvitation].message}</p><div className={sessionStyles.inviteActions}><button type="button" onClick={() => start(shownInvitation)}>Let’s explore <kbd>B</kbd></button><button type="button" onClick={() => { setDismissed(shownInvitation); setInvitation(null); }}>Not now</button></div></div></section> : null}
       </div>}
     />

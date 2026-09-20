@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { ActivitySessionFrame } from "../planet/ActivitySessionFrame";
 import { UniverseCanvas } from "../universe/UniverseCanvas";
+import { ViewTools } from "../universe/ViewTools";
 import { createExplorerInput, LANDMARKS, type CameraMode, type Destination, type LandmarkId } from "../universe/world";
 import { MathActivitySession } from "./MathActivitySession";
 import { MathHud } from "./MathHud";
@@ -19,6 +20,7 @@ export function MathPlanetCanvas({ quality, reducedMotion, onBackToWorlds, onSes
   const [resetKey, setResetKey] = useState(0);
   const [completionMessage, setCompletionMessage] = useState("");
   const [unavailable, setUnavailable] = useState(false);
+  const [sceneAvailable, setSceneAvailable] = useState(true);
   const input = useRef(createExplorerInput());
   const regionName = LANDMARKS.find((landmark) => landmark.id === (session ?? selectedRegion))!.name;
   // The HUD reads all four mappings. Keep a broken registry recoverable before
@@ -95,6 +97,7 @@ export function MathPlanetCanvas({ quality, reducedMotion, onBackToWorlds, onSes
         explorerInput={input}
         controlsDisabled={session !== null}
         resetViewKey={resetKey}
+        onSceneAvailability={setSceneAvailable}
         hud={<div className={styles.spaceHud}>
           {activitiesAvailable && !unavailable ? <MathHud
             selectedRegion={selectedRegion}
@@ -106,11 +109,13 @@ export function MathPlanetCanvas({ quality, reducedMotion, onBackToWorlds, onSes
             <p role="status" aria-live="polite">Numeria activities are unavailable right now. Please return to Worlds.</p>
             <button type="button" className={styles.backButton} onClick={onBackToWorlds}>Back to Worlds</button>
           </div>}
-          <button type="button" className={styles.cameraButton} onClick={() => setMode((current) => current === "globe" ? "follow" : "globe")}>
-            {mode === "globe" ? "Follow explorer" : "View whole planet"}
-          </button>
-          <button type="button" className={styles.resetView} onClick={() => { setResetKey((key) => key + 1); setMode("globe"); }}>Reset view</button>
-          <p className={styles.walkHint}>Tap the ground to walk · Arrow keys / WASD · Space to hop<br />Choose a region, then explore.</p>
+          <ViewTools
+            mode={mode}
+            input={input}
+            zoom={sceneAvailable}
+            onToggleMode={() => setMode((current) => current === "globe" ? "follow" : "globe")}
+            onReset={() => { setResetKey((key) => key + 1); setMode("globe"); }}
+          />
           <p className={styles.returnAnnouncement} role="status" aria-live="polite">{completionMessage}</p>
         </div>}
       />

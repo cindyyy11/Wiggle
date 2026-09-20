@@ -72,3 +72,13 @@
 .mapPizza{background:var(--mustard);border-color:var(--cream);box-shadow:0 14px 0 #d99e4f,0 24px 38px #285c8529}
 .mapPizza span{background:radial-gradient(circle at 45% 40%,var(--coral) 0 12%,transparent 13%),radial-gradient(circle at 76% 74%,var(--coral) 0 11%,transparent 12%),#f8dda0}
 .mapPizza span[data-selected=true]{background:radial-gradient(circle at 45% 40%,var(--coral) 0 12%,transparent 13%),radial-gradient(circle at 76% 74%,var(--coral) 0 11%,transparent 12%),var(--cream);box-shadow:inset 0 0 0 4px var(--mustard)}
+
+.universe[data-hud="custom"] .movementPad button,
+.universe[data-hud="custom"] .hop,
+.universe[data-hud="custom"] .run { background: #1c2c52d9; color: #fff8ee; border: 1px solid #ffffff33; box-shadow: none; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
+.universe[data-hud="custom"] .movementPad button:hover,
+.universe[data-hud="custom"] .hop:hover,
+.universe[data-hud="custom"] .run:hover { background: #2b4073; border-color: #ffffff77; }
+.universe[data-hud="custom"] .run[aria-pressed="true"] { background: #b9f6ff; color: #203450; border-color: #b9f6ff; }
+.universe[data-hud="custom"] .run,
+.universe[data-hud="custom"] .hop { font-size: 13px !important; font-weight: 700; }

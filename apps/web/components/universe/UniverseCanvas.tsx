@@ -117,7 +117,7 @@ export function UniverseCanvas({ explorerInput, controlsDisabled = false, resetV
     activePointer.current = null; input.current.horizontal = 0; input.current.vertical = 0;
   };
 
-  return <section className={`${styles.universe} ${className}`} aria-label={theme === "science" ? "Science Planet" : "Explore Numeria"} data-camera-mode={mode} data-guided-camera={String(!!activityView && mode !== "globe")} data-quality={mapVisible ? "fallback" : quality} data-reduced-motion={String(reducedMotion)}>
+  return <section className={`${styles.universe} ${className}`} aria-label={theme === "science" ? "Science Planet" : "Explore Numeria"} data-camera-mode={mode} data-guided-camera={String(!!activityView && mode !== "globe")} data-hud={hud ? "custom" : "default"} data-quality={mapVisible ? "fallback" : quality} data-reduced-motion={String(reducedMotion)}>
     <div className={styles.stars} aria-hidden="true" />
     <div className={styles.scene}>
       {mapVisible ? theme === "science" ? <p className={styles.loading} role="status">3D view unavailable. Your Science checkpoints are still ready below.</p> : <NumeriaMap /> : <GraphicsBoundary onFailure={graphicsFailed}><Scene resetViewKey={resetViewKey} activityView={activityView} theme={theme} sceneContent={sceneContent} mode={mode} quality={quality === "high" ? "high" : "low"} reducedMotion={reducedMotion} input={input} selectedLandmark={selectedLandmark} onLandmarkSelect={selectLandmark} onDestinationChange={onDestinationChange} onContextLost={graphicsFailed} onQualityChange={lowerQuality} pizza={pizza} /></GraphicsBoundary>}
@@ -138,7 +138,7 @@ export function UniverseCanvas({ explorerInput, controlsDisabled = false, resetV
       </div>
       <button type="button" className={styles.run} aria-pressed={running} onClick={() => { input.current.running = !running; setRunning(!running); }}>Run</button>
       <button type="button" className={styles.hop} onClick={() => { input.current.hop = true; }}>Hop <span aria-hidden="true">↑</span></button>
-      <div className={styles.zoom} role="group" aria-label="Zoom"><button type="button" aria-label="Zoom in" onClick={() => { input.current.zoom -= 1; }}>+</button><button type="button" aria-label="Zoom out" onClick={() => { input.current.zoom += 1; }}>−</button></div>
+      {hud ? null : <div className={styles.zoom} role="group" aria-label="Zoom"><button type="button" aria-label="Zoom in" onClick={() => { input.current.zoom -= 1; }}>+</button><button type="button" aria-label="Zoom out" onClick={() => { input.current.zoom += 1; }}>−</button></div>}
     </div> : mapVisible ? <p className={styles.mapNote}>A quieter view. The same little adventures.</p> : null}
     {pizza?.visible ? <div className={styles.sliceControls} role="group" aria-label="Pizza slices">{[0, 1, 2, 3].map(index => <button type="button" key={index} aria-pressed={pizza.selectedSlices.includes(index)} onClick={() => pizza.onSliceSelect?.(index)}>Slice {index + 1}</button>)}</div> : null}
     <div className={styles.live} role="status" aria-live="polite">{announcement}</div>
