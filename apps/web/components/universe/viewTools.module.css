@@ -2,11 +2,17 @@
   position: absolute;
   top: 132px;
   right: 28px;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 8px;
-  pointer-events: none;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  width: 196px;
+  gap: 2px;
+  padding: 6px;
+  border: 1px solid #ffffff2e;
+  border-radius: 24px;
+  background: #1c2c52d9;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  pointer-events: auto;
 }
 
 .tools .tool {
@@ -16,35 +22,28 @@
   gap: 8px;
   min-height: 44px;
   min-width: 44px;
-  padding: 0 16px 0 14px;
-  border: 1px solid #ffffff33;
-  border-radius: 999px;
-  background: #1c2c52d9;
+  padding: 0;
+  border: 0;
+  border-radius: 18px;
+  background: transparent;
   color: #fff8ee;
   font: 700 13px "Trebuchet MS", Arial, sans-serif;
   cursor: pointer;
-  pointer-events: auto;
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
-  transition: background .16s, border-color .16s;
+  transition: background .16s;
 }
 
-.tools .tool:hover { background: #2b4073; border-color: #ffffff77; }
-.tools .tool:focus-visible { outline: 3px solid #ffdf76; outline-offset: 3px; }
-
-.round, .zoom { display: flex; gap: 8px; }
-.tools .round .tool { padding: 0; }
-.tools .zoom .tool { padding: 0; }
-.tools > .tool { min-width: 192px; justify-content: flex-start; }
+.tools .tool:hover { background: #ffffff1f; }
+.tools .tool:focus-visible { outline: 3px solid #ffdf76; outline-offset: -3px; }
+.tools > .tool { grid-column: 1 / -1; justify-content: flex-start; padding: 0 12px; margin-bottom: 4px; box-shadow: 0 1px 0 #ffffff1f; border-radius: 18px 18px 6px 6px; }
+.round, .zoom { display: contents; }
 
 @media (min-width: 1400px) {
   .tools { top: 76px; }
 }
 
 @media (max-width: 680px) {
-  .tools { top: 132px; right: 14px; }
-  .tools .tool,
-  .tools > .tool { padding: 0; min-width: 44px; justify-content: center; }
+  .tools { top: 132px; right: 14px; width: 52px; grid-template-columns: 1fr; }
+  .tools > .tool { justify-content: center; padding: 0; margin-bottom: 0; box-shadow: none; border-radius: 18px; }
   .label {
     position: absolute;
     width: 1px;
@@ -53,8 +52,6 @@
     clip-path: inset(50%);
     white-space: nowrap;
   }
-  .round { flex-direction: column; }
-  .zoom { flex-direction: column; }
 }
 
 @media (prefers-reduced-motion: reduce) {
