@@ -16,14 +16,14 @@ npm run build
 npm run test:e2e
 ```
 
-The browser command starts and stops three fresh local processes: Next production builds on ports 3100 (browser-local demo) and 3101 (connected demo), plus the test-only API on 8101. It does not use provider credentials. The test API injects a Gemini transport timeout into the real provider class, while using the real routes, event replay, twin updates, and parent PIN service. Its diagnostic route lives under `tests/` and is excluded from the Docker image. Close conflicting local listeners before running. `PLAYWRIGHT_EXTERNAL_SERVERS=1` is only for an operator supplying those same test servers.
+The browser command starts and stops three local processes: `next start` on ports 3100 (browser-local demo) and 3101 (connected demo), plus the test-only API on 8101. `next start` serves whatever is already in `apps/web/.next`; it does not rebuild. Run `npm run build` first, and again after any web change, or the suite silently tests stale code. It does not use provider credentials. The test API injects a Gemini transport timeout into the real provider class, while using the real routes, event replay, twin updates, and parent PIN service. Its diagnostic route lives under `tests/` and is excluded from the Docker image. Close conflicting local listeners before running. `PLAYWRIGHT_EXTERNAL_SERVERS=1` is only for an operator supplying those same test servers.
 
 Browser reports, traces on failure, and screenshots are written below `.superpowers/sdd/2026-09-11-wiggle-hybrid-universe/`. The API suite includes six optional local-Supabase cases; skips do not prove live RLS isolation.
 
 ## Supabase
 
 1. After approval to create external resources, create a project in the chosen region. Record its project URL and publishable key in the provider dashboards.
-2. Apply both SQL files in `supabase/migrations/` in timestamp order. The repository uses imperative migrations. With a configured Supabase CLI, discover the installed commands using `supabase --help`, `supabase db --help`, and `supabase migration --help` before linking/pushing. Review the target project and migration diff before applying anything.
+2. Apply all SQL files in `supabase/migrations/` (three at the time of writing) in timestamp order. The repository uses imperative migrations. With a configured Supabase CLI, discover the installed commands using `supabase --help`, `supabase db --help`, and `supabase migration --help` before linking/pushing. Review the target project and migration diff before applying anything.
 3. Configure Auth's Site URL to the exact Vercel production origin. Add only the specific development/staging redirect origins needed. The supplied local `config.toml` uses localhost and must not be treated as the production Auth configuration.
 4. Create each household account through Supabase Auth using a real email/password under the operator's control. Confirm email as required by the project's policy. Do not use `seed.sql`: its `auth.users` entries are local test identities without usable passwords.
 5. Review `supabase/provision-household.sql`, replace its two sentinel UUIDs with the Auth user ID and a fresh child UUID, set the explorer name, then run it in that project's SQL editor. This adds an owned profile, child, initial twin and the supported fraction mission. Reusing the same child UUID is safe; existing progress is not reset. Repeat for a second test household to verify isolation. Onboarding is operator-assisted in this MVP.
@@ -51,7 +51,7 @@ The API listens on Render's `PORT` and `0.0.0.0`. Confirm the image's UID 10001 
 
 The browser normally calls same-origin Next routes, so cross-origin API access is unnecessary. Explicit CORS origins support direct diagnostic clients; CORS is not authentication. Do not set `NEXT_PUBLIC_API_URL` for household deployments.
 
-When Docker is available, build with `docker build -t wiggle-api -f apps/api/Dockerfile apps/api`; run with a private environment file and a writable named volume on `/var/lib/wiggle`. Never copy environment files or credentials into an image. Docker execution was unavailable on the Task 10 machine.
+When Docker is available, build with `docker build -t wiggle-api -f apps/api/Dockerfile apps/api`; run with a private environment file and a writable named volume on `/var/lib/wiggle`. Never copy environment files or credentials into an image. Docker execution was unavailable on the Task 10 machine. It has since been checked locally (see design-qa.md); when running the commands above from Git Bash on Windows, set `MSYS_NO_PATHCONV=1` or `-e WIGGLE_PIN_STORE_PATH=/var/lib/...` is rewritten into a Windows path and the container exits.
 
 ## Vercel web
 

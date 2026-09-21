@@ -11,7 +11,9 @@ test("the splash keeps the Wiggle logo moving until it auto-dismisses", async ({
   expect(await brand.evaluate(element => getComputedStyle(element).animationIterationCount)).toBe("infinite");
   expect(await brand.evaluate(element => getComputedStyle(element).animationPlayState)).toBe("running");
 
-  await expect.poll(() => brand.evaluate(element => getComputedStyle(element).animationName), { timeout: 10000 }).toBe("none");
+  // Once it auto-dismisses the splash logo is gone and the Worlds screen takes over.
+  await expect(brand).toBeHidden({ timeout: 10000 });
+  await expect(page.getByRole("region", { name: "Choose a subject world" })).toBeVisible();
 });
 
 test("the splash disables its decorative logo motion for reduced motion", async ({ page }) => {
@@ -41,7 +43,7 @@ for (const fallback of [false, true]) {
     await page.goto("/");
     await launchNumeria(page);
     if (!fallback) await expect(page.locator("canvas")).toBeVisible({ timeout: 20000 });
-    await page.getByRole("button", { name: "Start fractions mission", exact: true }).click();
+    await page.getByRole("button", { name: "Explore Fraction Forest", exact: true }).click();
     await page.getByRole("button", { name: "2 of 4", exact: true }).click();
     await page.getByRole("button", { name: "I'm stuck", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Select three pizza slices", exact: true })).toBeVisible();
@@ -61,7 +63,7 @@ for (const fallback of [false, true]) {
     await expect(page.getByText("+20 Wiggle Energy", { exact: true })).toBeVisible();
     await page.screenshot({ path: testInfo.outputPath(`completion-${fallback}.png`) });
     await page.getByRole("button", { name: "Back to my universe", exact: true }).click();
-    await expect(page.getByRole("button", { name: "Start fractions mission", exact: true })).toBeFocused();
+    await expect(page.getByRole("button", { name: "Explore Fraction Forest", exact: true })).toBeFocused();
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     expect(errors).toEqual([]);
   });

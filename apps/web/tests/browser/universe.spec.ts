@@ -1,30 +1,39 @@
 import { expect, test, type Locator } from "@playwright/test";
 import { launchNumeria } from "./helpers";
 
-async function expectReadableHud(surface: Locator, textSelector: string) {
+// Contrast of every matching text node against whatever is actually painted behind it. Translucent layers are
+// composited from the outermost inwards over white, the brightest possible scene pixel, so the floor is conservative.
+async function expectReadableSurface(surface: Locator, textSelector: string) {
   await expect(surface).toBeVisible();
   const measured = await surface.evaluate((element, selector) => {
     const rgb = (value: string) => value.match(/[\d.]+/g)!.map(Number);
-    const backing = getComputedStyle(element, "::before");
-    const [r, g, b, alpha = 1] = rgb(backing.backgroundColor);
-    // White is the brightest possible scene pixel: a conservative terrain-independent floor.
-    const background = [r, g, b].map(channel => channel * alpha + 255 * (1 - alpha));
     const luminance = (channels: number[]) => channels.map(channel => {
       const value = channel / 255;
       return value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4;
     }).reduce((total, value, index) => total + value * [.2126, .7152, .0722][index], 0);
-    return {
-      backing: backing.content !== "none" && backing.position === "absolute" && alpha > 0,
-      text: [...element.querySelectorAll(selector)].map(node => {
-        const foreground = luminance(rgb(getComputedStyle(node).color).slice(0, 3));
-        const behind = luminance(background);
-        return { text: node.textContent, contrast: (Math.max(foreground, behind) + .05) / (Math.min(foreground, behind) + .05) };
-      }),
+    const behind = (node: Element) => {
+      const layers: { colour: number[]; alpha: number }[] = [];
+      for (let current: Element | null = node; current; current = current.parentElement) {
+        const [r, g, b, alpha = 1] = rgb(getComputedStyle(current).backgroundColor);
+        if (alpha > 0) layers.push({ colour: [r, g, b], alpha });
+        if (alpha >= 1) break;
+      }
+      return layers.reverse().reduce((below, layer) => below.map((channel, index) => layer.colour[index] * layer.alpha + channel * (1 - layer.alpha)), [255, 255, 255]);
     };
+    const nodes = [element, ...element.querySelectorAll(selector)].filter(node => {
+      if (!node.matches(selector) || !node.textContent?.trim()) return false;
+      // Screen-reader-only text is clipped to a pixel; there is nothing to read, so nothing to measure.
+      const box = node.getBoundingClientRect();
+      return box.width > 2 && box.height > 2;
+    });
+    return nodes.map(node => {
+      const foreground = luminance(rgb(getComputedStyle(node).color).slice(0, 3));
+      const background = luminance(behind(node));
+      return { text: node.textContent!.trim().slice(0, 40), contrast: (Math.max(foreground, background) + .05) / (Math.min(foreground, background) + .05) };
+    });
   }, textSelector);
-  expect(measured.backing).toBe(true);
-  expect(measured.text.length).toBeGreaterThan(0);
-  for (const text of measured.text) expect(text.contrast, `${text.text} against brightest terrain`).toBeGreaterThanOrEqual(4.5);
+  expect(measured.length).toBeGreaterThan(0);
+  for (const text of measured) expect(text.contrast, `"${text.text}" against its own surface`).toBeGreaterThanOrEqual(4.5);
 }
 
 test("follow and mission HUD text keeps contrast above bright terrain", async ({ page }, info) => {
@@ -32,17 +41,17 @@ test("follow and mission HUD text keeps contrast above bright terrain", async ({
   await launchNumeria(page);
   await expect(page.locator("canvas")).toBeVisible({ timeout: 20_000 });
   await page.getByRole("button", { name: "Follow explorer", exact: true }).click();
-  const title = page.getByRole("heading", { name: "Numeria", exact: true }).locator("..");
-  const progress = page.getByLabel("Mission Atlas progress");
-  await expectReadableHud(title, ":scope > span, h1, p");
-  await expectReadableHud(progress, "span, strong, small");
-  await expectReadableHud(page.getByLabel("Future worlds"), "span, small");
+  const back = page.getByRole("button", { name: "Back to Worlds", exact: true });
+  const regions = page.getByRole("navigation", { name: "Numeria regions" });
+  const card = page.getByRole("region", { name: "Fraction Forest details" });
+  await expectReadableSurface(back, "button");
+  await expectReadableSurface(regions, "button");
+  await expectReadableSurface(card, "h1, p, button");
   await page.waitForTimeout(1600); // Allow the close-camera transition to settle for visual evidence.
   await page.screenshot({ path: info.outputPath("follow-hud.png") });
-  await page.getByRole("button", { name: "Start fractions mission", exact: true }).click();
+  await page.getByRole("button", { name: "Explore Fraction Forest", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Make three quarters", exact: true })).toBeVisible();
-  await expectReadableHud(title, ":scope > span, h1, p");
-  await expectReadableHud(progress, "span, strong, small");
+  await expectReadableSurface(page.getByRole("region", { name: "Fraction mission" }), "h2, p, button, span");
   await page.waitForTimeout(1600);
   await page.screenshot({ path: info.outputPath("mission-hud.png") });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
@@ -65,14 +74,14 @@ test("original world renders, camera controls work, and context loss preserves d
   await page.getByRole("button", { name: "Walk forward", exact: true }).focus();
   await page.keyboard.down("ArrowUp");
   await page.keyboard.up("ArrowUp");
-  await page.getByRole("button", { name: "Globe view", exact: true }).click();
+  await page.getByRole("button", { name: "View whole planet", exact: true }).click();
   await page.locator("canvas").evaluate(canvas => {
     (canvas as HTMLCanvasElement).getContext("webgl2")!.getExtension("WEBGL_lose_context")!.loseContext();
   });
   await expect(page.getByRole("img", { name: /Numeria map/ })).toBeVisible();
   await page.getByRole("button", { name: "Visit Fraction Forest", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Fraction Forest", exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Start fractions mission", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Explore Fraction Forest", exact: true })).toBeVisible();
   await page.screenshot({ path: testInfo.outputPath("fallback.png") });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   expect(errors).toEqual([]);
@@ -92,8 +101,8 @@ test("WebGL unavailable and reduced motion still expose the accessible map", asy
   await expect(page.getByRole("img", { name: /Numeria map/ })).toBeVisible();
   await page.getByRole("button", { name: "Visit Crystal Crater", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Crystal Crater", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "How to explore", exact: true }).click();
-  await expect(page.getByRole("complementary", { name: "Exploration instructions" })).toBeVisible();
+  // The selected region's instructions sit in its details card, readable without the 3D scene.
+  await expect(page.getByRole("region", { name: "Crystal Crater details" }).getByText("Use the crystal groups to solve each number sentence.")).toBeVisible();
 });
 
 test("held cross-button input moves the rendered explorer and orbit/zoom change the view", async ({ page }) => {

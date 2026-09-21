@@ -48,7 +48,7 @@ npm run test:e2e
 
 Root lint, type-check, and test include the API’s Ruff, mypy, and pytest gates. Run one API gate alone with `npm run api:test`, `npm run api:lint`, or `npm run api:typecheck`.
 
-The browser suite starts fresh production servers on 3100/3101 and a test-only API on 8101. It covers desktop and 390×844 mobile, the connected loop, keyboard/pointer controls, camera/WebGL fallbacks, Gemini timeout, replay, and parent insights. Chrome is required. Live Supabase tests need separate setup; their skips are not a live RLS pass.
+The browser suite serves the existing production build (run `npm run build` first, and again after any change to the web app, or it tests stale code) on 3100/3101 with a test-only API on 8101. It covers desktop and 390×844 mobile, the connected loop, keyboard/pointer controls, camera/WebGL fallbacks, Gemini timeout, replay, and parent insights. Chrome is required. Live Supabase tests need separate setup; their skips are not a live RLS pass.
 
 ## Deploy
 

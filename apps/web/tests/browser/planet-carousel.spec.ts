@@ -16,11 +16,13 @@ test("swiping changes the planet without entering it; locked worlds stay locked"
   await expect(page.getByRole("heading", { name: "Science Planet", exact: true })).toBeVisible();
   await expect(page).toHaveURL(/\/$/);
   await page.getByRole("button", { name: "Next planet", exact: true }).click();
-  await page.getByRole("button", { name: "??? (coming soon)", exact: true }).click();
-  await expect(page.getByRole("status")).toContainText("??? is coming soon");
+  // Locked worlds are a grey mystery: named "???", shown but disabled, and they never navigate.
+  await expect(page.getByRole("heading", { name: "???", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "??? (coming soon)", exact: true })).toBeDisabled();
+  await expect(page.getByText("More adventures are on their way.")).toBeVisible();
   await expect(page).toHaveURL(/\/$/);
   await page.getByRole("button", { name: "Previous planet", exact: true }).click();
   await page.getByRole("button", { name: "Previous planet", exact: true }).click();
   await page.getByRole("button", { name: "Explore Numeria", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Start fractions mission", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Explore Fraction Forest", exact: true })).toBeVisible();
 });
