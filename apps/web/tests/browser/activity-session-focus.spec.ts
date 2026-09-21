@@ -14,15 +14,17 @@ async function expectWrapsBothWays(page: Page, first: Locator, last: Locator) {
 }
 
 test("activity focus wraps around the native radio group in every question state", async ({ page }) => {
-  const activity = MATH_ACTIVITIES["fraction-forest"];
+  const activity = MATH_ACTIVITIES["number-valley"];
   const firstChallenge = activity.challenges[0];
   const secondChallenge = activity.challenges[1];
   const wrongAnswer = firstChallenge.options.find(option => option !== firstChallenge.answer)!;
 
+  // Fraction Forest runs the real fractions mission; the field activities (and this focus behaviour) live in the other regions.
   await page.goto("/?world=math");
-  await page.getByRole("button", { name: "Explore Fraction Forest", exact: true }).click();
+  await page.getByRole("button", { name: "Visit Number Valley", exact: true }).click();
+  await page.getByRole("button", { name: "Explore Number Valley", exact: true }).click();
 
-  const dialog = page.getByRole("dialog", { name: "Fraction Forest activity session" });
+  const dialog = page.getByRole("dialog", { name: "Number Valley activity session" });
   const close = dialog.getByRole("button", { name: "Close activity", exact: true });
   const firstOption = dialog.getByRole("radio", { name: firstChallenge.options[0], exact: true });
   await expect(dialog.getByRole("button", { name: "Check answer", exact: true })).toBeDisabled();

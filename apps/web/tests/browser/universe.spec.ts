@@ -101,8 +101,8 @@ test("WebGL unavailable and reduced motion still expose the accessible map", asy
   await expect(page.getByRole("img", { name: /Numeria map/ })).toBeVisible();
   await page.getByRole("button", { name: "Visit Crystal Crater", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Crystal Crater", exact: true })).toBeVisible();
-  // The selected region's instructions sit in its details card, readable without the 3D scene.
-  await expect(page.getByRole("region", { name: "Crystal Crater details" }).getByText("Use the crystal groups to solve each number sentence.")).toBeVisible();
+  // Without the 3D scene the selected region's details card still offers its way in (phones hide its longer text on purpose).
+  await expect(page.getByRole("region", { name: "Crystal Crater details" }).getByRole("button", { name: "Explore Crystal Crater", exact: true })).toBeVisible();
 });
 
 test("held cross-button input moves the rendered explorer and orbit/zoom change the view", async ({ page }) => {
