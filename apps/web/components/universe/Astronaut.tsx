@@ -4,9 +4,12 @@ import { useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { Group, Quaternion, Vector3 } from "three";
 import { INITIAL_DESTINATION, RADIUS, surfacePoint, type InputRef } from "./world";
-import { AUTO_RUN_SPEED, AUTO_WALK_SPEED, gaitAmount, idleGlance, strideRate, walkPace, waveAmount } from "./walkMotion";
+import { AstronautRig, type AstronautMotion } from "../worlds/AstronautRig";
+import { AUTO_RUN_SPEED, AUTO_WALK_SPEED, FACE_DELAY_SECONDS, easeAngle, gaitAmount, idleGlance, strideRate, walkPace, waveAmount } from "./walkMotion";
 
 const SCALE = 1.9;
+// The rig's boots sit a hair below its origin; lift it so they rest on the ground.
+const RIG_LIFT = .045;
 // Hops were tuned for the original 1.3 size; keep them in proportion as the explorer grows.
 const SIZE_RATIO = SCALE / 1.3;
 const WALK_SPEED = .42;
@@ -30,9 +33,10 @@ function createMotion() {
 
 export function Astronaut({ input, reducedMotion }: { input: InputRef; reducedMotion: boolean }) {
   const explorer = useRef<Group>(null); const body = useRef<Group>(null);
-  const leftLeg = useRef<Group>(null); const rightLeg = useRef<Group>(null);
-  const leftArm = useRef<Group>(null); const rightArm = useRef<Group>(null);
-  const head = useRef<Group>(null);
+  const nozzles = { left: useRef<Group>(null), right: useRef<Group>(null) };
+  const rigMotion = useRef<AstronautMotion>({ speed: 0, hover: 0, time: 0, lookX: 0, lookY: 0, cheer: 0, stride: 0 });
+  const settle = useRef(0);
+  const faceYaw = useRef(0);
   const { camera, clock, gl } = useThree();
   const motion = useMemo(createMotion, []);
   const waveStart = useRef(-Infinity);
@@ -123,7 +127,21 @@ export function Astronaut({ input, reducedMotion }: { input: InputRef; reducedMo
     explorer.current.position.copy(motion.normal).multiplyScalar(RADIUS + .03 + hop);
     motion.surface.setFromUnitVectors(UP, motion.normal);
     motion.forward.copy(motion.heading).applyQuaternion(motion.surfaceInverse.copy(motion.surface).invert());
-    motion.yaw.setFromAxisAngle(UP, Math.atan2(motion.forward.x, motion.forward.z));
+    // Once it has stopped it turns to show its face to the camera. This is only how it is drawn: state.heading, which the
+    // chase camera reads, stays the walking direction, so the camera never chases it round in circles.
+    const settled = !moving && !turning && !horizontal && !vertical && !state.destination;
+    settle.current = settled ? settle.current + delta : 0;
+    let faceTarget = 0;
+    if (settle.current > FACE_DELAY_SECONDS) {
+      motion.aim.copy(camera.position).sub(explorer.current.position);
+      motion.aim.addScaledVector(motion.normal, -motion.aim.dot(motion.normal));
+      if (motion.aim.lengthSq() > 1e-4) {
+        const side = motion.normal.dot(motion.axis.crossVectors(motion.heading, motion.aim)) < 0 ? -1 : 1;
+        faceTarget = side * motion.heading.angleTo(motion.aim);
+      }
+    }
+    faceYaw.current = reducedMotion ? faceTarget : easeAngle(faceYaw.current, faceTarget, settled ? 4.5 : 9, delta);
+    motion.yaw.setFromAxisAngle(UP, Math.atan2(motion.forward.x, motion.forward.z) + faceYaw.current);
     explorer.current.quaternion.copy(motion.surface).multiply(motion.yaw);
     explorer.current.position.toArray(state.position);
     state.heading ??= [0, 0, 0]; motion.heading.toArray(state.heading);
@@ -132,10 +150,6 @@ export function Astronaut({ input, reducedMotion }: { input: InputRef; reducedMo
     if (gait > 0) motion.step += delta * strideRate(Math.max(motion.speed, .2));
     const animate = gait > 0 && !reducedMotion;
     const stride = animate ? Math.sin(motion.step) * (sprinting ? .75 : .55) * gait : 0;
-    if (leftLeg.current) leftLeg.current.rotation.x = stride;
-    if (rightLeg.current) rightLeg.current.rotation.x = -stride;
-    if (leftArm.current) leftArm.current.rotation.x = -stride * .8;
-    if (rightArm.current) rightArm.current.rotation.x = stride * .8;
 
     // It waves at a pointer resting on it, and back at a tap; while standing about it glances around.
     const time = clock.getElapsedTime();
@@ -143,15 +157,12 @@ export function Astronaut({ input, reducedMotion }: { input: InputRef; reducedMo
     const tapWave = waveAmount(time - waveStart.current);
     const wave = Math.max(tapWave, hover.current * .85);
     standing.current += ((moving || turning || wave > .05 ? 0 : 1) - standing.current) * (1 - Math.exp(-3 * delta));
-    if (rightArm.current) {
-      rightArm.current.rotation.z = .2 + wave * (2.2 + (reducedMotion ? 0 : Math.sin(time * 9) * .3));
-      rightArm.current.position.y = .31 + wave * .09;
-    }
-    if (head.current) head.current.rotation.y = reducedMotion ? 0 : idleGlance(time, standing.current);
+    const glance = reducedMotion ? 0 : idleGlance(time, standing.current);
+    rigMotion.current = { speed: motion.speed, hover: hover.current * .85, time: reducedMotion ? 0 : time, lookX: glance / .55, lookY: 0, cheer: tapWave, stride };
     explorer.current.scale.setScalar(reducedMotion ? SCALE : SCALE * (1 + .04 * hover.current + .08 * tapWave));
     if (body.current) {
       const grounded = animate && moving;
-      body.current.position.y = grounded ? Math.abs(Math.sin(motion.step)) * .04 * gait : 0;
+      body.current.position.y = RIG_LIFT + (grounded ? Math.abs(Math.sin(motion.step)) * .04 * gait : 0);
       body.current.rotation.x += ((grounded ? .1 * gait : 0) - body.current.rotation.x) * (1 - Math.exp(-8 * delta));
       body.current.rotation.z = grounded ? Math.sin(motion.step) * .05 * gait : 0;
     }
@@ -167,73 +178,8 @@ export function Astronaut({ input, reducedMotion }: { input: InputRef; reducedMo
         <circleGeometry args={[.2, 14]} />
         <meshBasicMaterial color="#285c85" transparent opacity={.16} depthWrite={false} />
       </mesh>
-      <group ref={body}>
-        <group ref={leftLeg} position={[-.073, .19, 0]}>
-          <mesh position={[0, -.08, 0]}>
-            <capsuleGeometry args={[.057, .105, 2, 6]} />
-            <meshStandardMaterial color="#fff7e7" roughness={.92} />
-          </mesh>
-          <mesh position={[0, -.15, .04]}>
-            <boxGeometry args={[.115, .08, .16]} />
-            <meshStandardMaterial color="#ef8b78" roughness={.9} />
-          </mesh>
-        </group>
-        <group ref={rightLeg} position={[.073, .19, 0]}>
-          <mesh position={[0, -.08, 0]}>
-            <capsuleGeometry args={[.057, .105, 2, 6]} />
-            <meshStandardMaterial color="#fff7e7" roughness={.92} />
-          </mesh>
-          <mesh position={[0, -.15, .04]}>
-            <boxGeometry args={[.115, .08, .16]} />
-            <meshStandardMaterial color="#ef8b78" roughness={.9} />
-          </mesh>
-        </group>
-        <mesh position={[0, .31, 0]}>
-          <capsuleGeometry args={[.13, .14, 3, 8]} />
-          <meshStandardMaterial color="#fff7e7" roughness={.9} />
-        </mesh>
-        <mesh position={[0, .31, -.13]}>
-          <boxGeometry args={[.2, .24, .12]} />
-          <meshStandardMaterial color="#9dc99a" roughness={1} />
-        </mesh>
-        <mesh position={[0, .33, .119]}>
-          <boxGeometry args={[.13, .095, .026]} />
-          <meshStandardMaterial color="#f4c95d" roughness={.88} />
-        </mesh>
-        <group ref={leftArm} position={[-.17, .31, 0]} rotation={[0, 0, -.2]}>
-          <mesh>
-            <capsuleGeometry args={[.05, .15, 2, 6]} />
-            <meshStandardMaterial color="#d9efd7" roughness={.9} />
-          </mesh>
-        </group>
-        <group ref={rightArm} position={[.17, .31, 0]} rotation={[0, 0, .2]}>
-          <mesh>
-            <capsuleGeometry args={[.05, .15, 2, 6]} />
-            <meshStandardMaterial color="#d9efd7" roughness={.9} />
-          </mesh>
-        </group>
-        <group ref={head} position={[0, .55, 0]}>
-          <mesh>
-            <sphereGeometry args={[.205, 12, 9]} />
-            <meshStandardMaterial color="#fff7e7" roughness={.72} />
-          </mesh>
-          <mesh position={[0, .007, .113]} scale={[1, .78, .56]}>
-            <sphereGeometry args={[.174, 12, 8]} />
-            <meshStandardMaterial color="#285c85" metalness={0} roughness={.42} />
-          </mesh>
-          <mesh position={[-.062, .07, .188]} scale={[1, .3, .1]} rotation={[0, 0, -.3]}>
-            <sphereGeometry args={[.053, 8, 5]} />
-            <meshBasicMaterial color="#a9d9ee" />
-          </mesh>
-          <mesh position={[.13, .17, 0]}>
-            <cylinderGeometry args={[.009, .009, .14, 4]} />
-            <meshStandardMaterial color="#9dc99a" roughness={.9} />
-          </mesh>
-          <mesh position={[.13, .25, 0]}>
-            <sphereGeometry args={[.025, 6, 4]} />
-            <meshBasicMaterial color="#f4c95d" />
-          </mesh>
-        </group>
+      <group ref={body} position={[0, RIG_LIFT, 0]}>
+        <AstronautRig motion={rigMotion} nozzles={nozzles} grounded />
       </group>
     </group>
   );

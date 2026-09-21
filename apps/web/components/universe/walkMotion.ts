@@ -42,3 +42,16 @@ export const MAX_GLANCE = .45;
 export function idleGlance(time: number, standing: number) {
   return Math.sin(time * .8) * MAX_GLANCE * clamp01(standing);
 }
+
+/** Wraps an angle into -PI..PI. */
+export function wrapAngle(angle: number) {
+  return Math.atan2(Math.sin(angle), Math.cos(angle));
+}
+
+/** Eases `current` toward `target` the short way round, so +PI and -PI count as the same heading and it never spins the long way. */
+export function easeAngle(current: number, target: number, rate: number, delta: number) {
+  return current + wrapAngle(target - current) * (1 - Math.exp(-rate * delta));
+}
+
+/** How long the explorer stands still before it turns to face the camera. */
+export const FACE_DELAY_SECONDS = .4;

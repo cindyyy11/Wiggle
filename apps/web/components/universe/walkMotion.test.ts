@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AUTO_WALK_SPEED, MAX_GLANCE, WAVE_SECONDS, gaitAmount, idleGlance, strideRate, walkPace, waveAmount } from "./walkMotion";
+import { AUTO_WALK_SPEED, MAX_GLANCE, WAVE_SECONDS, easeAngle, gaitAmount, idleGlance, strideRate, walkPace, waveAmount, wrapAngle } from "./walkMotion";
 
 describe("walkPace", () => {
   it("waits until the explorer faces the goal, then walks at full pace", () => {
@@ -71,5 +71,42 @@ describe("idleGlance", () => {
   it("faces front whenever the explorer is on the move", () => {
     for (let time = 0; time < 10; time += .3) expect(idleGlance(time, 0)).toBeCloseTo(0);
     expect(Math.abs(idleGlance(2, .5))).toBeLessThan(Math.abs(idleGlance(2, 1)) + 1e-9);
+  });
+});
+
+describe("wrapAngle", () => {
+  it("keeps every angle within half a turn either way", () => {
+    for (let angle = -20; angle < 20; angle += .37) {
+      expect(Math.abs(wrapAngle(angle))).toBeLessThanOrEqual(Math.PI + 1e-9);
+      expect(Math.cos(wrapAngle(angle))).toBeCloseTo(Math.cos(angle));
+      expect(Math.sin(wrapAngle(angle))).toBeCloseTo(Math.sin(angle));
+    }
+  });
+});
+
+describe("easeAngle", () => {
+  it("settles on its target", () => {
+    let angle = 0;
+    for (let frame = 0; frame < 300; frame++) angle = easeAngle(angle, 2, 6, 1 / 60);
+    expect(angle).toBeCloseTo(2, 3);
+  });
+
+  it("takes the short way round instead of spinning through the far side", () => {
+    // Just short of half a turn, heading for the same spot written as -PI: it should creep forward, not swing back through 0.
+    const start = Math.PI - .1;
+    const next = easeAngle(start, -Math.PI, 6, 1 / 60);
+    expect(next).toBeGreaterThan(start);
+    let angle = start;
+    for (let frame = 0; frame < 120; frame++) {
+      angle = easeAngle(angle, -Math.PI, 6, 1 / 60);
+      expect(Math.abs(wrapAngle(angle - Math.PI))).toBeLessThanOrEqual(.1 + 1e-9);
+    }
+  });
+
+  it("does not move when it is already there, and stays put over a long frame gap", () => {
+    expect(easeAngle(1.2, 1.2, 6, 1 / 60)).toBeCloseTo(1.2);
+    const jumped = easeAngle(0, 1, 6, 5);
+    expect(jumped).toBeGreaterThan(.99);
+    expect(jumped).toBeLessThanOrEqual(1);
   });
 });
