@@ -29,13 +29,13 @@ const REST_Z = .3;
 const HELD_Z = .6;
 const FIELD_OF_VIEW = 42;
 
-/** Keeps the whole bench in view on narrow screens by moving the camera back. */
+/** Sizes the camera so the bench fills about two thirds of the view and never overflows it on narrow screens. */
 function FitBench() {
   const { camera, size } = useThree();
   useEffect(() => {
     const aspect = size.width / Math.max(1, size.height);
     const halfFov = Math.tan((FIELD_OF_VIEW * Math.PI) / 360);
-    camera.position.z = Math.max(5.3, 1.75 / (halfFov * aspect), 1.1 / halfFov);
+    camera.position.z = Math.max(1.95 / (.68 * 2 * halfFov), 3.1 / (.92 * 2 * halfFov * aspect));
     camera.updateProjectionMatrix();
   }, [camera, size]);
   return null;

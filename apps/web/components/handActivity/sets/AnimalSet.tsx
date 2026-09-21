@@ -26,7 +26,7 @@ function Frog(props: ItemModelProps) {
       <mesh position={[0, .01, .075]}><sphereGeometry args={[.017, 8, 6]} /><Dark /></mesh>
     </group>)}
     {[-.2, .2].map((x) => <mesh key={x} position={[x, -.1, .03]} scale={[1, .5, 1]}><sphereGeometry args={[.07, 12, 8]} /><Mat color="#5fc257" /></mesh>)}
-    <mesh position={[0, -.05, .15]} rotation={[0, 0, Math.PI]}><torusGeometry args={[.05, .008, 6, 16, Math.PI]} /><meshBasicMaterial color="#2c6b32" /></mesh>
+    <mesh position={[0, -.05, .19]} rotation={[0, 0, Math.PI]}><torusGeometry args={[.05, .008, 6, 16, Math.PI]} /><meshBasicMaterial color="#2c6b32" /></mesh>
   </Lift>;
 }
 
@@ -45,7 +45,7 @@ function Bird(props: ItemModelProps) {
 function Fish(props: ItemModelProps) {
   return <Lift {...props}>
     <mesh scale={[1.5, .85, .6]}><sphereGeometry args={[.14, 20, 14]} /><Mat color="#ffa86d" /></mesh>
-    <mesh position={[-.24, 0, 0]} rotation={[0, 0, Math.PI / 2]} scale={[1, 1, .4]}><coneGeometry args={[.11, .16, 3]} /><Mat color="#ff8a4a" /></mesh>
+    <mesh position={[-.24, 0, 0]} rotation={[0, 0, -Math.PI / 2]} scale={[1, 1, .4]}><coneGeometry args={[.11, .16, 3]} /><Mat color="#ff8a4a" /></mesh>
     <mesh position={[0, .13, 0]} scale={[1.2, .5, .3]}><sphereGeometry args={[.07, 10, 8]} /><Mat color="#ff8a4a" /></mesh>
     <mesh position={[.14, .03, .07]}><sphereGeometry args={[.026, 10, 8]} /><meshBasicMaterial color="#ffffff" /></mesh>
     <mesh position={[.15, .03, .095]}><sphereGeometry args={[.012, 8, 6]} /><Dark /></mesh>
