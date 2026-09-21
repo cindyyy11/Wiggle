@@ -20,6 +20,16 @@ Not verified, and not represented as passing:
 - Live Vercel, Render and Supabase deployment, and a real household Auth run. The 37-assertion pgTAP RLS suite was run and passes 37 of 37, but against a single container of Supabase's own Postgres 15.8 image (`supabase/postgres:15.8.1.135`, with its real `auth.users` and `auth.uid()`) after applying all three migrations, not a full local Supabase stack: GoTrue and PostgREST were not running, so the six live-Supabase repository cases (which need two signed-in parent tokens) were not run. No Supabase CLI is installed here.
 - The browser suite serves the existing `.next` build and does not rebuild it. A run before this session's rebuild exercised stale code; the README and runbook now say to run `npm run build` first.
 
+## Camera-first Science lands — 21 September 2026
+
+result: automated checks pass; real-camera play is not yet checked.
+
+Animal Types, Colors Canyon and Life Cycle Garden now open the camera on entry and are played only with the hand on a 3D workbench inside the Magnet-style frame (`components/handActivity/`). The camera is required: a blocked or missing camera shows "Ask an adult to turn on the camera" with Try again, and there is no button fallback for the activity. Keyboard-only and touch-only players cannot complete these three activities; Escape and the exit button still work. Magnet Lands is unchanged.
+
+Checked: 85 web unit files / 452 tests pass, including the pure engine and controller, the shared frame, a full discover-match-done play for each of the three lands with simulated hand actions, and a per-set consistency test against the lesson data. Browser: the `science-sessions` spec (camera requested on entry, adult help and Try again, no button fallback, Escape, no horizontal scroll) passes 2 of 2 at desktop and 2 of 2 at 390 px; the science walk-around, magnet-lab-camera and hover-contrast specs pass 7 of 7 on desktop and subject-worlds passes 11 of 11 on desktop. The three 3D benches were inspected in screenshots at 1440 x 900 and 390 x 844 with a fake camera; no page errors.
+
+Not verifiable automatically: real hand tracking (pinch, point, open palm, tracking-loss grace) and whether items snap or jitter while a real hand carries them; the local mobile and full desktop projects were not re-run in full this round. Numeria's Number Valley, Geometry Ridge and Crystal Crater are unchanged and are the next round.
+
 ## Subject Worlds and Science Planet — Task 8 verification
 
 result: pending/blocked in this isolated worktree

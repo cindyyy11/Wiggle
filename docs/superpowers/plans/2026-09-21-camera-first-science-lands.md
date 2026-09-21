@@ -639,7 +639,7 @@ it("speaks each new coach line once", () => {
   expect(mock.speak).not.toHaveBeenCalled();
 });
 
-it.each(["denied", "unavailable", "off"] as CameraStatus[])("offers adult help and Try again when the camera is %s", (status) => {
+it.each(["denied", "unavailable"] as CameraStatus[])("offers adult help and Try again when the camera is %s", (status) => {
   mock.status = status;
   render(<HandActivityShell {...props()} />);
   expect(screen.getByRole("heading", { name: "Ask an adult to turn on the camera" })).toBeTruthy();
@@ -647,6 +647,25 @@ it.each(["denied", "unavailable", "off"] as CameraStatus[])("offers adult help a
   fireEvent.click(screen.getByRole("button", { name: "Try again" }));
   expect(mock.retry).toHaveBeenCalledTimes(1);
   expect(screen.queryByTestId("scene")).toBeNull();
+});
+
+it("offers adult help when the camera goes back to off after starting", () => {
+  const { rerender } = render(<HandActivityShell {...props()} />);
+  mock.status = "off";
+  rerender(<HandActivityShell {...props()} />);
+  expect(screen.getByRole("heading", { name: "Ask an adult to turn on the camera" })).toBeTruthy();
+  expect(screen.getByRole("status").textContent).toBe(HELP_LINE);
+  fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+  expect(mock.retry).toHaveBeenCalledTimes(1);
+});
+
+it("does not flash adult help before the camera has started", () => {
+  mock.status = "off";
+  render(<HandActivityShell {...props()} />);
+  expect(screen.getByRole("heading", { name: "Let's get your hand ready" })).toBeTruthy();
+  expect(mock.speak).toHaveBeenCalledWith(STARTING_LINE);
+  expect(mock.speak).not.toHaveBeenCalledWith(HELP_LINE);
+  expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
 });
 
 it("leaves through the exit button", () => {
@@ -725,11 +744,14 @@ export function HandActivityShell({ label, title, instruction, progress, step, c
   const exit = useRef(onExit);
   const unlock = useRef(sound.unlock);
   const reduced = useRef(false);
+  const seenNonOff = useRef(false);
   exit.current = onExit;
   unlock.current = sound.unlock;
   reduced.current = reducedMotion;
 
-  const needsHelp = tracking.status === "denied" || tracking.status === "unavailable" || tracking.status === "off";
+  if (tracking.status !== "off") seenNonOff.current = true;
+  // The hook's first render is always "off" and becomes "starting" only in an effect, so "off" only means help once the camera has started.
+  const needsHelp = tracking.status === "denied" || tracking.status === "unavailable" || (tracking.status === "off" && seenNonOff.current);
   const ready = tracking.status === "ready";
   const line = needsHelp ? HELP_LINE : !ready ? STARTING_LINE : coach;
 
@@ -785,7 +807,7 @@ export function HandActivityShell({ label, title, instruction, progress, step, c
       <h1>{needsHelp ? "Ask an adult to turn on the camera" : !ready ? "Let's get your hand ready" : title}</h1>
       {ready && <>
         <p>{instruction}</p>
-        <div className={styles.progress} aria-label={`${progress.count} of ${progress.total} ${progress.label}`}>
+        <div className={styles.progress} role="img" aria-label={`${progress.count} of ${progress.total} ${progress.label}`}>
           {Array.from({ length: progress.total }, (_, index) => <span key={index} data-complete={index < progress.count} />)}
         </div>
         {step ? <p className={styles.checkpoint}>{step}</p> : null}
@@ -815,7 +837,7 @@ export function HandActivityShell({ label, title, instruction, progress, step, c
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `npx vitest run components/handActivity/HandActivityShell.test.tsx`
-Expected: PASS (10 tests).
+Expected: PASS (11 tests).
 
 If the "traps focus" test fails because the exit button is not the first button in the section, keep the exit button first in the JSX; it is.
 
@@ -2047,3 +2069,11 @@ Do not push unless the owner asks.
 - **Spec coverage:** shared frame (Task 3); pure engine and hand rules including the 400 ms grace (Tasks 1, 2); shared 3D scene with cursor, held item, hover, shake and sparkle (Task 4); three custom sets (Tasks 5, 7); session wiring, progress contract and removal of the old path (Tasks 6, 7); adult-help screen, Try again, Escape, focus, reduced motion (Tasks 3, 4, 6); testing at unit, component, browser and visual levels plus the manual real-camera step (Tasks 1 to 8); documentation (Task 8). Numeria and the Magnet refactor are out of scope by design.
 - **Type consistency:** `BenchAction`, `BenchPhase`, `BenchState`, `BenchRules`, `BenchPoint`, `BenchZone` (Task 1) are used unchanged by the controller, frame adapters, scene and session. `HandActivityShellProps` and `HandActivitySceneContext` (Task 3) match the session's use. `BenchSet`, `ItemModelProps`, `PadProps` (Task 4) match every set. `StarterProgress` lives in `scienceActivities.ts` from Task 6 onward.
 - **Placeholders:** none; every code step contains the code. The `<date>`, `<N>`, `<M>` and device markers in the `design-qa.md` template are filled in from real results at that step, and the step says so.
+
+## Execution notes
+
+- Task 3: progress indicator gets role="img", and "off" counts as adult help only after the camera has left "off" (the hook's first render is always "off"); both changes are now in the plan text above.
+- Task 4: the wrong-answer wobble in the scene only follows a drop the scene itself emitted, never a cancel.
+- Task 6: the session unlocks its own sound instance on mount, and keeps its state reference authoritative between renders (`stateRef.current = after` after dispatch and in the auto-advance timer); `SciencePlanetCanvas.test.tsx` had one assertion of the removed "Discover Frog" button changed to check the new "Animal Types activity" region.
+- Visual polish after looking at screenshots: the bench camera now fits the bench to at most 68% of the canvas height and 92% of its width (was a fixed 5.3 minimum distance); the fish tail rotation is -PI/2 and the frog smile z is .19; the Colors Canyon pedestals are opaque and the bench colour is #4d4266.
+- Known follow-ups (minor, deferred): the `Mat`/`Dark` helpers and row constants are duplicated across the three sets; `benchX`/`benchY` and the bench extents live in the scene file; the controller is phase-unaware and relies on its caller to reset it; Magnet Lands has the same initial-"off" behaviour the shell now avoids and was deliberately left untouched.
