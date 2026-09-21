@@ -83,7 +83,7 @@ it("speaks each new coach line once", () => {
   expect(mock.speak).not.toHaveBeenCalled();
 });
 
-it.each(["denied", "unavailable", "off"] as CameraStatus[])("offers adult help and Try again when the camera is %s", (status) => {
+it.each(["denied", "unavailable"] as CameraStatus[])("offers adult help and Try again when the camera is %s", (status) => {
   mock.status = status;
   render(<HandActivityShell {...props()} />);
   expect(screen.getByRole("heading", { name: "Ask an adult to turn on the camera" })).toBeTruthy();
@@ -91,6 +91,28 @@ it.each(["denied", "unavailable", "off"] as CameraStatus[])("offers adult help a
   fireEvent.click(screen.getByRole("button", { name: "Try again" }));
   expect(mock.retry).toHaveBeenCalledTimes(1);
   expect(screen.queryByTestId("scene")).toBeNull();
+});
+
+it("offers adult help when camera transitions from ready to off", () => {
+  mock.status = "starting";
+  const { rerender } = render(<HandActivityShell {...props()} />);
+  mock.status = "off";
+  rerender(<HandActivityShell {...props()} />);
+  expect(screen.getByRole("heading", { name: "Ask an adult to turn on the camera" })).toBeTruthy();
+  expect(screen.getByRole("status").textContent).toBe(HELP_LINE);
+  fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+  expect(mock.retry).toHaveBeenCalledTimes(1);
+  expect(screen.queryByTestId("scene")).toBeNull();
+});
+
+it("does not flash adult help before the camera has started", () => {
+  mock.status = "off";
+  render(<HandActivityShell {...props()} />);
+  expect(screen.getByRole("heading", { name: "Let's get your hand ready" })).toBeTruthy();
+  expect(screen.getByRole("status").textContent).toBe(STARTING_LINE);
+  expect(mock.speak).toHaveBeenCalledWith(STARTING_LINE);
+  expect(mock.speak).not.toHaveBeenCalledWith(HELP_LINE);
+  expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
 });
 
 it("leaves through the exit button", () => {

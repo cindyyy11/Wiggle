@@ -41,11 +41,13 @@ export function HandActivityShell({ label, title, instruction, progress, step, c
   const exit = useRef(onExit);
   const unlock = useRef(sound.unlock);
   const reduced = useRef(false);
+  const seenNonOff = useRef(false);
   exit.current = onExit;
   unlock.current = sound.unlock;
   reduced.current = reducedMotion;
 
-  const needsHelp = tracking.status === "denied" || tracking.status === "unavailable" || tracking.status === "off";
+  if (tracking.status !== "off") seenNonOff.current = true;
+  const needsHelp = tracking.status === "denied" || tracking.status === "unavailable" || (tracking.status === "off" && seenNonOff.current);
   const ready = tracking.status === "ready";
   const line = needsHelp ? HELP_LINE : !ready ? STARTING_LINE : coach;
 
@@ -101,7 +103,7 @@ export function HandActivityShell({ label, title, instruction, progress, step, c
       <h1>{needsHelp ? "Ask an adult to turn on the camera" : !ready ? "Let's get your hand ready" : title}</h1>
       {ready && <>
         <p>{instruction}</p>
-        <div className={styles.progress} aria-label={`${progress.count} of ${progress.total} ${progress.label}`}>
+        <div className={styles.progress} role="img" aria-label={`${progress.count} of ${progress.total} ${progress.label}`}>
           {Array.from({ length: progress.total }, (_, index) => <span key={index} data-complete={index < progress.count} />)}
         </div>
         {step ? <p className={styles.checkpoint}>{step}</p> : null}
