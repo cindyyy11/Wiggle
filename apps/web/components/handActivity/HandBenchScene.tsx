@@ -79,6 +79,7 @@ function BenchInteraction({ set, state, targetFor, latest, reducedMotion, onActi
   const statusRef = useRef("");
   const heldAt = useRef<BenchPoint | null>(null);
   const wasHeld = useRef<string | null>(null);
+  const lastDrop = useRef<string | null>(null);
   const seenMatched = useRef(state.matched.length);
   const shakeUntil = useRef(new Map<string, number>());
   const burstKey = useRef(0);
@@ -101,7 +102,10 @@ function BenchInteraction({ set, state, targetFor, latest, reducedMotion, onActi
     const target = point && s.held ? benchHit(point, set.targets.map((t) => ({ id: t.id, at: t.at, radius: t.radius }))) : null;
 
     const action = controller.current.update({ phase: s.phase, gesture: frame.gesture, item, target, isTracking: point !== null, at: now * 1000 });
-    if (action) act(action);
+    if (action) {
+      if (action.type === "drop") lastDrop.current = action.id;
+      act(action);
+    }
 
     const nextHover = s.held ? null : item;
     if (nextHover !== hoverRef.current) { hoverRef.current = nextHover; setHovered(nextHover); }
@@ -110,7 +114,11 @@ function BenchInteraction({ set, state, targetFor, latest, reducedMotion, onActi
 
     if (s.held && point) heldAt.current = point;
     if (!s.held) heldAt.current = null;
-    if (wasHeld.current && !s.held && !s.matched.includes(wasHeld.current)) shakeUntil.current.set(wasHeld.current, now + .5);
+    if (wasHeld.current && !s.held) {
+      // Only a drop this scene emitted is a judged wrong answer; a cancel (hand lost, palm opened away) never wobbles.
+      if (lastDrop.current === wasHeld.current && !s.matched.includes(wasHeld.current)) shakeUntil.current.set(wasHeld.current, now + .5);
+      lastDrop.current = null;
+    }
     wasHeld.current = s.held;
 
     if (s.matched.length > seenMatched.current && !reducedMotion) {
