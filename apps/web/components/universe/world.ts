@@ -50,6 +50,8 @@ export type ExplorerInput = {
   hop: boolean;
   running: boolean;
   destination: Destination | null;
+  /** 0 while walking, easing to 1 once the explorer has stopped and turned to face the camera; the camera closes in on it. */
+  portrait?: number;
   position: [number, number, number];
   /** Unit tangent the explorer is facing, written each frame so the camera can follow behind. */
   heading?: [number, number, number];
