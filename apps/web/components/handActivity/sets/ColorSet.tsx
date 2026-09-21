@@ -29,7 +29,7 @@ function gem(id: string) {
 
 function pedestal(id: string) {
   const Pad = (props: PadProps) => <PadFrame {...props}>
-    <mesh rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[.22, .24, .06, 32]} /><meshStandardMaterial color={COLORS[id]} roughness={.5} transparent opacity={.6} /></mesh>
+    <mesh rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[.22, .24, .06, 32]} /><meshStandardMaterial color={COLORS[id]} roughness={.5} /></mesh>
     <Glyph id={id} radius={.09} z={.05} />
   </PadFrame>;
   Pad.displayName = `${id}Pedestal`;
@@ -56,5 +56,5 @@ export const COLOR_SET: BenchSet = {
     { id: "purple", at: { x: .62, y: TARGET_Y }, radius: .1, settle, Pad: pedestal("purple") },
     { id: "yellow", at: { x: .85, y: TARGET_Y }, radius: .1, settle, Pad: pedestal("yellow") },
   ],
-  Scenery: () => <Bench color="#a5808f" />,
+  Scenery: () => <Bench color="#4d4266" />,
 };
