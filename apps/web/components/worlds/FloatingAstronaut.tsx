@@ -3,13 +3,15 @@
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import { Group, MathUtils, Vector3, type Mesh, type MeshBasicMaterial } from "three";
+import type { ThreeEvent } from "@react-three/fiber";
 import { RADIUS } from "../universe/world";
 import { AstronautRig, type AstronautMotion } from "./AstronautRig";
+import { useWiggleSound } from "../../features/audio/useWiggleSound";
 
 export const ASTRONAUT_CENTER_Y = .18;
 // The rig copies the in-world explorer's proportions, so it scales up from that size.
 export const ASTRONAUT_RIG_HEIGHT = .83;
-export const ASTRONAUT_SCALE = 2.8;
+export const ASTRONAUT_SCALE = 3.7;
 export const ASTRONAUT_FACING = .55;
 export const ASTRONAUT_REST_Z = 1.1;
 export const ROAM_X_SHARE = .72;
@@ -20,6 +22,12 @@ export const ROAM_Z_MAX = 2.4;
 export const BEHIND_Z = -3.2;
 export const SOMERSAULT_EVERY = 15;
 export const SOMERSAULT_SECONDS = 2.4;
+export const TRICK_SECONDS = 1.1;
+export const CHEER_SECONDS = 1.6;
+// How long it keeps watching the pointer after the pointer last moved.
+export const LOOK_HOLD_SECONDS = 2.5;
+const TAP_KICK_X = 5;
+const TAP_KICK_Y = 4.5;
 const SLIDE_KICK = 9;
 const WHEEL_KICK = .03;
 const MAX_SPEED = 10;
@@ -69,6 +77,26 @@ export function somersaultAngle(time: number): number {
   const phase = time % SOMERSAULT_EVERY;
   const start = SOMERSAULT_EVERY - SOMERSAULT_SECONDS;
   return phase < start ? 0 : turnAngle((phase - start) / SOMERSAULT_SECONDS);
+}
+
+// A tapped astronaut tumbles one full turn, away from where it was tapped. Level again once it has landed.
+export function trickAngle(elapsed: number, direction: number): number {
+  if (elapsed < 0 || elapsed >= TRICK_SECONDS) return 0;
+  return (direction < 0 ? -1 : 1) * turnAngle(elapsed / TRICK_SECONDS);
+}
+
+// Excitement after a tap: full at once, fading out over the cheer.
+export function cheerLevel(elapsed: number): number {
+  if (elapsed < 0 || elapsed >= CHEER_SECONDS) return 0;
+  return 1 - MathUtils.smoothstep(elapsed / CHEER_SECONDS, 0, 1);
+}
+
+// Which way the pointer lies from the astronaut, each axis from -1 to 1. Pointer coordinates are the canvas's -1..1.
+export function lookToward(pointer: { x: number; y: number }, position: { x: number; y: number }, halfWidth: number, halfHeight: number): { x: number; y: number } {
+  return {
+    x: MathUtils.clamp((pointer.x * halfWidth - position.x) / halfWidth, -1, 1),
+    y: MathUtils.clamp((pointer.y * halfHeight - position.y) / halfHeight, -1, 1),
+  };
 }
 
 type Nozzles = { left: RefObject<Group | null>; right: RefObject<Group | null> };
@@ -128,8 +156,9 @@ export function FloatingAstronaut({ index, reducedMotion }: { index: number; red
   const group = useRef<Group>(null);
   const body = useRef<Group>(null);
   const nozzles: Nozzles = { left: useRef<Group>(null), right: useRef<Group>(null) };
-  const motion = useRef<AstronautMotion>({ speed: 0, hover: 0, time: 0 });
-  const { viewport } = useThree();
+  const motion = useRef<AstronautMotion>({ speed: 0, hover: 0, time: 0, lookX: 0, lookY: 0, cheer: 0 });
+  const { viewport, gl, clock } = useThree();
+  const sound = useWiggleSound();
   const radiusScale = Math.min(.9, viewport.width / 8.5);
   const spacing = Math.min(7.2, viewport.width * .86);
   const scale = radiusScale * ASTRONAUT_SCALE;
@@ -139,6 +168,11 @@ export function FloatingAstronaut({ index, reducedMotion }: { index: number; red
   const hover = useRef(0);
   const velocity = useRef({ x: 0, y: 0 });
   const roamTime = useRef(0);
+  const trick = useRef({ start: -Infinity, direction: 1 });
+  const cheerStart = useRef(-Infinity);
+  const look = useRef({ x: 0, y: 0 });
+  const lastPointer = useRef({ x: 0, y: 0 });
+  const lastPointerMove = useRef(-Infinity);
   const previousIndex = useRef(index);
 
   useEffect(() => {
@@ -148,6 +182,8 @@ export function FloatingAstronaut({ index, reducedMotion }: { index: number; red
     velocity.current.x -= Math.sign(index - previous) * SLIDE_KICK;
     velocity.current.y += 2.2;
   }, [index, reducedMotion]);
+
+  useEffect(() => () => { gl.domElement.style.cursor = ""; }, [gl]);
 
   useEffect(() => {
     if (reducedMotion) return;
@@ -159,7 +195,20 @@ export function FloatingAstronaut({ index, reducedMotion }: { index: number; red
     return () => window.removeEventListener("wheel", onWheel);
   }, [reducedMotion]);
 
-  useFrame(({ clock, camera }, rawDelta) => {
+  // A tap is a high-five: it cheers, and unless motion is reduced it also blasts off into a somersault, away from the tap.
+  const tap = (event: ThreeEvent<MouseEvent>) => {
+    event.stopPropagation();
+    const time = clock.getElapsedTime();
+    cheerStart.current = time;
+    if (reducedMotion) return;
+    const away = (group.current?.position.x ?? 0) >= event.point.x ? 1 : -1;
+    trick.current = { start: time, direction: away };
+    velocity.current.x += away * TAP_KICK_X;
+    velocity.current.y += TAP_KICK_Y;
+    sound.play("whoosh");
+  };
+
+  useFrame(({ clock, camera, pointer }, rawDelta) => {
     const outer = group.current;
     const inner = body.current;
     if (!outer || !inner) return;
@@ -168,7 +217,7 @@ export function FloatingAstronaut({ index, reducedMotion }: { index: number; red
       outer.position.set((-1 - index) * spacing, ASTRONAUT_CENTER_Y, ASTRONAUT_REST_Z);
       inner.rotation.set(.06, ASTRONAUT_FACING, 0);
       outer.scale.setScalar(scale);
-      motion.current = { speed: 0, hover: 0, time: 0 };
+      motion.current = { speed: 0, hover: 0, time: 0, lookX: 0, lookY: 0, cheer: cheerLevel(clock.getElapsedTime() - cheerStart.current) };
       return;
     }
     const time = clock.getElapsedTime();
@@ -189,20 +238,33 @@ export function FloatingAstronaut({ index, reducedMotion }: { index: number; red
     // A narrow screen is mostly planet, so there it stays in the front lane rather than hiding.
     const targetZ = halfWidth > centreBand * 2.2 ? astronautDepth(outer.position.x, centreBand, roam.z) : roam.z;
     outer.position.z = MathUtils.lerp(outer.position.z, targetZ, 1 - Math.exp(-2.6 * delta));
-    outer.scale.setScalar(scale * (1 + .06 * hover.current + Math.sin(time * 1.4) * .015));
+    const cheer = cheerLevel(time - cheerStart.current);
+    outer.scale.setScalar(scale * (1 + .06 * hover.current + Math.sin(time * 1.4) * .015 + .08 * cheer));
+
+    // It keeps an eye on the pointer for a moment after it moves, then goes back to daydreaming.
+    if (Math.abs(pointer.x - lastPointer.current.x) + Math.abs(pointer.y - lastPointer.current.y) > .001) {
+      lastPointer.current = { x: pointer.x, y: pointer.y };
+      lastPointerMove.current = time;
+    }
+    const watching = time - lastPointerMove.current < LOOK_HOLD_SECONDS;
+    const gaze = watching ? lookToward(pointer, outer.position, halfWidth, halfHeight) : { x: 0, y: 0 };
+    const ease = 1 - Math.exp(-6 * delta);
+    look.current.x += (gaze.x - look.current.x) * ease;
+    look.current.y += (gaze.y - look.current.y) * ease;
 
     const centreLean = -MathUtils.clamp(outer.position.x / halfWidth, -1, 1) * ASTRONAUT_FACING;
-    inner.rotation.y = MathUtils.lerp(inner.rotation.y, centreLean + drift.turn, 1 - Math.exp(-6 * delta));
+    inner.rotation.y = MathUtils.lerp(inner.rotation.y, centreLean + drift.turn + look.current.x * .4, 1 - Math.exp(-6 * delta));
     inner.rotation.z = drift.tilt - MathUtils.clamp(velocity.current.x * .05, -.5, .5) + Math.sin(time * .37 + 2) * .1;
-    inner.rotation.x = .06 + MathUtils.clamp(velocity.current.y * .03, -.25, .25) + Math.sin(time * .5) * .06 + somersaultAngle(time);
-    motion.current = { speed: Math.hypot(velocity.current.x, velocity.current.y), hover: hover.current, time };
+    inner.rotation.x = .06 + MathUtils.clamp(velocity.current.y * .03, -.25, .25) + Math.sin(time * .5) * .06 + somersaultAngle(time) + trickAngle(time - trick.current.start, trick.current.direction);
+    motion.current = { speed: Math.hypot(velocity.current.x, velocity.current.y), hover: hover.current, time, lookX: look.current.x, lookY: look.current.y, cheer };
   });
 
   return <>
     <group ref={group} position={initialPosition} scale={scale}
-      onPointerOver={() => { hoveredRef.current = true; }}
-      onPointerOut={() => { hoveredRef.current = false; }}>
-      <mesh position={[0, -.04, 0]} visible={false}><capsuleGeometry args={[.3, .5, 2, 6]} /><meshBasicMaterial /></mesh>
+      onClick={tap}
+      onPointerOver={() => { hoveredRef.current = true; gl.domElement.style.cursor = "pointer"; }}
+      onPointerOut={() => { hoveredRef.current = false; gl.domElement.style.cursor = ""; }}>
+      <mesh position={[0, -.04, 0]} visible={false}><capsuleGeometry args={[.42, .62, 2, 6]} /><meshBasicMaterial /></mesh>
       <group ref={body} rotation={[.06, ASTRONAUT_FACING, 0]} position={[0, -.42, 0]}>
         <AstronautRig motion={motion} nozzles={nozzles} />
       </group>

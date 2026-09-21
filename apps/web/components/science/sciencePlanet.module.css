@@ -54,7 +54,7 @@
 .spaceHud .comingSoon { border: 0; padding: 6px; background: none; color: #d9dbff; }
 .spaceHud .completionStatus { border: 0; padding: 6px; background: none; color: #c9daf7; font-size: 12px; }
 .spaceHud .backButton { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px 0 12px; border: 1px solid #ffffff2e; border-radius: 999px; background: #1c2c52d9; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: #fffaf2; font: 700 14px "Trebuchet MS", sans-serif; box-shadow: 0 8px 24px #0b1a2a33; cursor: pointer; }
-.spaceHud .backButton::before { content: "‹"; font-size: 22px; line-height: 1; margin-top: -2px; }
+.spaceHud .backButton::before { content: "‹" / ""; font-size: 22px; line-height: 1; margin-top: -2px; }
 .spaceHud .backButton:hover { background: #2a3f75; border-color: #ffffff59; color: #fffaf2; }
 .walkHint { position: absolute; top: 150px; left: 28px; max-width: 230px; font-size: 12px; line-height: 1.5; }
 .spaceHud button:focus-visible { outline: 3px solid #ffdf76; outline-offset: 4px; }

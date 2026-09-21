@@ -26,7 +26,7 @@ test("connected pointer loop persists the intervention and gives the parent an i
   await expect(page.getByText("+20 Wiggle Energy", { exact: true })).toBeVisible();
   await page.screenshot({ path: info.outputPath("connected-completion.png") });
   await page.getByRole("button", { name: "Back to my universe", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Start fractions mission", exact: true })).toBeFocused();
+  await expect(page.getByRole("button", { name: "Explore Fraction Forest", exact: true })).toBeFocused();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   expect(errors).toEqual([]);
 });
@@ -36,15 +36,15 @@ test("keyboard-only navigation completes the connected mission in reduced motion
   await page.goto("/");
   await expect(page.getByRole("region", { name: "Choose a subject world" })).toBeVisible({ timeout: 10000 });
   await keyboardActivate(page, "Explore Numeria");
-  await expect(page.getByRole("button", { name: "Start fractions mission", exact: true })).toBeVisible();
-  await keyboardActivate(page, "Start fractions mission");
+  await expect(page.getByRole("button", { name: "Explore Fraction Forest", exact: true })).toBeVisible();
+  await keyboardActivate(page, "Explore Fraction Forest");
   await keyboardActivate(page, "Visual");
   for (const slice of [1, 2, 3]) await keyboardActivate(page, `Slice ${slice}`);
   const saved = page.waitForResponse(response => response.url().endsWith("/session/complete") && response.ok());
   await keyboardActivate(page, "Check my pizza");
   await saved;
   await keyboardActivate(page, "Back to my universe");
-  await expect(page.getByRole("button", { name: "Start fractions mission", exact: true })).toBeFocused();
+  await expect(page.getByRole("button", { name: "Explore Fraction Forest", exact: true })).toBeFocused();
 });
 
 test("the optional post-completion Reality Mission preserves the saved fraction result", async ({ page }, info) => {
@@ -73,5 +73,5 @@ test("the optional post-completion Reality Mission preserves the saved fraction 
   expect(after.twin).toEqual(outcome.update.twin);
   await page.screenshot({ path: info.outputPath("connected-reality-completed.png") });
   await page.getByRole("button", { name: "Back to my universe", exact: true }).click();
-  await expect(page.getByRole("button", { name: "Start fractions mission", exact: true })).toBeFocused();
+  await expect(page.getByRole("button", { name: "Explore Fraction Forest", exact: true })).toBeFocused();
 });

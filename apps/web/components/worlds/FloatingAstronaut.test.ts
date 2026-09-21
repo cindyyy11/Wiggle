@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
-  ASTRONAUT_CENTER_Y, ASTRONAUT_RIG_HEIGHT, ASTRONAUT_SCALE, BEHIND_Z, ROAM_X_SHARE, ROAM_Y_SHARE, ROAM_Z_MAX, ROAM_Z_MIN,
-  SOMERSAULT_EVERY, SOMERSAULT_SECONDS, astronautDepth, astronautDrift, astronautRoam, somersaultAngle, springStep, turnAngle,
+  ASTRONAUT_CENTER_Y, ASTRONAUT_RIG_HEIGHT, ASTRONAUT_SCALE, BEHIND_Z, CHEER_SECONDS, ROAM_X_SHARE, ROAM_Y_SHARE, ROAM_Z_MAX, ROAM_Z_MIN,
+  SOMERSAULT_EVERY, SOMERSAULT_SECONDS, TRICK_SECONDS, astronautDepth, astronautDrift, astronautRoam, cheerLevel, lookToward, somersaultAngle, springStep, trickAngle, turnAngle,
 } from "./FloatingAstronaut";
 
 const CAMERA_Z = 9.4;
 
 it("stands the astronaut tall enough to read beside a planet without outgrowing one", () => {
   const height = ASTRONAUT_SCALE * ASTRONAUT_RIG_HEIGHT;
-  expect(height).toBeGreaterThan(2);
+  expect(height).toBeGreaterThan(2.8);
   expect(height).toBeLessThan(4.4);
 });
 
@@ -120,5 +120,56 @@ describe("turnAngle", () => {
     expect(turnAngle(.5)).toBeCloseTo(Math.PI);
     expect(turnAngle(1)).toBeCloseTo(Math.PI * 2);
     expect(turnAngle(2)).toBeCloseTo(Math.PI * 2);
+  });
+});
+
+describe("trickAngle", () => {
+  it("stays level before a tap and after the tumble has landed", () => {
+    expect(trickAngle(-1, 1)).toBe(0);
+    expect(trickAngle(TRICK_SECONDS, 1)).toBe(0);
+    expect(trickAngle(TRICK_SECONDS + 5, -1)).toBe(0);
+    expect(trickAngle(Infinity, 1)).toBe(0);
+  });
+
+  it("turns one full circle, in the direction it was sent", () => {
+    expect(trickAngle(TRICK_SECONDS / 2, 1)).toBeCloseTo(Math.PI);
+    expect(trickAngle(TRICK_SECONDS / 2, -1)).toBeCloseTo(-Math.PI);
+    expect(trickAngle(TRICK_SECONDS - .001, 1)).toBeGreaterThan(Math.PI * 1.9);
+  });
+
+  it("starts smoothly from level", () => {
+    expect(trickAngle(0, 1)).toBeCloseTo(0);
+    expect(trickAngle(.02, 1)).toBeLessThan(.05);
+  });
+});
+
+describe("cheerLevel", () => {
+  it("is full straight after a tap and fades to calm", () => {
+    expect(cheerLevel(0)).toBe(1);
+    expect(cheerLevel(CHEER_SECONDS / 2)).toBeCloseTo(.5);
+    expect(cheerLevel(CHEER_SECONDS)).toBe(0);
+    for (let elapsed = 0; elapsed < CHEER_SECONDS; elapsed += .05) {
+      expect(cheerLevel(elapsed)).toBeGreaterThanOrEqual(cheerLevel(elapsed + .05));
+    }
+  });
+
+  it("is calm before any tap has happened", () => {
+    expect(cheerLevel(-Infinity)).toBe(0);
+    expect(cheerLevel(Infinity)).toBe(0);
+  });
+});
+
+describe("lookToward", () => {
+  it("points at the pointer from wherever the astronaut is", () => {
+    expect(lookToward({ x: .5, y: 0 }, { x: -3, y: 0 }, 6, 4).x).toBeGreaterThan(0);
+    expect(lookToward({ x: -.5, y: 0 }, { x: 3, y: 0 }, 6, 4).x).toBeLessThan(0);
+    expect(lookToward({ x: 0, y: .8 }, { x: 0, y: -1 }, 6, 4).y).toBeGreaterThan(0);
+    expect(lookToward({ x: 0, y: -.8 }, { x: 0, y: 1 }, 6, 4).y).toBeLessThan(0);
+  });
+
+  it("looks straight ahead when the pointer is right on it, and never past full turn", () => {
+    expect(lookToward({ x: .5, y: .25 }, { x: 3, y: 1 }, 6, 4)).toEqual({ x: 0, y: 0 });
+    const far = lookToward({ x: 1, y: 1 }, { x: -6, y: -4 }, 6, 4);
+    expect(far).toEqual({ x: 1, y: 1 });
   });
 });

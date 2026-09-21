@@ -15,7 +15,7 @@ test("offline API telemetry does not block curated supports and replays after re
   });
   await page.goto("/");
   await launchNumeria(page);
-  await page.getByRole("button", { name: "Start fractions mission", exact: true }).click();
+  await page.getByRole("button", { name: "Explore Fraction Forest", exact: true }).click();
   await page.getByRole("button", { name: "Ask Lexi", exact: true }).click();
   await page.getByRole("button", { name: "Give me a hint" }).click();
   await expect(page.getByText("Choose three equal slices. Leave one on the plate.")).toBeVisible();
@@ -56,12 +56,12 @@ test("opted-in camera runs local inference and stops every track on exit", async
   });
   await page.goto("/");
   await launchNumeria(page);
-  await page.getByRole("button", { name: "Start fractions mission", exact: true }).click();
+  await page.getByRole("button", { name: "Explore Fraction Forest", exact: true }).click();
   expect(requests.some(request => /mediapipe|hand_landmarker|vision_wasm/.test(request.url))).toBe(false);
   await expect(page.locator("html")).not.toHaveAttribute("data-camera-calls");
   await page.getByRole("button", { name: "Gesture", exact: true }).click();
-  await expect(page.getByText(/Camera on · Processed only|Camera unavailable/)).toBeVisible({ timeout: 60000 });
-  await expect(page.getByText(/Camera on · Processed only/), diagnostics.join("\n")).toBeVisible();
+  await expect(page.getByText(/Camera on · Point at a slice|Camera unavailable/)).toBeVisible({ timeout: 60000 });
+  await expect(page.getByText(/Camera on · Point at a slice/), diagnostics.join("\n")).toBeVisible();
   await page.getByRole("button", { name: "Show camera preview" }).click();
   await expect(page.getByLabel("Local camera preview")).toBeVisible();
   await page.getByRole("button", { name: "Leave mission" }).click();
@@ -80,9 +80,9 @@ test("camera denial preserves keyboard/touch play and accessible supports", asyn
   });
   await page.goto("/");
   await launchNumeria(page);
-  await page.getByRole("button", { name: "Start fractions mission", exact: true }).click();
+  await page.getByRole("button", { name: "Explore Fraction Forest", exact: true }).click();
   await page.getByRole("button", { name: "Gesture", exact: true }).click();
-  await expect(page.getByText(/Camera unavailable/)).toBeVisible();
+  await expect(page.getByText(/Camera access denied/)).toBeVisible();
   expect(requests.some(request => /mediapipe|hand_landmarker|vision_wasm/.test(request.url))).toBe(false);
   await page.getByRole("button", { name: "Slice 1", exact: true }).focus();
   await page.keyboard.press("Space");
@@ -90,7 +90,7 @@ test("camera denial preserves keyboard/touch play and accessible supports", asyn
   else await page.getByRole("button", { name: "Slice 2", exact: true }).click();
   await expect(page.getByText("2 of 4 slices selected")).toBeVisible();
   await page.getByRole("combobox", { name: "Slice to grab" }).selectOption("2");
-  await page.getByRole("button", { name: "Grab slice 3", exact: true }).click();
+  await page.getByRole("button", { name: "Place slice 3", exact: true }).click();
   await expect(page.getByText("3 of 4 slices selected")).toBeVisible();
   await page.getByRole("button", { name: "Ask Lexi", exact: true }).click();
   await expect(page.getByRole("heading", { name: "A little help from Lexi" })).toBeFocused();

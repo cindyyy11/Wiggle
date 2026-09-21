@@ -25,3 +25,20 @@ export function strideRate(angularSpeed: number) {
 export function gaitAmount(angularSpeed: number, cruise: number, turning: boolean) {
   return Math.max(clamp01(angularSpeed / cruise), turning ? .45 : 0);
 }
+
+export const WAVE_SECONDS = 1.8;
+const WAVE_RAISE_SECONDS = .18;
+const WAVE_LOWER_SECONDS = .35;
+
+/** How far the waving arm is raised (0 to 1) for a wave begun at elapsed = 0: up fast, held, then eased back down. */
+export function waveAmount(elapsed: number) {
+  if (elapsed < 0 || elapsed >= WAVE_SECONDS) return 0;
+  return Math.min(clamp01(elapsed / WAVE_RAISE_SECONDS), clamp01((WAVE_SECONDS - elapsed) / WAVE_LOWER_SECONDS));
+}
+
+export const MAX_GLANCE = .45;
+
+/** Radians the head turns to look about while the explorer stands still; `standing` (0 to 1) fades it out whenever it moves. */
+export function idleGlance(time: number, standing: number) {
+  return Math.sin(time * .8) * MAX_GLANCE * clamp01(standing);
+}

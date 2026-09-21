@@ -93,7 +93,8 @@ test("splash, Worlds, Science, and Magnet Lab stay on a native-control path", as
   const sciencePortal = page.getByRole("button", { name: "Explore Science Planet", exact: true });
   await expect(sciencePortal).toBeVisible();
   await expect(sciencePortal).toBeEnabled();
-  await enterScience(page);
+  await sciencePortal.click();
+  await expect(page.getByRole("region", { name: "Science Planet" })).toBeVisible();
   await enterMagnetLab(page);
   await expect(page.getByRole("region", { name: "Magnet Lab mission" })).toBeVisible();
 
@@ -110,14 +111,14 @@ test("Worlds enters Numeria before the existing fractions mission", async ({ pag
   await expectOrbitAfterSplash(page);
   await enterNumeria(page);
 
-  await expect(page.getByRole("button", { name: "Start fractions mission", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Explore Fraction Forest", exact: true })).toBeVisible();
 });
 
 test("Parent navigation waits for a safe Maths close", async ({ page }) => {
   await page.goto("/");
   await launchWiggle(page);
   await enterNumeria(page);
-  await page.getByRole("button", { name: "Start fractions mission", exact: true }).click();
+  await page.getByRole("button", { name: "Explore Fraction Forest", exact: true }).click();
   await expect(page.getByRole("region", { name: "Fraction mission" })).toBeVisible();
 
   await expect(page.getByRole("button", { name: "Parent mission control", exact: true })).toBeDisabled();
@@ -130,7 +131,7 @@ test("Parent navigation waits for a safe Maths close", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Parent mission control", exact: true })).toBeVisible();
 });
 
-test("locked subject worlds retain focus and do not open a fake lesson", async ({ page }) => {
+test("locked subject worlds stay disabled and do not open a fake lesson", async ({ page }) => {
   await page.goto("/");
   await launchWiggle(page);
   await expectOrbitAfterSplash(page);
@@ -139,10 +140,9 @@ test("locked subject worlds retain focus and do not open a fake lesson", async (
   for (let step = 0; step < 2; step++) {
     await page.getByRole("button", { name: "Next planet", exact: true }).click();
     const locked = page.getByRole("button", { name: "??? (coming soon)", exact: true });
-    await locked.focus();
-    await locked.click();
-    await expect(locked).toBeFocused();
-    await expect(page.getByRole("status").filter({ hasText: "??? is coming soon" })).toBeVisible();
+    await expect(locked).toBeDisabled();
+    await expect(page.getByText("More adventures are on their way.")).toBeVisible();
+    await expect(page).toHaveURL(/\/$/);
     await expect(page.getByRole("region", { name: "Choose a subject world" })).toBeVisible();
     await expect(page.getByRole("region", { name: "Science Planet" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Start Magnet Lab", exact: true })).toHaveCount(0);
@@ -249,7 +249,7 @@ test("keyboard navigation reaches Numeria and Science from the orbit past the au
   await page.goto("/");
   await expect(page.getByRole("region", { name: "Choose a subject world" })).toBeVisible({ timeout: 10000 });
   await keyboardActivate(page, "Explore Numeria");
-  await expect(page.getByRole("button", { name: "Start fractions mission", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Explore Fraction Forest", exact: true })).toBeVisible();
 
   await page.goto("/");
   await expect(page.getByRole("region", { name: "Choose a subject world" })).toBeVisible({ timeout: 10000 });

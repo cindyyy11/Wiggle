@@ -1,5 +1,7 @@
 /* apps/web/components/wiggle/twinLauncher.module.css */
-.launcher{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));z-index:40;display:flex;flex-direction:column;align-items:flex-end;gap:12px;font-family:"Trebuchet MS",Arial,sans-serif}
+/* The wrapper is as wide as the greeting bubble, so on a phone it sits over the page's own buttons. Only its real controls take pointer events. */
+.launcher{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));z-index:40;display:flex;flex-direction:column;align-items:flex-end;gap:12px;font-family:"Trebuchet MS",Arial,sans-serif;pointer-events:none}
+.launcher .button,.launcher .panel{pointer-events:auto}
 .button{position:relative;border:0;width:132px;height:150px;padding:0;background:transparent;color:inherit;cursor:pointer;overflow:visible;animation:launcherFloat 4.5s ease-in-out infinite;transition:transform .15s ease}
 .button:hover{transform:scale(1.06)}
 .button:focus-visible{outline:3px solid #8dd9e7;outline-offset:4px;border-radius:50%}

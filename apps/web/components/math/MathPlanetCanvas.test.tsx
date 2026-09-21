@@ -7,17 +7,26 @@ import { LANDMARKS } from "../universe/world";
 import { MATH_ACTIVITIES, type MathActivity, type MathRegionId } from "./mathActivities";
 import { MathPlanet } from "./MathPlanet";
 import { MathPlanetCanvas } from "./MathPlanetCanvas";
+import { ApiClient } from "../../lib/api/client";
+import { demoSession } from "../../lib/demo/seed";
 
 const state = vi.hoisted(() => ({ props: {} as UniverseCanvasProps }));
 vi.mock("../universe/UniverseCanvas", () => ({
   UniverseCanvas: (props: UniverseCanvasProps) => {
     state.props = props;
-    return <section aria-label="Mock Numeria scene">{props.hud}</section>;
+    return <section aria-label="Mock Numeria scene">{props.hud}{props.children}</section>;
   },
 }));
 
 afterEach(cleanup);
 const regions = LANDMARKS.filter((landmark) => landmark.id !== "lexi");
+// Fraction Forest runs the API-backed fractions mission; these regions use local field activities.
+const fieldRegions = regions.filter((landmark) => landmark.id !== "fraction-forest");
+const forest = regions.find((landmark) => landmark.id === "fraction-forest")!;
+
+function visit(name: string) {
+  fireEvent.click(screen.getByRole("button", { name: `Visit ${name}` }));
+}
 
 it("labels the planet and starts at Fraction Forest with the math globe", () => {
   render(<MathPlanet onBackToWorlds={vi.fn()} quality="fallback" reducedMotion />);
@@ -26,7 +35,7 @@ it("labels the planet and starts at Fraction Forest with the math globe", () => 
   expect(state.props).toMatchObject({ theme: "math", mode: "globe", quality: "fallback", reducedMotion: true, selectedLandmark: "fraction-forest" });
 });
 
-it.each(regions)("selects $name through the scene and opens its activity", (region) => {
+it.each(fieldRegions)("selects $name through the scene and opens its activity", (region) => {
   render(<MathPlanetCanvas onBackToWorlds={vi.fn()} />);
   act(() => state.props.onLandmarkSelect?.(region.id));
   expect(screen.getByRole("button", { name: `Visit ${region.name}` }).getAttribute("aria-pressed")).toBe("true");
@@ -69,7 +78,8 @@ it("keeps the universe mounted and inert, pauses input, and restores focus on Es
   const onSessionOpenChange = vi.fn();
   render(<MathPlanetCanvas onBackToWorlds={vi.fn()} onSessionOpenChange={onSessionOpenChange} />);
   const scene = screen.getByRole("region", { name: "Mock Numeria scene" });
-  const explore = screen.getByRole("button", { name: "Explore Fraction Forest" });
+  visit("Number Valley");
+  const explore = screen.getByRole("button", { name: "Explore Number Valley" });
   explore.focus();
   fireEvent.click(explore);
   expect(onSessionOpenChange).toHaveBeenLastCalledWith(true);
@@ -89,7 +99,8 @@ it("keeps the universe mounted and inert, pauses input, and restores focus on Es
 it("offers an explicit close button before completing an activity", () => {
   const onSessionOpenChange = vi.fn();
   render(<MathPlanetCanvas onBackToWorlds={vi.fn()} onSessionOpenChange={onSessionOpenChange} />);
-  fireEvent.click(screen.getByRole("button", { name: "Explore Fraction Forest" }));
+  visit("Number Valley");
+  fireEvent.click(screen.getByRole("button", { name: "Explore Number Valley" }));
   fireEvent.click(screen.getByRole("button", { name: "Close activity" }));
   expect(screen.queryByRole("dialog")).toBeNull();
   expect(onSessionOpenChange.mock.calls).toEqual([[true], [false]]);
@@ -141,17 +152,72 @@ it("announces a missing mapping without opening an empty dialog", () => {
   const onSessionOpenChange = vi.fn();
   const back = vi.fn();
   render(<MathPlanetCanvas onBackToWorlds={back} onSessionOpenChange={onSessionOpenChange} />);
-  const savedActivity = MATH_ACTIVITIES["fraction-forest"];
+  visit("Number Valley");
+  onSessionOpenChange.mockClear();
+  const savedActivity = MATH_ACTIVITIES["number-valley"];
   const mutableActivities: Partial<Record<MathRegionId, MathActivity>> = MATH_ACTIVITIES;
   try {
-    delete mutableActivities["fraction-forest"];
-    fireEvent.click(screen.getByRole("button", { name: "Explore Fraction Forest" }));
+    delete mutableActivities["number-valley"];
+    fireEvent.click(screen.getByRole("button", { name: "Explore Number Valley" }));
     expect(screen.queryByRole("dialog")).toBeNull();
     expect(screen.getByText(/activities are unavailable/i).getAttribute("aria-live")).toBe("polite");
-    expect(onSessionOpenChange).not.toHaveBeenCalled();
+    expect(onSessionOpenChange).not.toHaveBeenCalledWith(true);
     fireEvent.click(screen.getByRole("button", { name: "Back to Worlds" }));
     expect(back).toHaveBeenCalledOnce();
   } finally {
-    mutableActivities["fraction-forest"] = savedActivity;
+    mutableActivities["number-valley"] = savedActivity;
   }
+});
+
+function missionClient() {
+  const client = new ApiClient();
+  const start = vi.spyOn(client, "start").mockResolvedValue(demoSession("remote-session"));
+  vi.spyOn(client, "events").mockImplementation(async (body) => ({ acceptedEventIds: body.events.map((event) => event.id) }));
+  vi.spyOn(client, "twin").mockRejectedValue(new Error("no twin in this test"));
+  return { client, start };
+}
+
+it("starts the API-backed fractions mission from Fraction Forest instead of a field quiz", async () => {
+  const { client, start } = missionClient();
+  const onSessionOpenChange = vi.fn();
+  render(<MathPlanetCanvas client={client} childId="owned-child" allowLocalFallback={false} onBackToWorlds={vi.fn()} onSessionOpenChange={onSessionOpenChange} />);
+  fireEvent.click(screen.getByRole("button", { name: "Explore Fraction Forest" }));
+  await screen.findByRole("heading", { name: "Make three quarters" });
+  expect(start.mock.calls[0][0]).toEqual({ childId: "owned-child" });
+  expect(screen.queryByRole("dialog")).toBeNull();
+  expect(state.props.mode).toBe("mission");
+  expect(state.props.destination).toEqual(forest.destination);
+  expect(onSessionOpenChange).toHaveBeenLastCalledWith(true);
+  // The Numeria HUD steps aside while the mission is open.
+  expect(screen.queryByRole("button", { name: "Explore Fraction Forest" })).toBeNull();
+});
+
+it("marks Fraction Forest complete, announces it, and hands the world back after the mission", async () => {
+  const { client } = missionClient();
+  const onSessionOpenChange = vi.fn();
+  render(<MathPlanetCanvas client={client} onBackToWorlds={vi.fn()} onSessionOpenChange={onSessionOpenChange} />);
+  fireEvent.click(screen.getByRole("button", { name: "Explore Fraction Forest" }));
+  await screen.findByRole("heading", { name: "Make three quarters" });
+  fireEvent.click(screen.getByRole("button", { name: "3 of 4" }));
+  fireEvent.click(screen.getByRole("button", { name: "Check my answer" }));
+  fireEvent.click(await screen.findByRole("button", { name: "Back to my universe" }));
+  await waitFor(() => expect(onSessionOpenChange).toHaveBeenLastCalledWith(false));
+  expect(state.props.mode).toBe("follow");
+  expect(state.props.destination).toBeNull();
+  expect(screen.getByText("Wonderful exploring! Fraction Forest complete.")).toBeTruthy();
+  expect(screen.getByText("1 of 4 regions complete")).toBeTruthy();
+  const completed = screen.getByRole("button", { name: "Visit Fraction Forest" });
+  expect(document.getElementById(completed.getAttribute("aria-describedby") ?? "")?.textContent).toBe("Complete");
+});
+
+it("keeps the Numeria HUD and shows a retryable message when the mission cannot start", async () => {
+  const client = new ApiClient();
+  vi.spyOn(client, "start").mockRejectedValue(new Error("offline"));
+  vi.spyOn(client, "events").mockResolvedValue({ acceptedEventIds: [] });
+  render(<MathPlanetCanvas client={client} childId="owned-child" allowLocalFallback={false} onBackToWorlds={vi.fn()} />);
+  fireEvent.click(screen.getByRole("button", { name: "Explore Fraction Forest" }));
+  await screen.findByRole("alert");
+  expect(screen.queryByRole("heading", { name: "Make three quarters" })).toBeNull();
+  expect(state.props.mode).not.toBe("mission");
+  expect(screen.getByRole("button", { name: "Explore Fraction Forest" })).toBeTruthy();
 });

@@ -19,6 +19,9 @@ test("parent insight reflects a completed child session and relocking denies acc
 
   const { session, outcome } = await completeVisualMission(page);
   expect(outcome.sessionId).toBe(session.sessionId);
+  // The completion screen keeps Parent navigation closed until the child leaves the mission.
+  await expect(page.getByRole("button", { name: "Parent mission control", exact: true })).toBeDisabled();
+  await page.getByRole("button", { name: "Back to my universe" }).click();
   await page.getByRole("link", { name: "Parent mission control" }).click();
   expect((await page.request.get(insightURL)).status()).toBe(403);
   await unlock();

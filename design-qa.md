@@ -1,5 +1,25 @@
 # Wiggle final QA — 12 September 2026
 
+## Local verification — 21 September 2026
+
+result: local checks pass; the production acceptance gate below is still blocked.
+
+**Regression found and fixed.** Commit `809cc91` (19 September) swapped Numeria over to region activities and unmounted `MissionAtlas`, the API-backed fractions mission. From then on a child could not complete a mission that reached the API, so the Twin and parent insights had no data, and `allowLocalFallback`, `childId` and `client` never reached Numeria. The mission logic now lives in `useFractionMission`; `MissionAtlas` is a thin wrapper around it, and Fraction Forest's Explore button starts the real mission inside the Numeria world. The other three regions keep their local field activities and do not feed the Twin.
+
+Checked on this machine:
+
+- `tsc`, ESLint, and the full web unit suite pass (80 files, 390 tests). API: 123 passed, 6 skipped (the live-Supabase cases). `next build` passes.
+- API Docker image builds and runs as UID 10001 with a writable named volume; `/health` returns 200 with an `X-Request-ID`; the container healthcheck reports healthy; the SQLite PIN file is created and survives a restart. Not checked: an actual Render deployment.
+- Browser, connected desktop and connected mobile (390 × 844): 8 of 8 each, on the final build. This covers the child mission, event persistence, the parent insight, replay after a lost acknowledgement, Gemini timeout fallback, camera denial and keyboard-only play.
+- Four real problems found while verifying were fixed: the Wiggle companion launcher's wrapper covered the "Explore Numeria" button on phones and swallowed taps (`twinLauncher.module.css`); the "Back to Worlds" buttons drew a decorative "‹" that Chrome folded into their accessible name, so it read "‹ Back to Worlds" (marked decorative with CSS alt text in `mathPlanet.module.css` and `sciencePlanet.module.css`); the mission panel inherited dark navy text on its dark background, so its heading measured about 1.8:1 and the four learning-mode buttons 1.2–1.8:1 against a 4.5:1 minimum (`mission.module.css` now sets the panel's text colour and the mode buttons'); and `e2e/parent.spec.ts` skipped the child's "Back to my universe" step before opening Parent, which is deliberately blocked until the mission closes.
+- The floating and walking astronauts were enlarged and made tappable. Hover, tap and pointer-look were exercised in Chrome with no page errors; this is not a physical-device check.
+
+Not verified, and not represented as passing:
+
+- Local desktop project, five spec files (mission, subject-worlds, planet-carousel, universe, supports): 13 of 23 passed before this session's spec updates and 21 of 23 after them in one run. The ten stale specs were brought up to the current app rather than the app being changed back: locked worlds are now a disabled "???" button, the splash logo is removed on auto-dismiss, the Back button and view controls have new names ("View whole planet", "Place slice"), and the camera panel words its states "Camera on · Point at a slice…" and "Camera access denied". The last two (camera denial, HUD contrast) were then fixed and each passed on its own on the final build. The HUD contrast spec now measures the real Numeria HUD and mission panel against the surface behind each piece of text. These five files were not re-run together after that last change, the remaining files of the desktop project (magnet-lab-camera, parent, science-sessions, science-walkaround) passed in an earlier partial run but were not re-run, and the local mobile project was not run.
+- Live Vercel, Render and Supabase deployment; a real household Auth/RLS run; the 37-assertion pgTAP suite and the six live-Supabase repository cases (no Supabase CLI here, and the local stack needs about ten images); physical-device and real-camera testing.
+- The browser suite serves the existing `.next` build and does not rebuild it. A run before this session's rebuild exercised stale code; the README and runbook now say to run `npm run build` first.
+
 ## Subject Worlds and Science Planet — Task 8 verification
 
 result: pending/blocked in this isolated worktree
