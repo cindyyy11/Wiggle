@@ -6,7 +6,7 @@ import type { Group, Mesh } from "three";
 import type { HandTrackingLatest } from "../../features/gestures/useHandTracking";
 import type { BenchSet } from "./benchSet";
 import { HandBenchController } from "./handBenchController";
-import { benchStatusForFrame, trackedBenchPoint } from "./handBenchFrame";
+import { benchStatusForFrame, staleHoldToCancel, trackedBenchPoint } from "./handBenchFrame";
 import { benchHit, type BenchAction, type BenchPoint, type BenchState, type BenchZone } from "./handBenchPlay";
 
 export type HandBenchSceneProps = {
@@ -94,6 +94,9 @@ function BenchInteraction({ set, state, targetFor, latest, reducedMotion, onActi
     const { state: s, onAction: act, onHandStatus: report } = current.current;
     const frame = latest.current;
     const point = trackedBenchPoint(frame);
+
+    const stale = staleHoldToCancel(s.held, controller.current.holding);
+    if (stale) act({ type: "cancel", id: stale });
 
     const resting: BenchZone[] = set.items
       .filter((entry) => entry.id !== s.held && !s.matched.includes(entry.id))

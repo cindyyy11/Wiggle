@@ -19,6 +19,42 @@ describe("HandBenchController while discovering", () => {
   });
 });
 
+describe("HandBenchController.holding", () => {
+  it("is null until an item is grabbed", () => {
+    expect(new HandBenchController().holding).toBeNull();
+  });
+
+  it("is the grabbed id after a pinch", () => {
+    const controller = new HandBenchController();
+    step(controller, { gesture: "pinch", item: "frog" });
+    expect(controller.holding).toBe("frog");
+  });
+
+  it("is null again after a drop", () => {
+    const controller = new HandBenchController();
+    step(controller, { gesture: "pinch", item: "frog" });
+    step(controller, { gesture: "open_palm", target: "both", at: 100 });
+    expect(controller.holding).toBeNull();
+  });
+
+  it("is null again after the palm opens away from every target", () => {
+    const controller = new HandBenchController();
+    step(controller, { gesture: "pinch", item: "frog" });
+    step(controller, { gesture: "open_palm", target: null, at: 100 });
+    expect(controller.holding).toBeNull();
+  });
+
+  it("is null again once the lost-hand grace period expires, and not before", () => {
+    const controller = new HandBenchController();
+    step(controller, { gesture: "pinch", item: "frog" });
+    step(controller, { isTracking: false, at: 10 });
+    step(controller, { isTracking: false, at: 10 + GESTURE_CONFIG.lostHandGraceMs - 1 });
+    expect(controller.holding).toBe("frog");
+    step(controller, { isTracking: false, at: 10 + GESTURE_CONFIG.lostHandGraceMs });
+    expect(controller.holding).toBeNull();
+  });
+});
+
 describe("HandBenchController while matching", () => {
   it("grabs on a pinch over an item", () => {
     expect(step(new HandBenchController(), { gesture: "pinch", item: "frog" })).toEqual({ type: "grab", id: "frog" });

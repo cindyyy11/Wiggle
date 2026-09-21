@@ -23,6 +23,11 @@ export class HandBenchController {
   private lostSince: number | null = null;
   private pointing: string | null = null;
 
+  /** The id of the item this controller believes is being carried, if any. */
+  get holding(): string | null {
+    return this.held;
+  }
+
   reset() {
     this.held = null;
     this.lostSince = null;

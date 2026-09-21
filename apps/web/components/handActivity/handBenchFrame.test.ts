@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { HandTrackingLatest } from "../../features/gestures/useHandTracking";
-import { benchStatusForFrame, trackedBenchPoint } from "./handBenchFrame";
+import { benchStatusForFrame, staleHoldToCancel, trackedBenchPoint } from "./handBenchFrame";
 
 const frame = (patch: Partial<HandTrackingLatest> = {}): HandTrackingLatest => ({
   pointer: { x: 0, y: 0 }, gesture: "point", handedness: "Right", confidence: .9, isTracking: true, ...patch,
@@ -16,6 +16,25 @@ describe("trackedBenchPoint", () => {
     expect(trackedBenchPoint(frame({ confidence: .2 }))).toBeNull();
     expect(trackedBenchPoint(frame({ pointer: null }))).toBeNull();
     expect(trackedBenchPoint(frame({ pointer: { x: Number.NaN, y: 0 } }))).toBeNull();
+  });
+});
+
+describe("staleHoldToCancel", () => {
+  it("returns the held id when the lesson holds an item the controller does not", () => {
+    expect(staleHoldToCancel("frog", null)).toBe("frog");
+  });
+
+  it("returns null when the lesson and the controller hold the same item", () => {
+    expect(staleHoldToCancel("frog", "frog")).toBeNull();
+  });
+
+  it("returns null when the lesson holds nothing", () => {
+    expect(staleHoldToCancel(null, null)).toBeNull();
+    expect(staleHoldToCancel(null, "frog")).toBeNull();
+  });
+
+  it("returns the lesson's id when the controller holds a different item", () => {
+    expect(staleHoldToCancel("frog", "horse")).toBe("frog");
   });
 });
 

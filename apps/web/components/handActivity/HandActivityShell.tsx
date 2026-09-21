@@ -116,7 +116,11 @@ export function HandActivityShell({ label, title, instruction, progress, step, c
       <p key={bubblePop} className={styles.speechBubble} role="status" aria-live="polite" data-reduced-motion={reducedMotion || undefined}>
         {line}
       </p>
-      {needsHelp && <button className={styles.retry} type="button" onClick={tracking.retry}>Try again</button>}
+      {needsHelp && <button className={styles.retry} type="button" onClick={() => {
+        // This button unmounts once the camera restarts; keep focus inside the shell so Escape still reaches it.
+        section.current?.querySelector<HTMLButtonElement>("button")?.focus();
+        tracking.retry();
+      }}>Try again</button>}
     </aside>
     <div className={styles.workbench}>
       {ready && children({ latest: tracking.latest, ready, reducedMotion, onHandStatus: setHandStatus })}

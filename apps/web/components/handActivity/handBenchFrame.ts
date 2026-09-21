@@ -9,6 +9,11 @@ export function trackedBenchPoint(frame: HandTrackingLatest): BenchPoint | null 
     Number.isFinite(pointer.x) && Number.isFinite(pointer.y) ? handPointerToBench(pointer) : null;
 }
 
+/** The item to put back when the lesson thinks one is held but this controller is not, as after the scene remounts. */
+export function staleHoldToCancel(reducerHeld: string | null, controllerHeld: string | null): string | null {
+  return reducerHeld !== null && reducerHeld !== controllerHeld ? reducerHeld : null;
+}
+
 export function benchStatusForFrame(phase: BenchPhase, tracked: boolean, holding: boolean): string {
   if (!tracked) return holding ? "Tracking paused. Keep your hand in view." : "Show your hand to the camera.";
   if (phase === "discover") return "Point at an item to discover it.";

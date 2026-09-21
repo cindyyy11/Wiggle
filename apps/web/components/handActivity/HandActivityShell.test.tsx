@@ -93,6 +93,28 @@ it.each(["denied", "unavailable"] as CameraStatus[])("offers adult help and Try 
   expect(screen.queryByTestId("scene")).toBeNull();
 });
 
+it("keeps focus on the exit button, and Escape working, after Try again removes itself", () => {
+  const onExit = vi.fn();
+  mock.status = "denied";
+  const { rerender } = render(<HandActivityShell {...props({ onExit })} />);
+  const exitButton = screen.getByRole("button", { name: "Back to Science Planet" });
+  const retry = screen.getByRole("button", { name: "Try again" });
+  retry.focus();
+  expect(document.activeElement).toBe(retry);
+
+  fireEvent.click(retry);
+  expect(mock.retry).toHaveBeenCalledTimes(1);
+  expect(document.activeElement).toBe(exitButton);
+
+  // The camera restarts: the Try again button unmounts, which used to drop focus to <body>.
+  mock.status = "starting";
+  rerender(<HandActivityShell {...props({ onExit })} />);
+  expect(screen.queryByRole("button", { name: "Try again" })).toBeNull();
+  expect(document.activeElement).toBe(exitButton);
+  fireEvent.keyDown(document.activeElement!, { key: "Escape" });
+  expect(onExit).toHaveBeenCalledTimes(1);
+});
+
 it("offers adult help when camera transitions from ready to off", () => {
   mock.status = "starting";
   const { rerender } = render(<HandActivityShell {...props()} />);

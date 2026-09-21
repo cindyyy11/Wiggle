@@ -81,6 +81,17 @@ it("resumes in the matching step when every discovery was already made", () => {
   expect(screen.getByText("Step 2 of 2 · Match")).toBeTruthy();
 });
 
+it("resumes mid-match with partial progress", () => {
+  const items = SCIENCE_ACTIVITIES.animals.items;
+  const third = items[2];
+  render(<Harness land="animals" initial={{ observed: items.map((item) => item.id), matched: items.slice(0, 2).map((item) => item.id) }} />);
+  expect(screen.getByText("Step 2 of 2 · Match")).toBeTruthy();
+  expect(screen.getByTestId("progress").textContent).toBe(`${items.length}/2`);
+  send({ type: "grab", id: third.id });
+  send({ type: "drop", id: third.id, target: third.target });
+  expect(screen.getByTestId("progress").textContent).toBe(`${items.length}/3`);
+});
+
 it("resumes as finished when every match was already made", () => {
   const ids = SCIENCE_ACTIVITIES.animals.items.map((item) => item.id);
   render(<Harness land="animals" initial={{ observed: ids, matched: ids }} />);
