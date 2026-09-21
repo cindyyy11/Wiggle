@@ -63,7 +63,8 @@ it('dismisses an invitation and opens a subject-specific starter through touch',
   fireEvent.click(screen.getByRole('button', { name: 'Explore Animal Types' }));
   fireEvent.click(screen.getByRole('button', { name: /Let’s explore/ }));
   expect(screen.getByRole('dialog', { name: 'Animal Types activity session' })).toBeTruthy();
-  expect(screen.getByRole('button', { name: 'Discover Frog' })).toBeTruthy();
+  expect(screen.getByRole('region', { name: 'Animal Types activity' })).toBeTruthy();
+  expect(screen.queryByRole('button', { name: 'Discover Frog' })).toBeNull();
   expect(screen.queryByRole('button', { name: 'Test steel coin' })).toBeNull();
 });
 

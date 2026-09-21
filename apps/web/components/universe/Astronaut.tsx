@@ -141,6 +141,10 @@ export function Astronaut({ input, reducedMotion }: { input: InputRef; reducedMo
       }
     }
     faceYaw.current = reducedMotion ? faceTarget : easeAngle(faceYaw.current, faceTarget, settled ? 4.5 : 9, delta);
+    // Tell the chase camera when to close in for a face-on view; it eases so the move is gentle.
+    const wantPortrait = !reducedMotion && !state.paused && settle.current > FACE_DELAY_SECONDS ? 1 : 0;
+    const portrait = state.portrait ?? 0;
+    state.portrait = portrait + (wantPortrait - portrait) * (1 - Math.exp(-2.5 * delta));
     motion.yaw.setFromAxisAngle(UP, Math.atan2(motion.forward.x, motion.forward.z) + faceYaw.current);
     explorer.current.quaternion.copy(motion.surface).multiply(motion.yaw);
     explorer.current.position.toArray(state.position);

@@ -1,36 +1,30 @@
 import { test, expect } from '@playwright/test';
-import { acceptScienceInvitation } from './helpers';
-import { SCIENCE_ACTIVITIES } from '../../components/science/scienceActivities';
+import { acceptScienceInvitation, denyCamera } from './helpers';
 import { scienceLand } from '../../components/science/scienceLands';
 
-test('all lands invite, open with B or tap, and complete their own starter session', async ({ page }, info) => {
+test('the starter lands ask for the camera on entry and show adult help when it is blocked', async ({ page }, info) => {
   test.setTimeout(120000);
-  await page.addInitScript(() => { Object.defineProperty(navigator, 'mediaDevices', { configurable: true, value: { getUserMedia: () => Promise.reject(new DOMException('Denied', 'NotAllowedError')) } }); });
+  await denyCamera(page);
   await page.goto('/?world=science');
   await expect(page.getByRole('region', { name: 'Science Planet', exact: true }).locator('canvas')).toBeVisible({ timeout: 10000 });
+  const calls = () => page.evaluate(() => (window as unknown as { __magnetCameraCalls(): number }).__magnetCameraCalls());
   for (const land of ['animals', 'colors', 'life-cycle'] as const) {
     await page.getByRole('button', { name: `Visit ${scienceLand(land).name}`, exact: true }).click();
     await expect(page.getByRole('dialog')).toHaveCount(0);
+    const before = await calls();
     await acceptScienceInvitation(page, land === 'animals');
     const dialog = page.getByRole('dialog', { name: `${scienceLand(land).name} activity session` });
     await expect(dialog).toBeVisible();
-    if (land === 'animals') {
-      await page.getByRole('button', { name: 'Use hand gestures', exact: true }).click();
-      await expect(page.getByText('Camera unavailable. Use the discovery and target buttons, or retry.')).toBeVisible();
-      await page.getByRole('button', { name: 'Turn camera off', exact: true }).click();
-      await page.screenshot({ path: info.outputPath(`animal-session-${info.project.name}.png`) });
-    }
-    const activity = SCIENCE_ACTIVITIES[land];
-    for (const item of activity.items) await page.getByRole('button', { name: `Discover ${item.name}`, exact: true }).click();
-    await page.getByRole('button', { name: /Next:/ }).click();
-    for (const item of activity.items) {
-      await page.getByRole('button', { name: `Grab ${item.name}`, exact: true }).click();
-      await page.getByRole('button', { name: `${activity.targets.find(target => target.id === item.target)!.name} Release here`, exact: true }).click();
-    }
-    await page.getByRole('button', { name: `Finish ${scienceLand(land).name}`, exact: true }).click();
+    await expect(dialog.getByRole('heading', { name: 'Ask an adult to turn on the camera' })).toBeVisible();
+    expect(await calls()).toBeGreaterThan(before);
+    await expect(dialog.getByRole('button', { name: /^(Discover|Grab|Next:|Finish) / })).toHaveCount(0);
+    await dialog.getByRole('button', { name: 'Try again', exact: true }).click();
+    await expect.poll(calls).toBeGreaterThan(before + 1);
+    await page.screenshot({ path: info.outputPath(`${land}-adult-help-${info.project.name}.png`) });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(page.getByRole('region', { name: 'Science Planet', exact: true }).locator('canvas')).toBeVisible();
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   }
 });
 

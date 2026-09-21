@@ -48,10 +48,21 @@ export const CHASE_BACK = 2.8;
 export const CHASE_HEIGHT = 4.4;
 export const CHASE_AHEAD = 2.2;
 
-/** Camera pose for watching the explorer walk: behind and above, aimed at the ground just ahead. */
-export function chaseFrame(explorer: Vector3, heading: Vector3, ahead: number, zoom: number, out: { position: Vector3; target: Vector3; up: Vector3 }) {
+// Once the explorer has stopped, the camera settles into a close, near-level view aimed at its head and chest so its face shows.
+export const PORTRAIT_BACK = 3.2;
+export const PORTRAIT_HEIGHT = 1.7;
+export const PORTRAIT_LOOK = .95;
+
+/**
+ * Camera pose for watching the explorer: behind and above while it walks, aimed at the ground just ahead.
+ * `portrait` (0 to 1) blends toward the close, level view used once it has stopped.
+ */
+export function chaseFrame(explorer: Vector3, heading: Vector3, ahead: number, zoom: number, out: { position: Vector3; target: Vector3; up: Vector3 }, portrait = 0) {
+  const blend = Math.max(0, Math.min(1, portrait));
+  const height = (CHASE_HEIGHT + (PORTRAIT_HEIGHT - CHASE_HEIGHT) * blend) * zoom;
+  const back = (CHASE_BACK + (PORTRAIT_BACK - CHASE_BACK) * blend) * zoom;
   out.up.copy(explorer).normalize();
-  out.target.copy(explorer).addScaledVector(heading, ahead).setLength(explorer.length());
-  out.position.copy(explorer).addScaledVector(out.up, CHASE_HEIGHT * zoom).addScaledVector(heading, -CHASE_BACK * zoom);
+  out.target.copy(explorer).addScaledVector(heading, ahead).setLength(explorer.length()).addScaledVector(out.up, PORTRAIT_LOOK * blend);
+  out.position.copy(explorer).addScaledVector(out.up, height).addScaledVector(heading, -back);
   return out;
 }

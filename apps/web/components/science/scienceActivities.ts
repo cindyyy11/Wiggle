@@ -1,5 +1,6 @@
 export type StarterLand = 'animals' | 'colors' | 'life-cycle';
 export type ActivityItem = { id: string; name: string; fact: string; target: string; color: string };
+export type StarterProgress = { observed: string[]; matched: string[] };
 export const SCIENCE_ACTIVITIES: Record<StarterLand, { title: string; instruction: string; items: ActivityItem[]; targets: { id: string; name: string }[] }> = {
   animals: {
     title: 'Meet the neighbours', instruction: 'Discover each animal, then help it find its habitat.',
@@ -32,23 +33,3 @@ export const SCIENCE_ACTIVITIES: Record<StarterLand, { title: string; instructio
   },
 };
 export function matchesActivity(land: StarterLand, item: string, target: string) { return SCIENCE_ACTIVITIES[land].items.find(entry => entry.id === item)?.target === target; }
-
-/** A held item is released only by a positively tracked open palm, never an end edge. */
-export class StarterHandController {
-  held: string | null = null;
-  private lostAt: number | null = null;
-  private pointing: string | null = null;
-  reset() { this.held = null; this.lostAt = null; this.pointing = null; }
-  update({ tracking, gesture, item, target, discover, at }: { tracking: boolean; gesture: string | null; item: string | null; target: string | null; discover: boolean; at: number }): { type: 'discover' | 'grab'; item: string } | { type: 'drop'; item: string; target: string } | null {
-    if (!tracking) { this.lostAt ??= at; if (at - this.lostAt >= 400) this.reset(); return null; }
-    this.lostAt = null;
-    if (discover) {
-      if (gesture !== 'point' || !item) { this.pointing = null; return null; }
-      if (this.pointing === item) return null;
-      this.pointing = item; return { type: 'discover', item };
-    }
-    if (gesture === 'pinch' && item && !this.held) { this.held = item; return { type: 'grab', item }; }
-    if (gesture === 'open_palm' && this.held) { const held = this.held; this.held = null; return target ? { type: 'drop', item: held, target } : null; }
-    return null;
-  }
-}

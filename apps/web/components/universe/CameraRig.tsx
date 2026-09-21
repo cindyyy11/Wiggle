@@ -71,13 +71,13 @@ export function CameraRig({ mode, input, reducedMotion, activityView, resetViewK
     const walk = chase.current;
     if (goal && goal !== walk.goal) { walk.goal = goal; walk.userOrbited = false; }
     walk.hold = goal ? CHASE_HOLD : Math.max(0, walk.hold - rawDelta);
-    if (mode === "follow" && !reducedMotion && !walk.userOrbited && !input.current.paused && input.current.heading && walk.hold > 0) {
+    if (mode === "follow" && !reducedMotion && !walk.userOrbited && !input.current.paused && input.current.heading && (walk.hold > 0 || (input.current.portrait ?? 0) > .01)) {
       const chaseAlpha = 1 - Math.exp(-Math.min(rawDelta, .05) * 4);
       if (input.current.zoom) { walk.zoom = Math.max(.7, Math.min(1.25, walk.zoom * Math.pow(1.17, input.current.zoom))); input.current.zoom = 0; }
       scratch.explorer.set(...input.current.position);
       scratch.heading.set(...input.current.heading);
       walk.ahead += ((goal ? CHASE_AHEAD : 0) - walk.ahead) * chaseAlpha;
-      chaseFrame(scratch.explorer, scratch.heading, walk.ahead, walk.zoom, scratch.chase);
+      chaseFrame(scratch.explorer, scratch.heading, walk.ahead, walk.zoom, scratch.chase, input.current.portrait ?? 0);
       arcLerp(camera.position, scratch.chase.position, chaseAlpha); orbit.target.lerp(scratch.chase.target, chaseAlpha);
       camera.up.lerp(scratch.chase.up, chaseAlpha).normalize();
       scratch.follow.previousNormal.copy(scratch.chase.up);
