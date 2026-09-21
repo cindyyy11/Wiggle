@@ -4,7 +4,8 @@ import { useRef, type MutableRefObject, type RefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import { AdditiveBlending, type Group, type Mesh } from "three";
 
-export type AstronautMotion = { speed: number; hover: number; time: number };
+// lookX/lookY (-1..1) point the helmet at the pointer; cheer (0..1) is the burst of excitement after a tap.
+export type AstronautMotion = { speed: number; hover: number; time: number; lookX: number; lookY: number; cheer: number };
 export type AstronautNozzles = { left: RefObject<Group | null>; right: RefObject<Group | null> };
 
 const SUIT = "#fdf8ee";
@@ -35,13 +36,14 @@ export function AstronautRig({ motion, nozzles }: { motion: MutableRefObject<Ast
   const lights = useRef<(Mesh | null)[]>([]);
 
   useFrame(() => {
-    const { speed, hover, time } = motion.current;
-    const swing = .26 + Math.min(speed, 8) * .035 + hover * .12;
+    const { speed, hover, time, lookX, lookY, cheer } = motion.current;
+    const wave = Math.max(hover, cheer);
+    const swing = .26 + Math.min(speed, 8) * .035 + wave * .12;
     if (leftLeg.current) leftLeg.current.rotation.x = .24 + Math.sin(time * 1.7) * swing;
     if (rightLeg.current) rightLeg.current.rotation.x = -.1 + Math.sin(time * 1.7 + Math.PI) * swing;
     if (leftArm.current) { leftArm.current.rotation.z = -.38 + Math.sin(time * 1.3 + 1) * .14; leftArm.current.rotation.x = Math.sin(time * 1.1) * .18; }
-    if (waveArm.current) waveArm.current.rotation.z = Math.sin(time * (2.1 + hover * 4)) * (.22 + .3 * hover) + hover * .35;
-    if (helmet.current) { helmet.current.rotation.y = Math.sin(time * .7) * .17; helmet.current.rotation.x = Math.sin(time * .9 + 1) * .06; }
+    if (waveArm.current) waveArm.current.rotation.z = Math.sin(time * (2.1 + wave * 4)) * (.22 + .3 * wave) + wave * .35;
+    if (helmet.current) { helmet.current.rotation.y = Math.sin(time * .7) * .17 + lookX * .55; helmet.current.rotation.x = Math.sin(time * .9 + 1) * .06 - lookY * .35; }
     const flame = .55 + Math.min(speed, 8) * .16 + Math.sin(time * 11) * .07;
     jetLeft.current?.scale.set(1, flame, 1);
     jetRight.current?.scale.set(1, flame * .95, 1);
