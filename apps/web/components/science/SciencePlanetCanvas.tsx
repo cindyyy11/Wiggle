@@ -10,6 +10,8 @@ import { MagnetLabMission } from "./MagnetLabMission";
 import { ScienceExplorerBridge } from './ScienceExplorerBridge';
 import { ScienceSessionFrame } from './ScienceSessionFrame';
 import { ScienceStarterSession, type StarterProgress } from './ScienceStarterSession';
+import { ScienceHandSession } from './ScienceHandSession';
+import { BENCH_SETS } from '../handActivity/sets';
 import { isEntryKey, LAND_GUIDES } from './scienceInvitation';
 import type { StarterLand } from './scienceActivities';
 import sessionStyles from './ScienceSession.module.css';
@@ -77,6 +79,8 @@ export function SciencePlanetCanvas(props: SciencePlanetCanvasProps) {
     />
     </div>
     {active ? <div className={sessionStyles.magnetOverlay} data-session-controls><MagnetLabMission manageFocus={false} onExit={close} onComplete={() => setCompleted(true)} /></div> : null}
-    {starter ? <ScienceStarterSession key={starter} land={starter} graphics={available} progress={progress[starter]} onProgress={value => setProgress(previous => ({ ...previous, [starter]: value }))} onClose={close} /> : null}
+    {starter ? (BENCH_SETS[starter]
+      ? <ScienceHandSession key={starter} land={starter} progress={progress[starter]} onProgress={value => setProgress(previous => ({ ...previous, [starter]: value }))} onClose={close} />
+      : <ScienceStarterSession key={starter} land={starter} graphics={available} progress={progress[starter]} onProgress={value => setProgress(previous => ({ ...previous, [starter]: value }))} onClose={close} />) : null}
   </ScienceSessionFrame>;
 }

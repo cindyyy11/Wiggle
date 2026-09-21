@@ -1,5 +1,6 @@
 export type StarterLand = 'animals' | 'colors' | 'life-cycle';
 export type ActivityItem = { id: string; name: string; fact: string; target: string; color: string };
+export type StarterProgress = { observed: string[]; matched: string[] };
 export const SCIENCE_ACTIVITIES: Record<StarterLand, { title: string; instruction: string; items: ActivityItem[]; targets: { id: string; name: string }[] }> = {
   animals: {
     title: 'Meet the neighbours', instruction: 'Discover each animal, then help it find its habitat.',
