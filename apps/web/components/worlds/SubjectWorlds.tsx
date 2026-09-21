@@ -40,7 +40,7 @@ function routeForChild(route: SubjectRoute, childId?: string): SubjectRoute {
   return { world: null, child: childId };
 }
 
-export function SubjectWorlds({ childId, client, quality, initialRoute }: SubjectWorldsProps) {
+export function SubjectWorlds({ childId, allowLocalFallback, client, quality, initialRoute }: SubjectWorldsProps) {
   const [entered, setEntered] = useState(false);
   const [route, setRoute] = useState<SubjectRoute>(() => routeForChild(initialRoute, childId));
   const [mathsOverlayOpen, setMathsOverlayOpen] = useState(false);
@@ -116,6 +116,9 @@ export function SubjectWorlds({ childId, client, quality, initialRoute }: Subjec
 
   const content = route.world === "math" ? <div className={styles.worldContent}>
     <MathPlanet
+      childId={childId}
+      allowLocalFallback={allowLocalFallback}
+      client={client}
       quality={quality}
       onSessionOpenChange={setMathsOverlayOpen}
       onBackToWorlds={() => navigate({ world: null, child: currentChild })}

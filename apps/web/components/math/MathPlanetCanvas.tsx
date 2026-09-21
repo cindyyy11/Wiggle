@@ -2,16 +2,26 @@
 
 import { useRef, useState } from "react";
 import { ActivitySessionFrame } from "../planet/ActivitySessionFrame";
+import { FractionMission } from "../mission/FractionMission";
+import { useFractionMission } from "../mission/useFractionMission";
+import missionStyles from "../mission/mission.module.css";
 import { UniverseCanvas } from "../universe/UniverseCanvas";
 import { ViewTools } from "../universe/ViewTools";
-import { createExplorerInput, LANDMARKS, type CameraMode, type Destination, type LandmarkId } from "../universe/world";
+import { createExplorerInput, LANDMARKS, MISSION_DESTINATION, type CameraMode, type Destination, type LandmarkId } from "../universe/world";
 import { MathActivitySession } from "./MathActivitySession";
 import { MathHud } from "./MathHud";
 import type { MathPlanetProps } from "./MathPlanet";
 import { MATH_ACTIVITIES, type MathRegionId } from "./mathActivities";
 import styles from "./mathPlanet.module.css";
 
-export function MathPlanetCanvas({ quality, reducedMotion, onBackToWorlds, onSessionOpenChange }: MathPlanetProps) {
+const FRACTION_FOREST = LANDMARKS.find((landmark) => landmark.id === "fraction-forest")!;
+
+function focusFractionForestExplore() {
+  Array.from(document.querySelectorAll<HTMLButtonElement>("button"))
+    .find((button) => button.textContent === `Explore ${FRACTION_FOREST.name}`)?.focus();
+}
+
+export function MathPlanetCanvas({ quality, reducedMotion, childId, allowLocalFallback, client, onBackToWorlds, onSessionOpenChange }: MathPlanetProps) {
   const [selectedRegion, setSelectedRegion] = useState<MathRegionId>("fraction-forest");
   const [session, setSession] = useState<MathRegionId | null>(null);
   const [completedRegions, setCompletedRegions] = useState<ReadonlySet<MathRegionId>>(() => new Set());
@@ -22,6 +32,38 @@ export function MathPlanetCanvas({ quality, reducedMotion, onBackToWorlds, onSes
   const [unavailable, setUnavailable] = useState(false);
   const [sceneAvailable, setSceneAvailable] = useState(true);
   const input = useRef(createExplorerInput());
+  const missionCompleted = useRef(false);
+  // Fraction Forest runs the real, API-backed fractions mission in this same world, so the
+  // Twin and parent insights see it. The other regions keep their local field activities.
+  const mission = useFractionMission({
+    client,
+    childId,
+    allowLocalFallback,
+    onMissionOverlayChange: onSessionOpenChange,
+    host: {
+      showMission() {
+        setSelectedRegion("fraction-forest");
+        walkTo(MISSION_DESTINATION);
+        setMode("mission");
+        setUnavailable(false);
+        setCompletionMessage("");
+      },
+      hideMission() {
+        input.current.destination = null;
+        setDestination(null);
+        setMode("follow");
+        if (missionCompleted.current) {
+          missionCompleted.current = false;
+          setCompletionMessage(`Wonderful exploring! ${FRACTION_FOREST.name} complete.`);
+        }
+        requestAnimationFrame(focusFractionForestExplore);
+      },
+      missionCompleted() {
+        missionCompleted.current = true;
+        setCompletedRegions((previous) => new Set(previous).add("fraction-forest"));
+      },
+    },
+  });
   const regionName = LANDMARKS.find((landmark) => landmark.id === (session ?? selectedRegion))!.name;
   // The HUD reads all four mappings. Keep a broken registry recoverable before
   // rendering it, as well as validating the chosen activity when opening it.
@@ -53,6 +95,10 @@ export function MathPlanetCanvas({ quality, reducedMotion, onBackToWorlds, onSes
   }
 
   function openSession() {
+    if (selectedRegion === "fraction-forest") {
+      mission.start();
+      return;
+    }
     if (!MATH_ACTIVITIES[selectedRegion]) {
       setUnavailable(true);
       return;
@@ -86,7 +132,7 @@ export function MathPlanetCanvas({ quality, reducedMotion, onBackToWorlds, onSes
     <div inert={session !== null} aria-hidden={session ? true : undefined}>
       <UniverseCanvas
         theme="math"
-        className={styles.spaceWorld}
+        className={`${styles.spaceWorld} ${missionStyles.atlas} ${mission.phase ? missionStyles.active : ""} ${mission.phase === "stuck" ? missionStyles.simplified : ""}`}
         quality={quality}
         reducedMotion={reducedMotion}
         mode={mode}
@@ -98,9 +144,10 @@ export function MathPlanetCanvas({ quality, reducedMotion, onBackToWorlds, onSes
         explorerInput={input}
         controlsDisabled={session !== null}
         resetViewKey={resetKey}
+        pizza={mission.pizza}
         onSceneAvailability={setSceneAvailable}
         hud={<div className={styles.spaceHud}>
-          {activitiesAvailable && !unavailable ? <MathHud
+          {mission.missionOverlayOpen ? null : activitiesAvailable && !unavailable ? <MathHud
             selectedRegion={selectedRegion}
             completedRegions={completedRegions}
             onRegionSelect={selectRegion}
@@ -110,16 +157,20 @@ export function MathPlanetCanvas({ quality, reducedMotion, onBackToWorlds, onSes
             <p role="status" aria-live="polite">Numeria activities are unavailable right now. Please return to Worlds.</p>
             <button type="button" className={styles.backButton} onClick={onBackToWorlds}>Back to Worlds</button>
           </div>}
-          <ViewTools
+          {mission.missionOverlayOpen ? null : <ViewTools
             mode={mode}
             input={input}
             zoom={sceneAvailable}
             onToggleMode={() => setMode((current) => current === "globe" ? "follow" : "globe")}
             onReset={() => { setResetKey((key) => key + 1); setMode("globe"); }}
-          />
+          />}
           <p className={styles.returnAnnouncement} role="status" aria-live="polite">{completionMessage}</p>
         </div>}
-      />
+      >
+        {!mission.phase && mission.busy ? <p className={missionStyles.starting} role="status">Your mission is coming into view…</p> : null}
+        {!mission.phase && mission.feedback ? <p className={missionStyles.starting} role="alert">{mission.feedback}</p> : null}
+        {mission.missionProps ? <FractionMission {...mission.missionProps} /> : null}
+      </UniverseCanvas>
     </div>
     {session ? <div className={styles.sessionOverlay} data-session-controls>
       <div className={styles.sessionToolbar}>
