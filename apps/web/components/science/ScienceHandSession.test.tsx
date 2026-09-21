@@ -8,7 +8,7 @@ import { BENCH_SETS } from "../handActivity/sets";
 import { ScienceHandSession } from "./ScienceHandSession";
 import { SCIENCE_ACTIVITIES, type StarterLand, type StarterProgress } from "./scienceActivities";
 
-const mock = vi.hoisted(() => ({ scene: null as HandBenchSceneProps | null, play: vi.fn(), speak: vi.fn() }));
+const mock = vi.hoisted(() => ({ scene: null as HandBenchSceneProps | null, play: vi.fn(), unlocks: [] as ReturnType<typeof vi.fn>[], speak: vi.fn() }));
 vi.mock("../../features/gestures/useHandTracking", () => ({
   useHandTracking: () => ({ status: "ready", video: { current: null }, retry: vi.fn(), latest: { current: { isTracking: false } } }),
 }));
@@ -16,11 +16,15 @@ vi.mock("../handActivity/HandBenchScene", () => ({
   HandBenchScene: (props: HandBenchSceneProps) => { mock.scene = props; return <div data-testid="scene" />; },
 }));
 vi.mock("../../features/voice/voicePreference", () => ({ speakIfUnmuted: (text: string) => mock.speak(text) }));
+// Every component that calls the hook gets its own instance with its own unlock, like the real hook.
 vi.mock("../../features/audio/useWiggleSound", () => ({
-  useWiggleSound: () => ({ play: mock.play, unlock: vi.fn(), muted: false, setMuted: vi.fn() }),
+  useWiggleSound: () => {
+    const [unlock] = useState(() => { const fn = vi.fn(); mock.unlocks.push(fn); return fn; });
+    return { play: mock.play, unlock, muted: false, setMuted: vi.fn() };
+  },
 }));
 
-beforeEach(() => { mock.scene = null; vi.clearAllMocks(); vi.useFakeTimers(); });
+beforeEach(() => { mock.scene = null; mock.unlocks.length = 0; vi.clearAllMocks(); vi.useFakeTimers(); });
 afterEach(() => { cleanup(); vi.useRealTimers(); });
 
 const lands = (Object.keys(BENCH_SETS) as StarterLand[]).filter((land) => BENCH_SETS[land]);
@@ -88,4 +92,35 @@ it("leaves through the exit button", () => {
   render(<Harness land="animals" onClose={onClose} />);
   fireEvent.click(screen.getByRole("button", { name: "Back to Science Planet" }));
   expect(onClose).toHaveBeenCalledTimes(1);
+});
+
+it("unlocks its own sound instance on mount, not only the shell's", () => {
+  render(<Harness land="animals" />);
+  expect(mock.unlocks.length).toBeGreaterThanOrEqual(2);
+  for (const unlock of mock.unlocks) expect(unlock).toHaveBeenCalled();
+});
+
+const matchPhase = { observed: SCIENCE_ACTIVITIES.animals.items.map((item) => item.id), matched: [] as string[] };
+
+it("judges two actions in one tick against fresh state", () => {
+  const first = SCIENCE_ACTIVITIES.animals.items[0];
+  render(<Harness land="animals" initial={matchPhase} />);
+  act(() => {
+    mock.scene!.onAction({ type: "grab", id: first.id });
+    mock.scene!.onAction({ type: "drop", id: first.id, target: first.target });
+  });
+  expect(screen.getByTestId("progress").textContent).toBe(`${matchPhase.observed.length}/1`);
+  expect(mock.play).toHaveBeenCalledWith("correct");
+});
+
+it("cancels a held item gently without judging it", () => {
+  const first = SCIENCE_ACTIVITIES.animals.items[0];
+  render(<Harness land="animals" initial={matchPhase} />);
+  send({ type: "grab", id: first.id });
+  send({ type: "cancel", id: first.id });
+  expect(status()).toContain("No problem!");
+  expect(mock.play).not.toHaveBeenCalledWith("tryAgain");
+  expect(mock.play).not.toHaveBeenCalledWith("correct");
+  expect(mock.play).not.toHaveBeenCalledWith("celebrate");
+  expect(screen.getByTestId("progress").textContent).toBe(`${matchPhase.observed.length}/0`);
 });
