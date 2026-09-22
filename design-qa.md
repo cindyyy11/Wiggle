@@ -20,6 +20,16 @@ Not verified, and not represented as passing:
 - Live Vercel, Render and Supabase deployment, and a real household Auth run. The 37-assertion pgTAP RLS suite was run and passes 37 of 37, but against a single container of Supabase's own Postgres 15.8 image (`supabase/postgres:15.8.1.135`, with its real `auth.users` and `auth.uid()`) after applying all three migrations, not a full local Supabase stack: GoTrue and PostgREST were not running, so the six live-Supabase repository cases (which need two signed-in parent tokens) were not run. No Supabase CLI is installed here.
 - The browser suite serves the existing `.next` build and does not rebuild it. A run before this session's rebuild exercised stale code; the README and runbook now say to run `npm run build` first.
 
+## Numeria whole-globe scenery fill — 22 September 2026
+
+result: automated checks pass; visual check is confirmed at 1440 x 900 and 390 x 844.
+
+The Numeria (math) planet now has a whole-globe filler layer (`MathLivingScenery`) of small, sparse versions of its own props — trees, hills, berries and number-boxes, chosen by each filler point's nearest land — plus a light instanced dust of ground-detail dots, so the terrain between Fraction Forest, Number Valley, Geometry Ridge and Crystal Crater no longer reads as bare. The four existing per-land clusters, the region plateaus and `ShapeSparkles` are unchanged; the filler layer's points are scattered with the same Fibonacci-sphere method Science's `LivingScenery` uses, and dropped within `CLEARING_RADIUS` of a land's center to stay clear of the existing clusters and plateaus.
+
+Checked: 2 web unit files / 9 tests pass (`mathSceneryLayout` 5 and `Numeria` 4), with TypeScript and universe ESLint also passing. Visual: the globe was inspected at 1440 x 900 and 390 x 844; rotated far-side checks found no wide bare band, no visible hero overlap with plateaus or existing clusters, and the four lands still read as visually distinct. There were no browser console warnings or errors and no visible quick-pan regression; no tuning of counts or clearing radius was needed.
+
+Not verifiable automatically: how "full" the globe looks is a judgment call, not a test; the counts and clearing radius in this change were tuned to that judgment during Task 4, not derived from a formula.
+
 ## Camera-first Numeria regions — 22 September 2026
 
 result: automated checks pass; real-camera play is not yet checked.
