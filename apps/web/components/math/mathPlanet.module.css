@@ -208,6 +208,7 @@
 .unavailable { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%); width: min(32rem, 90%); padding: 1.25rem; border-radius: 22px; background: #253665ed; text-align: center; }
 .sessionOverlay { position: absolute; inset: 0; z-index: 5; overflow-y: auto; padding: clamp(1rem, 4vw, 2.5rem); background: #e6f3f3f5; }
 .sessionToolbar { display: flex; justify-content: flex-end; width: min(100%, 38rem); margin: 0 auto 1rem; }
+.handOverlay { position: fixed; inset: 0; z-index: 20; overflow-y: auto; padding: 16px; background: #172d52e8; }
 
 @media (min-width: 1200px) {
   .spaceHud .regionCard { width: min(600px, calc(100vw - 720px)); display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 20px; align-items: center; padding: 14px 18px; text-align: left; }

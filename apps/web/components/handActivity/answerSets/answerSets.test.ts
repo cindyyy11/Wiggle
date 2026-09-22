@@ -1,12 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { MATH_ACTIVITIES } from "../../math/mathActivities";
-import { ANSWER_SETS } from "./index";
+import { ANSWER_SETS, answerSetFor } from "./index";
 
 const sets = Object.entries(ANSWER_SETS).filter(([, set]) => set);
 
 describe("the answer sets", () => {
   it("offers Number Valley", () => {
     expect(ANSWER_SETS["number-valley"]).toBeTruthy();
+  });
+
+  it("looks a set up by region id, and only for hand-played regions", () => {
+    expect(answerSetFor("number-valley")).toBe(ANSWER_SETS["number-valley"]);
+    expect(answerSetFor("fraction-forest")).toBeUndefined();
+    expect(answerSetFor("toString")).toBeUndefined();
   });
 });
 

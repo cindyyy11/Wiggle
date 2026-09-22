@@ -8,3 +8,8 @@ export type MathHandRegion = "number-valley" | "geometry-ridge" | "crystal-crate
 export const ANSWER_SETS: Partial<Record<MathHandRegion, AnswerSet>> = {
   "number-valley": NUMBER_VALLEY_SET,
 };
+
+/** The hand-played set for a region id, or undefined for a region that is not (yet) hand-played. */
+export function answerSetFor(region: string): AnswerSet | undefined {
+  return Object.prototype.hasOwnProperty.call(ANSWER_SETS, region) ? ANSWER_SETS[region as MathHandRegion] : undefined;
+}
