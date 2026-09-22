@@ -9,7 +9,7 @@ const mock = vi.hoisted(() => ({
   retry: vi.fn(),
   tracking: vi.fn(),
   video: { current: null },
-  latest: { current: { isTracking: false } },
+  latest: { current: { isTracking: false, gesture: null as string | null } },
   speak: vi.fn(),
   unlock: vi.fn(),
 }));
@@ -157,4 +157,19 @@ it("leaves Escape and focus to the parent frame when manageFocus is false", () =
   render(<HandActivityShell {...props({ onExit, manageFocus: false })} />);
   fireEvent.keyDown(document, { key: "Escape" });
   expect(onExit).not.toHaveBeenCalled();
+});
+
+it("shows a gesture hint and nudges once when the kid uses the wrong gesture", () => {
+  vi.useFakeTimers();
+  mock.status = "ready";
+  mock.latest.current = { isTracking: true, gesture: "pinch" };
+  render(<HandActivityShell {...props({
+    coachMode: { kind: "bench", phase: "discover", holding: false },
+    coach: "Point at the horse!",
+  })} />);
+  expect(screen.getByLabelText("Use this gesture: Point")).toBeTruthy();
+  act(() => { vi.advanceTimersByTime(250); });
+  expect(screen.getByRole("status").textContent).toBe("Try pointing your finger to discover!");
+  expect(mock.speak).toHaveBeenCalledWith("Try pointing your finger to discover!");
+  vi.useRealTimers();
 });

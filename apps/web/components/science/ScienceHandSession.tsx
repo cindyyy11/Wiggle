@@ -52,6 +52,11 @@ export function ScienceHandSession({ land, progress, onProgress, onClose }: Scie
   // This session plays its own sounds, so unlock this instance for strict-autoplay browsers.
   useEffect(() => { unlock.current(); }, []);
   const [line, setLine] = useState(() => state.phase === "done" ? DONE_LINE : state.phase === "match" ? MATCH_LINE : activity.instruction);
+  const [holding, setHolding] = useState(false);
+  const coachMode = useMemo(
+    () => ({ kind: "bench" as const, phase: state.phase, holding }),
+    [state.phase, holding],
+  );
 
   const factFor = (id: string) => activity.items.find((item) => item.id === id)?.fact ?? "";
   const handleAction = (action: BenchAction) => {
@@ -92,10 +97,11 @@ export function ScienceHandSession({ land, progress, onProgress, onClose }: Scie
     <HandActivityShell
       label={`${scienceLand(land).name} activity`}
       title={activity.title}
-      instruction={discovering ? "Point at each one to learn about it." : state.phase === "match" ? "Pinch to pick up. Open your palm over a target." : "Wonderful exploring!"}
+      instruction={discovering ? "Point your finger at each one to discover it." : state.phase === "match" ? "Pinch to pick up. Open your palm over its home." : "Wonderful exploring!"}
       progress={{ count: discovering ? state.observed.length : state.matched.length, total, label: discovering ? "discoveries" : "matches" }}
       step={discovering ? "Step 1 of 2 · Discover" : state.phase === "match" ? "Step 2 of 2 · Match" : "All done!"}
       coach={line}
+      coachMode={coachMode}
       exitLabel="Back to Science Planet"
       onExit={onClose}
       manageFocus={false}
@@ -108,6 +114,7 @@ export function ScienceHandSession({ land, progress, onProgress, onClose }: Scie
         reducedMotion={scene.reducedMotion}
         onAction={handleAction}
         onHandStatus={scene.onHandStatus}
+        onHoldingChange={setHolding}
       />}
     </HandActivityShell>
   </div>;

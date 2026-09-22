@@ -20,22 +20,24 @@ export type HandBenchSceneProps = {
   reducedMotion: boolean;
   onAction(action: BenchAction): void;
   onHandStatus(message: string): void;
+  onHoldingChange?(holding: boolean): void;
 };
 
 const TARGET_Z = .1;
 const REST_Z = .3;
 const HELD_Z = .6;
 
-function BenchInteraction({ set, state, targetFor, latest, reducedMotion, onAction, onHandStatus }: HandBenchSceneProps) {
+function BenchInteraction({ set, state, targetFor, latest, reducedMotion, onAction, onHandStatus, onHoldingChange }: HandBenchSceneProps) {
   const controller = useRef(new HandBenchController());
   const groups = useRef(new Map<string, Group>());
   const cursor = useRef<Group>(null);
   const dot = useRef<Mesh>(null);
-  const current = useRef({ state, onAction, onHandStatus });
-  current.current = { state, onAction, onHandStatus };
+  const current = useRef({ state, onAction, onHandStatus, onHoldingChange });
+  current.current = { state, onAction, onHandStatus, onHoldingChange };
   const hoverRef = useRef<string | null>(null);
   const overRef = useRef<string | null>(null);
   const statusRef = useRef("");
+  const holdingRef = useRef(false);
   const heldAt = useRef<BenchPoint | null>(null);
   const wasHeld = useRef<string | null>(null);
   const lastDrop = useRef<string | null>(null);
@@ -50,7 +52,7 @@ function BenchInteraction({ set, state, targetFor, latest, reducedMotion, onActi
   useFrame(({ clock }, rawDelta) => {
     const delta = Math.min(rawDelta, .05);
     const now = clock.elapsedTime;
-    const { state: s, onAction: act, onHandStatus: report } = current.current;
+    const { state: s, onAction: act, onHandStatus: report, onHoldingChange: reportHolding } = current.current;
     const frame = latest.current;
     const point = trackedBenchPoint(frame);
 
@@ -68,6 +70,9 @@ function BenchInteraction({ set, state, targetFor, latest, reducedMotion, onActi
       if (action.type === "drop") lastDrop.current = action.id;
       act(action);
     }
+
+    const holding = s.held !== null;
+    if (holding !== holdingRef.current) { holdingRef.current = holding; reportHolding?.(holding); }
 
     const nextHover = s.held ? null : item;
     if (nextHover !== hoverRef.current) { hoverRef.current = nextHover; setHovered(nextHover); }
