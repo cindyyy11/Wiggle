@@ -39,6 +39,10 @@ export function MathHandSession({ region, onComplete, onClose }: MathHandSession
   const stateRef = useRef(state);
   stateRef.current = state;
   const [line, setLine] = useState(activity.challenges[0].prompt);
+  const coachMode = useMemo(
+    () => ({ kind: "answer" as const, phase: state.phase }),
+    [state.phase],
+  );
 
   // This session plays its own sounds, so unlock this instance for strict-autoplay browsers.
   useEffect(() => { unlock.current(); }, []);
@@ -87,6 +91,7 @@ export function MathHandSession({ region, onComplete, onClose }: MathHandSession
     progress={{ count: state.solved, total, label: "puzzles solved" }}
     step={done ? "All done!" : `Puzzle ${state.index + 1} of ${total} · Hold over an answer`}
     coach={line}
+    coachMode={coachMode}
     exitLabel="Back to Numeria"
     onExit={onClose}
     manageFocus={false}

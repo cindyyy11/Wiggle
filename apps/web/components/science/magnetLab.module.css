@@ -101,6 +101,14 @@
 .cameraCard h2 { font-size: 1rem; margin: .15rem 0 .45rem; }
 .cameraCard > p { font-size: .8rem; margin: .55rem 0 0; }
 .cameraStatus { margin: 0; font-weight: 700; color: #654d5c; }
+.gestureHint { display: flex; align-items: center; gap: .45rem; margin: 0 0 .35rem; font-size: .78rem; font-weight: 700; color: #654d5c; }
+.gestureHintGlyph { width: 1.35rem; height: 1.35rem; border-radius: 50%; background: #ffd991; box-shadow: inset 0 0 0 2px #72576b; position: relative; flex: 0 0 auto; }
+.gestureHintGlyph[data-hint="point"]::after { content: ""; position: absolute; left: 55%; top: 20%; width: .22rem; height: .7rem; background: #342c43; border-radius: .2rem; transform: translateX(-50%); }
+.gestureHintGlyph[data-hint="pinch"]::before, .gestureHintGlyph[data-hint="pinch"]::after { content: ""; position: absolute; width: .35rem; height: .35rem; border-radius: 50%; background: #342c43; top: 35%; }
+.gestureHintGlyph[data-hint="pinch"]::before { left: 22%; }
+.gestureHintGlyph[data-hint="pinch"]::after { right: 22%; }
+.gestureHintGlyph[data-hint="open_palm"]::after { content: ""; position: absolute; inset: 22%; border: 2px solid #342c43; border-radius: 40%; }
+.gestureHintGlyph[data-hint="hold"]::after { content: ""; position: absolute; inset: 28%; background: #342c43; border-radius: 50%; }
 .objectKey {
   grid-column: 3;
   grid-row: 1;
