@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { HandTrackingLatest } from "../../features/gestures/useHandTracking";
-import { benchStatusForFrame, staleHoldToCancel, trackedBenchPoint } from "./handBenchFrame";
+import { answerStatusForFrame, benchStatusForFrame, staleHoldToCancel, trackedBenchPoint } from "./handBenchFrame";
 
 const frame = (patch: Partial<HandTrackingLatest> = {}): HandTrackingLatest => ({
   pointer: { x: 0, y: 0 }, gesture: "point", handedness: "Right", confidence: .9, isTracking: true, ...patch,
@@ -49,5 +49,18 @@ describe("benchStatusForFrame", () => {
     expect(benchStatusForFrame("match", true, false)).toBe("Pinch an item to pick it up.");
     expect(benchStatusForFrame("match", true, true)).toBe("Open your palm over a target to place it.");
     expect(benchStatusForFrame("done", true, false)).toBe("All done!");
+  });
+});
+
+describe("answerStatusForFrame", () => {
+  it("asks for a hand when none is seen, and gives one instruction while asking", () => {
+    expect(answerStatusForFrame("asking", false)).toBe("Show your hand to the camera.");
+    expect(answerStatusForFrame("asking", true)).toBe("Hold your hand over an answer.");
+  });
+
+  it("celebrates and finishes without needing a hand", () => {
+    expect(answerStatusForFrame("celebrating", false)).toBe("Well done!");
+    expect(answerStatusForFrame("celebrating", true)).toBe("Well done!");
+    expect(answerStatusForFrame("done", false)).toBe("All done!");
   });
 });
