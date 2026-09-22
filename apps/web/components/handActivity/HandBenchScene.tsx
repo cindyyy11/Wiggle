@@ -1,10 +1,13 @@
 "use client";
 
-import { Component, useCallback, useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { useRef, useState, type RefObject } from "react";
+import { useFrame } from "@react-three/fiber";
 import type { Group, Mesh } from "three";
 import type { HandTrackingLatest } from "../../features/gestures/useHandTracking";
 import type { BenchSet } from "./benchSet";
+import { benchX, benchY } from "./benchSpace";
+import { BenchCanvas } from "./BenchCanvas";
+import { MatchBurst } from "./MatchBurst";
 import { HandBenchController } from "./handBenchController";
 import { benchStatusForFrame, staleHoldToCancel, trackedBenchPoint } from "./handBenchFrame";
 import { benchHit, type BenchAction, type BenchPoint, type BenchState, type BenchZone } from "./handBenchPlay";
@@ -19,53 +22,9 @@ export type HandBenchSceneProps = {
   onHandStatus(message: string): void;
 };
 
-export const BENCH_WIDTH = 2.8;
-export const BENCH_HEIGHT = 1.7;
-export const benchX = (x: number) => (x - .5) * BENCH_WIDTH;
-export const benchY = (y: number) => (y - .5) * BENCH_HEIGHT;
-
 const TARGET_Z = .1;
 const REST_Z = .3;
 const HELD_Z = .6;
-const FIELD_OF_VIEW = 42;
-
-/** Sizes the camera so the bench fills about two thirds of the view and never overflows it on narrow screens. */
-function FitBench() {
-  const { camera, size } = useThree();
-  useEffect(() => {
-    const aspect = size.width / Math.max(1, size.height);
-    const halfFov = Math.tan((FIELD_OF_VIEW * Math.PI) / 360);
-    camera.position.z = Math.max(1.95 / (.68 * 2 * halfFov), 3.1 / (.92 * 2 * halfFov * aspect));
-    camera.updateProjectionMatrix();
-  }, [camera, size]);
-  return null;
-}
-
-/** A short ring of sparkles where an item has just been matched. */
-function MatchBurst({ x, y, onDone }: { x: number; y: number; onDone(): void }) {
-  const group = useRef<Group>(null);
-  const age = useRef(0);
-  const finished = useRef(false);
-  useFrame((_, rawDelta) => {
-    age.current += Math.min(rawDelta, .05);
-    const life = age.current / .8;
-    if (life >= 1) {
-      if (!finished.current) { finished.current = true; onDone(); }
-      return;
-    }
-    group.current?.children.forEach((child, index) => {
-      const angle = (index / 8) * Math.PI * 2;
-      child.position.set(Math.cos(angle) * life * .35, Math.sin(angle) * life * .35, 0);
-      child.scale.setScalar(Math.max(.01, 1 - life));
-    });
-  });
-  return <group ref={group} position={[x, y, .7]}>
-    {Array.from({ length: 8 }, (_, index) => <mesh key={index}>
-      <sphereGeometry args={[.035, 8, 6]} />
-      <meshBasicMaterial color={index % 2 ? "#ffe17d" : "#9dffb8"} />
-    </mesh>)}
-  </group>;
-}
 
 function BenchInteraction({ set, state, targetFor, latest, reducedMotion, onAction, onHandStatus }: HandBenchSceneProps) {
   const controller = useRef(new HandBenchController());
@@ -191,51 +150,13 @@ function BenchInteraction({ set, state, targetFor, latest, reducedMotion, onActi
   </>;
 }
 
-class GraphicsBoundary extends Component<{ children: ReactNode; onFailure(): void }, { failed: boolean }> {
-  state = { failed: false };
-  static getDerivedStateFromError() { return { failed: true }; }
-  componentDidCatch() { this.props.onFailure(); }
-  render() { return this.state.failed ? null : this.props.children; }
-}
-
 export function HandBenchScene(props: HandBenchSceneProps) {
-  const [webglSupported, setWebglSupported] = useState<boolean | null>(null);
-  const reported = useRef(false);
-  const report = useRef(props.onHandStatus);
-  report.current = props.onHandStatus;
-  const reportFailure = useCallback(() => {
-    if (reported.current) return;
-    reported.current = true;
-    setWebglSupported(false);
-    report.current("The workbench needs a graphics-capable device.");
-  }, []);
-
-  useEffect(() => {
-    let supported = false;
-    try {
-      const probe = document.createElement("canvas");
-      const context = probe.getContext("webgl2", { failIfMajorPerformanceCaveat: true });
-      if (context) { context.getExtension("WEBGL_lose_context")?.loseContext(); supported = true; }
-    } catch { supported = false; }
-    if (supported) setWebglSupported(true); else reportFailure();
-  }, [reportFailure]);
-
-  if (webglSupported !== true) return null;
-  return <GraphicsBoundary onFailure={reportFailure}>
-    <Canvas
-      aria-label={props.set.label}
-      aria-hidden="true"
-      style={{ display: "block", width: "100%", height: "100%", minHeight: 320, background: "transparent" }}
-      camera={{ position: [0, 0, 5.3], fov: FIELD_OF_VIEW, near: .1, far: 30 }}
-      dpr={props.reducedMotion ? 1 : [1, 1.5]}
-      gl={{ antialias: !props.reducedMotion, alpha: true, powerPreference: "low-power", failIfMajorPerformanceCaveat: true }}
-    >
-      <ambientLight intensity={1.45} color="#f7e7c5" />
-      <hemisphereLight args={["#fff0d4", "#3e4664", 1.1]} />
-      <directionalLight position={[-3, 4, 5]} intensity={2.2} color="#ffd991" />
-      <pointLight position={[1.4, 1.1, 2]} intensity={6} distance={6} color="#f39b83" />
-      <FitBench />
-      <BenchInteraction {...props} />
-    </Canvas>
-  </GraphicsBoundary>;
+  return <BenchCanvas
+    label={props.set.label}
+    reducedMotion={props.reducedMotion}
+    failureMessage="The workbench needs a graphics-capable device."
+    onFailure={props.onHandStatus}
+  >
+    <BenchInteraction {...props} />
+  </BenchCanvas>;
 }
