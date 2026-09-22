@@ -12,6 +12,7 @@ import { BmLandScenery } from "../worlds/BmLandScenery";
 import { BM_LANDS } from "../worlds/bmLands";
 import { fibonacciSphereRegions } from "../worlds/planetScatter";
 import { BerryProp, HILL_COLORS, HillProp, NUMERIA_REGION_COLORS, NUMERIA_REGION_COUNT, NumberBoxProp } from "./mathRegionProps";
+import { MathLivingScenery } from "./MathLivingScenery";
 
 const UP = new Vector3(0, 1, 0);
 export { NUMERIA_REGION_COLORS, NUMERIA_REGION_COUNT };
@@ -71,7 +72,7 @@ export function Numeria({ quality, dimmed, onDestination, theme = "math", previe
     {theme === "science" ? <ScienceLandScenery quality={quality} />
       : theme === "english" ? <EnglishLandScenery quality={quality} />
       : theme === "bm" ? <BmLandScenery quality={quality} />
-      : <><Forest count={quality === "high" ? 104 : 58} /><TerrainObjects dimmed={dimmed} /><ShapeSparkles quality={quality} /></>}
+      : <><Forest count={quality === "high" ? 104 : 58} /><TerrainObjects dimmed={dimmed} /><ShapeSparkles quality={quality} /><MathLivingScenery quality={quality} dimmed={dimmed} /></>}
     <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, -3.65, 0]} scale={[1, 1, 1]}>
       <torusGeometry args={[4.08, .009, 3, 96]} /><meshBasicMaterial color="#6fa8c2" transparent opacity={.22} />
     </mesh>
