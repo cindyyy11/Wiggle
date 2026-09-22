@@ -32,7 +32,7 @@ vi.mock("../universe/UniverseCanvas", () => ({
 afterEach(cleanup);
 const regions = LANDMARKS.filter((landmark) => landmark.id !== "lexi");
 // Fraction Forest runs the API-backed fractions mission; these regions use local field activities.
-const fieldRegions = regions.filter((landmark) => landmark.id !== "fraction-forest" && landmark.id !== "number-valley");
+const fieldRegions = regions.filter((landmark) => landmark.id !== "fraction-forest");
 const forest = regions.find((landmark) => landmark.id === "fraction-forest")!;
 
 function visit(name: string) {
@@ -46,7 +46,7 @@ it("labels the planet and starts at Fraction Forest with the math globe", () => 
   expect(state.props).toMatchObject({ theme: "math", mode: "globe", quality: "fallback", reducedMotion: true, selectedLandmark: "fraction-forest" });
 });
 
-it.each(fieldRegions)("selects $name through the scene and opens its activity", (region) => {
+it.each(fieldRegions)("selects $name through the scene and opens its hand-played activity", (region) => {
   render(<MathPlanetCanvas onBackToWorlds={vi.fn()} />);
   act(() => state.props.onLandmarkSelect?.(region.id));
   expect(screen.getByRole("button", { name: `Visit ${region.name}` }).getAttribute("aria-pressed")).toBe("true");
@@ -54,7 +54,8 @@ it.each(fieldRegions)("selects $name through the scene and opens its activity", 
   expect(state.props.mode).toBe("follow");
   fireEvent.click(screen.getByRole("button", { name: `Explore ${region.name}` }));
   const dialog = screen.getByRole("dialog", { name: `${region.name} activity session` });
-  expect(within(dialog).getByRole("heading", { name: MATH_ACTIVITIES[region.id as MathRegionId].challenges[0].prompt })).toBeTruthy();
+  expect(within(dialog).getByRole("heading", { name: region.name })).toBeTruthy();
+  expect(answers.props?.challenge.id).toBe(MATH_ACTIVITIES[region.id as MathRegionId].challenges[0].id);
 });
 
 it("restarts walking when the active region is selected again after manual movement", () => {
@@ -112,33 +113,38 @@ it("offers an explicit close button before completing an activity", () => {
   render(<MathPlanetCanvas onBackToWorlds={vi.fn()} onSessionOpenChange={onSessionOpenChange} />);
   visit("Geometry Ridge");
   fireEvent.click(screen.getByRole("button", { name: "Explore Geometry Ridge" }));
-  fireEvent.click(screen.getByRole("button", { name: "Close activity" }));
+  fireEvent.click(screen.getByRole("button", { name: "Back to Numeria" }));
   expect(screen.queryByRole("dialog")).toBeNull();
   expect(onSessionOpenChange.mock.calls).toEqual([[true], [false]]);
   expect(screen.getByText("0 of 4 regions complete")).toBeTruthy();
 });
 
 it("marks only the completed region and announces it after returning", () => {
-  const onSessionOpenChange = vi.fn();
-  render(<MathPlanetCanvas onBackToWorlds={vi.fn()} onSessionOpenChange={onSessionOpenChange} />);
-  fireEvent.click(screen.getByRole("button", { name: "Visit Geometry Ridge" }));
-  fireEvent.click(screen.getByRole("button", { name: "Explore Geometry Ridge" }));
-  for (const challenge of MATH_ACTIVITIES["geometry-ridge"].challenges) {
-    fireEvent.click(screen.getByRole("radio", { name: challenge.answer }));
-    fireEvent.click(screen.getByRole("button", { name: "Check answer" }));
-  }
-  fireEvent.click(screen.getByRole("button", { name: "Back to Numeria" }));
-  expect(onSessionOpenChange.mock.calls).toEqual([[true], [false]]);
-  const announcement = screen.getByText("Wonderful exploring! Geometry Ridge complete.");
-  expect(announcement.getAttribute("aria-live")).toBe("polite");
-  expect(screen.getByText("1 of 4 regions complete")).toBeTruthy();
-  const completed = screen.getByRole("button", { name: "Visit Geometry Ridge" });
-  expect(document.getElementById(completed.getAttribute("aria-describedby") ?? "")?.textContent).toBe("Complete");
-  expect(within(completed).getAllByText("Complete").filter((node) => node.getAttribute("aria-hidden") === "true")).toHaveLength(1);
-  for (const region of regions.filter((entry) => entry.id !== "geometry-ridge")) {
-    const other = screen.getByRole("button", { name: `Visit ${region.name}` });
-    expect(other.getAttribute("aria-describedby")).toBeNull();
-    expect(within(other).queryByText("Complete")).toBeNull();
+  vi.useFakeTimers();
+  try {
+    const onSessionOpenChange = vi.fn();
+    render(<MathPlanetCanvas onBackToWorlds={vi.fn()} onSessionOpenChange={onSessionOpenChange} />);
+    fireEvent.click(screen.getByRole("button", { name: "Visit Geometry Ridge" }));
+    fireEvent.click(screen.getByRole("button", { name: "Explore Geometry Ridge" }));
+    for (const challenge of MATH_ACTIVITIES["geometry-ridge"].challenges) {
+      act(() => answers.props!.onSelect(challenge.answer));
+      act(() => { vi.advanceTimersByTime(CELEBRATE_MS + 50); });
+    }
+    fireEvent.click(screen.getByRole("button", { name: "Back to Numeria" }));
+    expect(onSessionOpenChange.mock.calls).toEqual([[true], [false]]);
+    const announcement = screen.getByText("Wonderful exploring! Geometry Ridge complete.");
+    expect(announcement.getAttribute("aria-live")).toBe("polite");
+    expect(screen.getByText("1 of 4 regions complete")).toBeTruthy();
+    const completed = screen.getByRole("button", { name: "Visit Geometry Ridge" });
+    expect(document.getElementById(completed.getAttribute("aria-describedby") ?? "")?.textContent).toBe("Complete");
+    expect(within(completed).getAllByText("Complete").filter((node) => node.getAttribute("aria-hidden") === "true")).toHaveLength(1);
+    for (const region of regions.filter((entry) => entry.id !== "geometry-ridge")) {
+      const other = screen.getByRole("button", { name: `Visit ${region.name}` });
+      expect(other.getAttribute("aria-describedby")).toBeNull();
+      expect(within(other).queryByText("Complete")).toBeNull();
+    }
+  } finally {
+    vi.useRealTimers();
   }
 });
 
