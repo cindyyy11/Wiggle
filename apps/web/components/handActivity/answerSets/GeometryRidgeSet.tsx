@@ -2,7 +2,7 @@
 
 import { useRef } from "react";
 import { useFrame } from "@react-three/fiber";
-import type { Mesh } from "three";
+import { Shape, Vector2, type Mesh } from "three";
 import { ANSWER_TOKEN_HOMES, ANSWER_TOKEN_RADIUS, type AnswerSet, type PuzzleProps, type TokenProps } from "../answerSet";
 import { benchX, benchY } from "../benchSpace";
 import { Bench } from "../sets/setParts";
@@ -22,14 +22,14 @@ function Beacon({ x, y, lit, delay, reducedMotion }: { x: number; y: number; lit
   const glow = useRef<Mesh>(null);
   const age = useRef(0);
   useFrame((_, rawDelta) => {
-    age.current += Math.min(rawDelta, .05);
+    age.current = lit ? age.current + Math.min(rawDelta, .05) : 0;
     if (!glow.current) return;
     const on = lit && (reducedMotion || age.current >= delay);
     glow.current.scale.setScalar(on ? 1 : .001);
   });
   return <group position={[x, y, .12]}>
     <mesh><sphereGeometry args={[.055, 16, 12]} /><meshStandardMaterial color="#a68a5c" roughness={.6} /></mesh>
-    <mesh ref={glow}><sphereGeometry args={[.09, 16, 12]} /><meshBasicMaterial color="#ffe17d" transparent opacity={.85} /></mesh>
+    <mesh ref={glow} scale={.001}><sphereGeometry args={[.09, 16, 12]} /><meshBasicMaterial color="#ffe17d" transparent opacity={.85} /></mesh>
   </group>;
 }
 
@@ -40,9 +40,12 @@ function Puzzle({ challenge, answer, reducedMotion }: PuzzleProps) {
   const sides = { triangle: 3, square: 4, hexagon: 6 }[visual.shape];
   const points = polygonPoints(sides);
   const litCount = answer !== null ? Number(answer) : 0;
+  // The mountain's outline is built from the exact same corner points as the beacons, in world
+  // units, so the mesh can never drift away from where the beacons sit.
+  const mountainShape = new Shape(points.map((point) => new Vector2(benchX(point.x), benchY(point.y))));
   return <group>
-    <mesh position={[benchX(.5), benchY(.68), .08]}>
-      <ringGeometry args={[.001, .3, sides]} />
+    <mesh position={[0, 0, .08]}>
+      <shapeGeometry args={[mountainShape]} />
       <meshStandardMaterial color="#8a6f45" roughness={.8} />
     </mesh>
     {points.map((point, index) => <Beacon
