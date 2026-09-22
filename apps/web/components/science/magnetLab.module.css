@@ -17,16 +17,16 @@
 }
 .mission *, .mission *::before, .mission *::after { box-sizing: border-box; }
 .mission ::selection { background: #ffd991; color: #342c43; }
-.mission h1 { margin: 0; font-size: clamp(1.6rem, 2.8vw, 2.5rem); line-height: 1.15; letter-spacing: -.025em; text-wrap: balance; }
+.mission h1 { margin: 0; font-size: clamp(1.15rem, 2.2vw, 1.75rem); line-height: 1.15; letter-spacing: -.025em; text-wrap: balance; }
 .mission p { line-height: 1.5; }
 .mission button { min-width: 44px; min-height: 44px; padding: .8rem 1rem; font: inherit; font-weight: 700; cursor: pointer; border: 0; border-radius: 1rem; transition: background-color 160ms ease-out; }
 .mission button:focus-visible { outline: 3px solid #ffd991; outline-offset: 5px; }
 .exit { grid-column: 1; grid-row: 1; align-self: start; justify-self: start; background: #f9e7ce; color: #342c43; z-index: 2; }
 .exit:hover, .retry:hover { background: #ffd991; }
-.missionCard { grid-column: 2; grid-row: 1; align-self: start; z-index: 2; text-align: center; padding: 1.4rem 1.5rem 1rem; background: #fff0d4; color: #342c43; border-radius: 1.5rem; box-shadow: 0 .75rem 2rem #100d2040; }
-.missionCard p { margin: .75rem 0; }
-.progress { display: flex; justify-content: center; gap: .55rem; margin-top: 1rem; }
-.progress span { width: .8rem; height: .8rem; border: 2px solid #72576b; border-radius: 50%; }
+.missionCard { grid-column: 2; grid-row: 1; align-self: start; z-index: 2; text-align: center; padding: .75rem 1rem .65rem; background: #fff0d4; color: #342c43; border-radius: 1.25rem; box-shadow: 0 .75rem 2rem #100d2040; }
+.missionCard p { margin: .4rem 0; font-size: .92rem; }
+.progress { display: flex; justify-content: center; gap: .45rem; margin-top: .55rem; }
+.progress span { width: .65rem; height: .65rem; border: 2px solid #72576b; border-radius: 50%; }
 .progress span[data-complete="true"] { background: #5b785b; border-color: #5b785b; }
 .missionCard .checkpoint { margin-bottom: 0; font-size: .8rem; font-weight: 700; color: #654d5c; }
 .guide { grid-column: 1; grid-row: 1; z-index: 2; align-self: end; max-height: 100%; overflow-y: auto; }
@@ -72,7 +72,7 @@
   0%, 100% { transform: translateY(0) rotate(0deg); }
   50% { transform: translateY(-.12rem) rotate(-3deg); }
 }
-.workbench { grid-column: 1 / -1; grid-row: 1; min-width: 0; height: 100%; z-index: 1; }
+.workbench { grid-column: 1 / -1; grid-row: 1; min-width: 0; height: 100%; z-index: 1; padding-top: clamp(5.5rem, 18vh, 8.5rem); }
 .cameraBackdrop, .cameraBackdropReady {
   position: absolute;
   inset: 0;
@@ -142,14 +142,14 @@
 @media (max-width: 48rem) {
   .mission { display: flex; flex-direction: column; height: 100%; gap: .65rem; padding: .75rem; border-radius: 1.3rem; }
   .exit, .missionCard, .guide, .cameraCard, .objectKey { flex: 0 0 auto; max-height: 26vh; overflow-y: auto; }
-  .missionCard { padding: 1.1rem; }
+  .missionCard { padding: .7rem .85rem; max-height: 18vh; }
   .guide { display: grid; grid-template-columns: 3rem minmax(0, 1fr); align-items: start; gap: .65rem; }
   .guideSpeaker { margin: 0; }
   .guideMark { width: 3rem; height: 3rem; margin: 0; }
   .speechBubble { margin: 0; padding: .75rem; font-size: .9rem; animation-duration: 240ms; }
   .speechBubble::before { top: .85rem; left: -.28rem; transform: rotate(45deg); }
   .retry { grid-column: 2; margin-top: 0; }
-  .workbench { flex: 1 1 auto; min-height: 12rem; height: auto; }
+  .workbench { flex: 1 1 auto; min-height: 14rem; height: auto; padding-top: 0; }
   .cameraCard { padding: .75rem 1rem; }
   .objectKey { order: 5; }
 }

@@ -20,6 +20,16 @@ Not verified, and not represented as passing:
 - Live Vercel, Render and Supabase deployment, and a real household Auth run. The 37-assertion pgTAP RLS suite was run and passes 37 of 37, but against a single container of Supabase's own Postgres 15.8 image (`supabase/postgres:15.8.1.135`, with its real `auth.users` and `auth.uid()`) after applying all three migrations, not a full local Supabase stack: GoTrue and PostgREST were not running, so the six live-Supabase repository cases (which need two signed-in parent tokens) were not run. No Supabase CLI is installed here.
 - The browser suite serves the existing `.next` build and does not rebuild it. A run before this session's rebuild exercised stale code; the README and runbook now say to run `npm run build` first.
 
+## Hand shell gesture coaching and layout — 23 September 2026
+
+result: automated checks pass; visual check is not yet checked in a live camera session.
+
+Camera-first hand sessions (Science benches and Numeria regions) now share clearer gesture coaching in `HandActivityShell`: stronger discover/match/hold copy, a small gesture hint in “Your Hand”, and a one-shot wrong-gesture nudge from Wiggle. The top mission card is smaller and the workbench has top clearance on desktop so props are not covered.
+
+Checked: 4 web unit files / 44 tests pass (`gestureCoach` 9, `HandActivityShell` 13, `ScienceHandSession` 11, `MathHandSession` 11), with related math planet canvas step-copy updates also green. Visual: layout and hint glyphs were verified via unit assertions; a live desktop / ~390 px camera session for covering and nudge timing has not been run in this pass.
+
+Not verifiable automatically: whether kids understand the glyph without reading the label — judgment call. Magnet Lands still uses its own frame (Phase 3); completion cheer and constellation unlocks are later phases.
+
 ## Numeria whole-globe scenery fill — 22 September 2026
 
 result: automated checks pass; visual check re-confirmed at CLEARING_RADIUS .65 (tall side viewport ~300 px wide and zoomed-out / whole-planet views).
