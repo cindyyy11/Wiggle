@@ -72,7 +72,7 @@ describe("crystalOffsets", () => {
       const offsets = crystalOffsets(count);
       expect(offsets).toHaveLength(count);
       const meanX = offsets.reduce((sum, point) => sum + point.x, 0) / count;
-      expect(meanX).toBeCloseTo(0, 1);
+      expect(meanX).toBeCloseTo(0, 5);
     }
   });
 

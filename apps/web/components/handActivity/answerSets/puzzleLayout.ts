@@ -30,7 +30,8 @@ export function crystalOffsets(count: number): { x: number; y: number }[] {
   const spacing = .26;
   return Array.from({ length: count }, (_, index) => {
     const row = Math.floor(index / perRow);
-    const inRow = index === count - 1 && count % perRow !== 0 ? count % perRow : perRow;
+    const isLastRow = row === rows - 1;
+    const inRow = isLastRow && count % perRow !== 0 ? count % perRow : perRow;
     const col = index % perRow;
     return { x: (col - (inRow - 1) / 2) * spacing, y: (row - (rows - 1) / 2) * spacing };
   });
