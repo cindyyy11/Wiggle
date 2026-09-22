@@ -20,6 +20,16 @@ Not verified, and not represented as passing:
 - Live Vercel, Render and Supabase deployment, and a real household Auth run. The 37-assertion pgTAP RLS suite was run and passes 37 of 37, but against a single container of Supabase's own Postgres 15.8 image (`supabase/postgres:15.8.1.135`, with its real `auth.users` and `auth.uid()`) after applying all three migrations, not a full local Supabase stack: GoTrue and PostgREST were not running, so the six live-Supabase repository cases (which need two signed-in parent tokens) were not run. No Supabase CLI is installed here.
 - The browser suite serves the existing `.next` build and does not rebuild it. A run before this session's rebuild exercised stale code; the README and runbook now say to run `npm run build` first.
 
+## Camera-first Numeria regions — 22 September 2026
+
+result: automated checks pass; real-camera play is not yet checked.
+
+Number Valley, Geometry Ridge and Crystal Crater now open the camera on entry and are played only with the hand, pointing and holding over an answer token on a 3D workbench inside the shared camera-first frame (`components/handActivity/`). The camera is required: a blocked or missing camera shows "Ask an adult to turn on the camera" with Try again, and there is no radio-button or keyboard fallback for answering. Escape and the exit button still work. Fraction Forest keeps its API-backed mission, unchanged; Magnet Lands and the three Science lands are unchanged.
+
+Checked: 90 web unit files / 525 tests pass, including the extracted bench canvas and bench space against the unchanged Round 1 tests, the pure dwell selector and puzzle reducer, a per-region set-consistency test against the lesson data, and a full puzzle-by-puzzle play for every region with simulated hand selections including wrong answers, hand loss and a re-open restart. Browser: the numeria-hand-sessions spec (camera requested on entry for all three regions, adult help and Try again, no radio buttons, Escape, no horizontal scroll, Fraction Forest unaffected) passes at desktop and 390 px, and universe, hover-contrast, subject-worlds and mission still pass. The three workbenches were inspected in screenshots at 1440 x 900 and 390 x 844.
+
+Not verifiable automatically: real hand tracking (the 1200 ms hold, the 300 ms leave grace, tracking-loss reset). All three rounds of the camera-first effort are now complete for the lands and regions in scope; moving Magnet Lands onto the shared frame remains optional future work.
+
 ## Camera-first Science lands — 21 September 2026
 
 result: automated checks pass; real-camera play is not yet checked.
