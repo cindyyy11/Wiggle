@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import type { ItemModelProps, PadProps } from "../benchSet";
+import { BENCH_SLAB_HEIGHT, BENCH_SLAB_WIDTH } from "../benchSpace";
 
 /** Grows and lifts an item model when it is hovered or carried. */
 export function Lift({ held, hovered, matched, reducedMotion, children }: ItemModelProps & { children: ReactNode }) {
@@ -22,7 +23,7 @@ export function PadFrame({ active, filled, radius = .25, children }: PadProps & 
 /** The slab the lesson sits on. */
 export function Bench({ color }: { color: string }) {
   return <mesh position={[0, 0, -.08]}>
-    <boxGeometry args={[3.1, 1.95, .12]} />
+    <boxGeometry args={[BENCH_SLAB_WIDTH, BENCH_SLAB_HEIGHT, .12]} />
     <meshStandardMaterial color={color} roughness={.75} transparent opacity={.92} />
   </mesh>;
 }

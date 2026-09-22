@@ -11,10 +11,11 @@ import { ENGLISH_LANDS } from "../worlds/englishLands";
 import { BmLandScenery } from "../worlds/BmLandScenery";
 import { BM_LANDS } from "../worlds/bmLands";
 import { fibonacciSphereRegions } from "../worlds/planetScatter";
+import { BerryProp, HILL_COLORS, HillProp, NUMERIA_REGION_COLORS, NUMERIA_REGION_COUNT, NumberBoxProp } from "./mathRegionProps";
+import { MathLivingScenery } from "./MathLivingScenery";
 
 const UP = new Vector3(0, 1, 0);
-export const NUMERIA_REGION_COLORS = ["#67c96f", "#f8c83f", "#55bde8", "#f17463"] as const;
-export const NUMERIA_REGION_COUNT = 4;
+export { NUMERIA_REGION_COLORS, NUMERIA_REGION_COUNT };
 const REGION_BORDER_COLOR = "#fff2c9";
 export type NumeriaTheme = "math" | "science" | "bm" | "english";
 const THEMED_LANDS: Record<Exclude<NumeriaTheme, "math">, readonly { color: string; destination: Destination }[]> = {
@@ -71,7 +72,7 @@ export function Numeria({ quality, dimmed, onDestination, theme = "math", previe
     {theme === "science" ? <ScienceLandScenery quality={quality} />
       : theme === "english" ? <EnglishLandScenery quality={quality} />
       : theme === "bm" ? <BmLandScenery quality={quality} />
-      : <><Forest count={quality === "high" ? 104 : 58} /><TerrainObjects dimmed={dimmed} /><ShapeSparkles quality={quality} /></>}
+      : <><Forest count={quality === "high" ? 104 : 58} /><TerrainObjects dimmed={dimmed} /><ShapeSparkles quality={quality} /><MathLivingScenery quality={quality} dimmed={dimmed} /></>}
     <mesh rotation={[Math.PI / 2, 0, 0]} position={[0, -3.65, 0]} scale={[1, 1, 1]}>
       <torusGeometry args={[4.08, .009, 3, 96]} /><meshBasicMaterial color="#6fa8c2" transparent opacity={.22} />
     </mesh>
@@ -125,8 +126,6 @@ function Forest({ count }: { count: number }) {
   return <group><instancedMesh ref={trunks} args={[undefined, undefined, count]}><cylinderGeometry args={[.035, .05, .3, 5]} /><meshStandardMaterial color="#5e8b67" roughness={1} /></instancedMesh><instancedMesh ref={crowns} args={[undefined, undefined, count]}><sphereGeometry args={[.26, 8, 6]} /><meshStandardMaterial roughness={1} flatShading /></instancedMesh></group>;
 }
 
-const HILL_COLORS = ["#cceaf2", "#a9d9ee", "#d9c9f0"];
-
 function TerrainObjects({ dimmed }: { dimmed: boolean }) {
   const hills = useMemo(() => Array.from({ length: 20 }, (_, index) => {
     const angle = index * 2.39996; const distance = .12 + Math.sqrt(index / 20) * .4;
@@ -141,13 +140,11 @@ function TerrainObjects({ dimmed }: { dimmed: boolean }) {
   return <group>
     {/* Soft, rounded candy hills — no sharp peaks. */}
     {hills.map((hill, index) => <group key={index} position={hill.position} quaternion={hill.quaternion}>
-      <mesh position={[0, hill.height * .32, 0]} scale={[1, .82, 1]}><sphereGeometry args={[hill.height * .55, 10, 8]} /><meshStandardMaterial color={HILL_COLORS[index % HILL_COLORS.length]} roughness={1} flatShading /></mesh>
-      <mesh position={[0, hill.height * .58, 0]} scale={[.5, .42, .5]}><sphereGeometry args={[hill.height * .55, 8, 6]} /><meshStandardMaterial color="#fff7e7" flatShading /></mesh>
+      <HillProp height={hill.height} color={HILL_COLORS[index % HILL_COLORS.length]} />
     </group>)}
     {/* Round gem berries — plump and glossy instead of pointy crystals. */}
     {berries.map((berry, index) => <group key={index} position={berry.position} quaternion={berry.quaternion} scale={berry.scale}>
-      <mesh position={[0, .13, 0]}><sphereGeometry args={[.15, 10, 8]} /><meshStandardMaterial color={index % 3 === 0 ? "#ef8b78" : "#f4c95d"} emissive="#ef8b78" emissiveIntensity={dimmed ? .02 : .1} roughness={.5} flatShading /></mesh>
-      <mesh position={[-.04, .18, .09]}><sphereGeometry args={[.04, 6, 6]} /><meshStandardMaterial color="#fff7e7" transparent opacity={.8} /></mesh>
+      <BerryProp color={index % 3 === 0 ? "#ef8b78" : "#f4c95d"} dimmed={dimmed} />
     </group>)}
     <NumberGarden />
   </group>;
@@ -157,7 +154,7 @@ function NumberGarden() {
   return <group>{Array.from({ length: 24 }, (_, index) => {
     const angle = index * 2.4; const distance = .16 + Math.sqrt(index / 24) * .32;
     const normal = new Vector3(...surfacePoint({ latitude: -.16 + Math.sin(angle) * distance, longitude: .43 + Math.cos(angle) * distance }, 1));
-    return <group key={index} position={normal.clone().multiplyScalar(RADIUS + .07)} quaternion={new Quaternion().setFromUnitVectors(UP, normal)}><mesh position={[0, .035 * (1 + index % 3), 0]} rotation={[0, angle, 0]}><boxGeometry args={[.2, .12 * (1 + index % 3), .2]} /><meshStandardMaterial color={index % 3 === 0 ? "#f4c95d" : "#e8ad67"} flatShading roughness={1} /></mesh></group>;
+    return <group key={index} position={normal.clone().multiplyScalar(RADIUS + .07)} quaternion={new Quaternion().setFromUnitVectors(UP, normal)}><NumberBoxProp tier={index % 3} rotation={angle} /></group>;
   })}</group>;
 }
 

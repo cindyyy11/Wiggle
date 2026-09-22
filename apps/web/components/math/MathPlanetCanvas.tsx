@@ -8,7 +8,8 @@ import missionStyles from "../mission/mission.module.css";
 import { UniverseCanvas } from "../universe/UniverseCanvas";
 import { ViewTools } from "../universe/ViewTools";
 import { createExplorerInput, LANDMARKS, MISSION_DESTINATION, type CameraMode, type Destination, type LandmarkId } from "../universe/world";
-import { MathActivitySession } from "./MathActivitySession";
+import { answerSetFor, type MathHandRegion } from "../handActivity/answerSets";
+import { MathHandSession } from "./MathHandSession";
 import { MathHud } from "./MathHud";
 import type { MathPlanetProps } from "./MathPlanet";
 import { MATH_ACTIVITIES, type MathRegionId } from "./mathActivities";
@@ -99,7 +100,7 @@ export function MathPlanetCanvas({ quality, reducedMotion, childId, allowLocalFa
       mission.start();
       return;
     }
-    if (!MATH_ACTIVITIES[selectedRegion]) {
+    if (!MATH_ACTIVITIES[selectedRegion] || answerSetFor(selectedRegion) === undefined) {
       setUnavailable(true);
       return;
     }
@@ -172,11 +173,9 @@ export function MathPlanetCanvas({ quality, reducedMotion, childId, allowLocalFa
         {mission.missionProps ? <FractionMission {...mission.missionProps} /> : null}
       </UniverseCanvas>
     </div>
-    {session ? <div className={styles.sessionOverlay} data-session-controls>
-      <div className={styles.sessionToolbar}>
-        <button type="button" className={styles.backButton} onClick={closeSession}>Close activity</button>
-      </div>
-      <MathActivitySession key={session} region={session} onComplete={completeRegion} onClose={closeSession} />
+    {session ? <div className={styles.handOverlay} data-session-controls>
+      {/* Safe: openSession only sets `session` for a region confirmed by answerSetFor. */}
+      <MathHandSession key={session} region={session as MathHandRegion} onComplete={completeRegion} onClose={closeSession} />
     </div> : null}
   </ActivitySessionFrame>;
 }
