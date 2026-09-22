@@ -45,9 +45,9 @@ describe("benchStatusForFrame", () => {
   });
 
   it("gives one clear instruction per phase", () => {
-    expect(benchStatusForFrame("discover", true, false)).toBe("Point at an item to discover it.");
-    expect(benchStatusForFrame("match", true, false)).toBe("Pinch an item to pick it up.");
-    expect(benchStatusForFrame("match", true, true)).toBe("Open your palm over a target to place it.");
+    expect(benchStatusForFrame("discover", true, false)).toBe("Point your finger at each one to discover it.");
+    expect(benchStatusForFrame("match", true, false)).toBe("Pinch your fingers together to pick it up.");
+    expect(benchStatusForFrame("match", true, true)).toBe("Open your palm over its home to place it.");
     expect(benchStatusForFrame("done", true, false)).toBe("All done!");
   });
 });
@@ -55,7 +55,7 @@ describe("benchStatusForFrame", () => {
 describe("answerStatusForFrame", () => {
   it("asks for a hand when none is seen, and gives one instruction while asking", () => {
     expect(answerStatusForFrame("asking", false)).toBe("Show your hand to the camera.");
-    expect(answerStatusForFrame("asking", true)).toBe("Hold your hand over an answer.");
+    expect(answerStatusForFrame("asking", true)).toBe("Hold your hand steady over an answer.");
   });
 
   it("celebrates and finishes without needing a hand", () => {

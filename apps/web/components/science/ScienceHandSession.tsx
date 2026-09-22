@@ -92,7 +92,7 @@ export function ScienceHandSession({ land, progress, onProgress, onClose }: Scie
     <HandActivityShell
       label={`${scienceLand(land).name} activity`}
       title={activity.title}
-      instruction={discovering ? "Point at each one to learn about it." : state.phase === "match" ? "Pinch to pick up. Open your palm over a target." : "Wonderful exploring!"}
+      instruction={discovering ? "Point your finger at each one to discover it." : state.phase === "match" ? "Pinch to pick up. Open your palm over its home." : "Wonderful exploring!"}
       progress={{ count: discovering ? state.observed.length : state.matched.length, total, label: discovering ? "discoveries" : "matches" }}
       step={discovering ? "Step 1 of 2 · Discover" : state.phase === "match" ? "Step 2 of 2 · Match" : "All done!"}
       coach={line}

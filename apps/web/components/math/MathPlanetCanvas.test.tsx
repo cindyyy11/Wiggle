@@ -154,7 +154,7 @@ it("opens Number Valley as a camera-first hand session with no radio buttons", (
   fireEvent.click(screen.getByRole("button", { name: "Explore Number Valley" }));
   const dialog = screen.getByRole("dialog", { name: "Number Valley activity session" });
   expect(within(dialog).getByRole("heading", { name: "Number Valley" })).toBeTruthy();
-  expect(within(dialog).getByText("Puzzle 1 of 3")).toBeTruthy();
+  expect(within(dialog).getByText("Puzzle 1 of 3 · Hold over an answer")).toBeTruthy();
   expect(within(dialog).queryByRole("radio")).toBeNull();
   expect(within(dialog).queryByRole("button", { name: "Close activity" })).toBeNull();
   expect(within(dialog).getByRole("button", { name: "Back to Numeria" })).toBeTruthy();

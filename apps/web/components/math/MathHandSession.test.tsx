@@ -48,7 +48,7 @@ it.each(regions)("%s: plays every puzzle with hand selections only, and complete
   expect(screen.queryByRole("button", { name: "Check answer" })).toBeNull();
 
   activity.challenges.forEach((challenge, index) => {
-    expect(screen.getByText(`Puzzle ${index + 1} of ${total}`)).toBeTruthy();
+    expect(screen.getByText(`Puzzle ${index + 1} of ${total} · Hold over an answer`)).toBeTruthy();
     expect(status()).toBe(challenge.prompt);
     expect(mock.scene?.challenge.id).toBe(challenge.id);
 
@@ -76,10 +76,10 @@ it("waits out the celebration before showing the next puzzle", () => {
   const [first, second] = MATH_ACTIVITIES["number-valley"].challenges;
   select(first.answer);
   act(() => { vi.advanceTimersByTime(CELEBRATE_MS - 100); });
-  expect(screen.getByText("Puzzle 1 of 3")).toBeTruthy();
+  expect(screen.getByText("Puzzle 1 of 3 · Hold over an answer")).toBeTruthy();
   expect(mock.scene?.state.phase).toBe("celebrating");
   act(() => { vi.advanceTimersByTime(200); });
-  expect(screen.getByText("Puzzle 2 of 3")).toBeTruthy();
+  expect(screen.getByText("Puzzle 2 of 3 · Hold over an answer")).toBeTruthy();
   expect(mock.scene?.challenge.id).toBe(second.id);
   expect(mock.scene?.state.phase).toBe("asking");
 });
@@ -135,9 +135,9 @@ it("starts again from the first puzzle when it is opened again", () => {
   open();
   select(MATH_ACTIVITIES["number-valley"].challenges[0].answer);
   celebrate();
-  expect(screen.getByText("Puzzle 2 of 3")).toBeTruthy();
+  expect(screen.getByText("Puzzle 2 of 3 · Hold over an answer")).toBeTruthy();
   cleanup();
   open();
-  expect(screen.getByText("Puzzle 1 of 3")).toBeTruthy();
+  expect(screen.getByText("Puzzle 1 of 3 · Hold over an answer")).toBeTruthy();
   expect(progress()).toBe("0 of 3 puzzles solved");
 });

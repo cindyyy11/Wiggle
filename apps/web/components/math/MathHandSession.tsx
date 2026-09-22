@@ -85,7 +85,7 @@ export function MathHandSession({ region, onComplete, onClose }: MathHandSession
     title={activity.name}
     instruction={done ? "Wonderful exploring!" : challenge.prompt}
     progress={{ count: state.solved, total, label: "puzzles solved" }}
-    step={done ? "All done!" : `Puzzle ${state.index + 1} of ${total}`}
+    step={done ? "All done!" : `Puzzle ${state.index + 1} of ${total} · Hold over an answer`}
     coach={line}
     exitLabel="Back to Numeria"
     onExit={onClose}

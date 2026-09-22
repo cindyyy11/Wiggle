@@ -17,13 +17,13 @@ export function staleHoldToCancel(reducerHeld: string | null, controllerHeld: st
 
 export function benchStatusForFrame(phase: BenchPhase, tracked: boolean, holding: boolean): string {
   if (!tracked) return holding ? "Tracking paused. Keep your hand in view." : "Show your hand to the camera.";
-  if (phase === "discover") return "Point at an item to discover it.";
+  if (phase === "discover") return "Point your finger at each one to discover it.";
   if (phase === "done") return "All done!";
-  return holding ? "Open your palm over a target to place it." : "Pinch an item to pick it up.";
+  return holding ? "Open your palm over its home to place it." : "Pinch your fingers together to pick it up.";
 }
 
 export function answerStatusForFrame(phase: AnswerPhase, tracked: boolean): string {
   if (phase === "done") return "All done!";
   if (phase === "celebrating") return "Well done!";
-  return tracked ? "Hold your hand over an answer." : "Show your hand to the camera.";
+  return tracked ? "Hold your hand steady over an answer." : "Show your hand to the camera.";
 }
