@@ -4,10 +4,13 @@ import { useEffect, useMemo, useRef, type ReactNode } from "react";
 import { Color, InstancedMesh, Object3D, Quaternion, Vector3 } from "three";
 import { RADIUS, surfacePoint, type Destination } from "./world";
 import { mathSceneryLayout } from "./mathSceneryLayout";
-import { BerryProp, HillProp, NUMERIA_REGION_COLORS, NumberBoxProp, TreeProp } from "./mathRegionProps";
+import { BerryProp, HILL_COLORS, HillProp, NUMERIA_REGION_COLORS, NumberBoxProp, TreeProp } from "./mathRegionProps";
 
 const UP = new Vector3(0, 1, 0);
-/** Roughly a third of Science's own hero/dot counts, scaled down to Numeria's current, lighter footprint. */
+/**
+ * Numeria's own starting counts, tuned for its lighter props: more heroes than Science's 110/64 because Numeria's are
+ * simpler single meshes, and fewer ground dots than Science's 460/240 so the globe stays airy rather than speckled.
+ */
 const HERO_COUNTS = { high: 140, low: 70 } as const;
 const DOT_COUNTS = { high: 380, low: 160 } as const;
 
@@ -21,7 +24,7 @@ function HeroProp({ region, index, dimmed }: { region: number; index: number; di
   switch (region) {
     case 0: return <TreeProp tint={index} />;
     case 1: return <NumberBoxProp tier={index % 3} rotation={index} />;
-    case 2: return <HillProp height={.35 + (index % 5) * .07} color={["#cceaf2", "#a9d9ee", "#d9c9f0"][index % 3]} />;
+    case 2: return <HillProp height={.35 + (index % 5) * .07} color={HILL_COLORS[index % HILL_COLORS.length]} />;
     default: return <BerryProp color={index % 3 === 0 ? "#ef8b78" : "#f4c95d"} dimmed={dimmed} />;
   }
 }

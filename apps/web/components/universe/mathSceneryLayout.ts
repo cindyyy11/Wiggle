@@ -4,12 +4,14 @@ const MATH_LANDS = LANDMARKS.slice(0, 4);
 const CENTERS = MATH_LANDS.map(land => surfacePoint(land.destination, 1));
 
 /**
- * How close (3D chord distance on the unit sphere) a filler point may get to a land's center before it is dropped, so
- * the whole-globe filler layer stays clear of the four hand-placed clusters and the region plateaus. Science's
- * equivalent radius is .32; Numeria's clusters (especially Fraction Forest's) reach further out, so this starts
- * larger and is tuned visually in Task 4 if a hero prop is still seen overlapping a cluster or a plateau.
+ * How close (3D chord distance on the unit sphere) a filler point may get to a land's center before it is dropped.
+ * At .65 this clears each region plateau with margin (the plateau discs have radius ~.98 on a globe of RADIUS 3, so
+ * ~.33 here) and clears the dense middle of each cluster. It does NOT clear every cluster's extent: measured from
+ * their centers, Fraction Forest's trees reach ~.677, Geometry Ridge's hills ~.504, Crystal Crater's berries ~.488 and
+ * Number Valley's boxes ~.467, so the Forest's outermost trees still fall outside the clearing and a filler prop can
+ * sit among them. Science's equivalent radius is .32; Numeria's clusters reach further, hence the larger value here.
  */
-export const CLEARING_RADIUS = .45;
+export const CLEARING_RADIUS = .65;
 
 export type MathSceneryPoint = { index: number; destination: Destination; region: number; point: readonly [number, number, number] };
 

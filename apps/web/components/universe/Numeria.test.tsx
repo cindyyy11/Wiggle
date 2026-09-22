@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
-import type { ReactElement } from "react";
+import { Fragment, type ReactElement } from "react";
 import { cleanup, renderHook } from "@testing-library/react";
 import { afterEach, expect, it, vi } from "vitest";
 import { NUMERIA_REGION_COLORS, NUMERIA_REGION_COUNT, Numeria } from "./Numeria";
+import { MathLivingScenery } from "./MathLivingScenery";
 import { ScienceLandScenery } from "../science/ScienceLandScenery";
 
 afterEach(cleanup);
@@ -12,6 +13,12 @@ function terrain(element: ReactElement) {
     onClick: (event: { delta: number; stopPropagation: () => void; point: { x: number; y: number; z: number } }) => void;
     geometry: { getAttribute: (name: string) => { array: ArrayLike<number> } };
   };
+}
+
+/** The math theme wraps its scenery in a fragment, so flatten one level before looking for a layer. */
+function sceneryChildren(element: ReactElement) {
+  return (element.props as { children: ReactElement[] }).children.flatMap(child =>
+    child?.type === Fragment ? (child.props as { children: ReactElement[] }).children : [child]);
 }
 
 it("preserves ordinary Numeria destination clicks and ignores drags", () => {
@@ -41,6 +48,15 @@ it("uses saved science scenery and lets preview clicks bubble to the carousel", 
   const children = (result.current.props as { children: ReactElement[] }).children;
   expect(children.some(child => child?.type === ScienceLandScenery)).toBe(true);
   expect(terrain(result.current).geometry.getAttribute("color").array.length).toBeGreaterThan(0);
+});
+
+it("fills the math globe with the whole-globe scenery layer and keeps it off the science theme", () => {
+  const onDestination = vi.fn();
+  const math = renderHook(() => Numeria({ quality: "low", dimmed: false, onDestination }));
+  expect(sceneryChildren(math.result.current).some(child => child?.type === MathLivingScenery)).toBe(true);
+  const science = renderHook(() => Numeria({ quality: "low", dimmed: false, theme: "science", onDestination }));
+  expect(sceneryChildren(science.result.current).some(child => child?.type === MathLivingScenery)).toBe(false);
+  expect(sceneryChildren(science.result.current).some(child => child?.type === ScienceLandScenery)).toBe(true);
 });
 
 it("does not chase the cursor: hovering the planet sends the explorer nowhere", () => {
