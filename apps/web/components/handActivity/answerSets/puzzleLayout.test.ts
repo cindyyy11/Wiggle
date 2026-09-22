@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { BENCH_HEIGHT, BENCH_WIDTH } from "../benchSpace";
-import { stoneTrail } from "./puzzleLayout";
+import { crystalOffsets, polygonPoints, stoneTrail } from "./puzzleLayout";
 
 describe("stoneTrail", () => {
   it("gives one spot per stone, running left to right", () => {
@@ -37,5 +37,59 @@ describe("stoneTrail", () => {
   it("centres a single stone and draws nothing for none", () => {
     expect(stoneTrail(1)[0].x).toBeCloseTo(.5);
     expect(stoneTrail(0)).toEqual([]);
+  });
+});
+
+describe("polygonPoints", () => {
+  it("gives one corner per side, flat side down", () => {
+    for (const sides of [3, 4, 6]) expect(polygonPoints(sides)).toHaveLength(sides);
+    const square = polygonPoints(4);
+    expect(square[0].y).toBeCloseTo(square[1].y);
+  });
+
+  it("keeps every corner on the bench, above the answer row", () => {
+    for (const sides of [3, 4, 6]) {
+      for (const point of polygonPoints(sides)) {
+        expect(point.x).toBeGreaterThanOrEqual(.05);
+        expect(point.x).toBeLessThanOrEqual(.95);
+        expect(point.y).toBeGreaterThanOrEqual(.42);
+        expect(point.y).toBeLessThanOrEqual(.98);
+      }
+    }
+  });
+
+  it("is centred left to right", () => {
+    const hexagon = polygonPoints(6);
+    const minX = Math.min(...hexagon.map((point) => point.x));
+    const maxX = Math.max(...hexagon.map((point) => point.x));
+    expect((minX + maxX) / 2).toBeCloseTo(.5, 1);
+  });
+});
+
+describe("crystalOffsets", () => {
+  it("gives one offset per crystal, centred on the origin", () => {
+    for (const count of [2, 3, 4, 7]) {
+      const offsets = crystalOffsets(count);
+      expect(offsets).toHaveLength(count);
+      const meanX = offsets.reduce((sum, point) => sum + point.x, 0) / count;
+      expect(meanX).toBeCloseTo(0, 1);
+    }
+  });
+
+  it("keeps neighbouring crystals from touching", () => {
+    for (const count of [2, 4, 7]) {
+      const offsets = crystalOffsets(count);
+      for (let a = 0; a < offsets.length; a++) {
+        for (let b = a + 1; b < offsets.length; b++) {
+          const gap = Math.hypot(offsets[a].x - offsets[b].x, offsets[a].y - offsets[b].y);
+          expect(gap, `${count} crystals: ${a} and ${b}`).toBeGreaterThanOrEqual(.16);
+        }
+      }
+    }
+  });
+
+  it("draws nothing for none and one crystal at the centre", () => {
+    expect(crystalOffsets(0)).toEqual([]);
+    expect(crystalOffsets(1)).toEqual([{ x: 0, y: 0 }]);
   });
 });
