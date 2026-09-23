@@ -2,6 +2,8 @@
 
 import { useRef, useState } from "react";
 import { ActivitySessionFrame } from "../planet/ActivitySessionFrame";
+import { PlanetCompletionCheer } from "../planet/PlanetCompletionCheer";
+import { shouldQueueCheer } from "../planet/planetCheerGate";
 import { FractionMission } from "../mission/FractionMission";
 import { useFractionMission } from "../mission/useFractionMission";
 import missionStyles from "../mission/mission.module.css";
@@ -16,6 +18,8 @@ import { MATH_ACTIVITIES, type MathRegionId } from "./mathActivities";
 import styles from "./mathPlanet.module.css";
 
 const FRACTION_FOREST = LANDMARKS.find((landmark) => landmark.id === "fraction-forest")!;
+const CHEER_TITLE = "You did it!";
+const CHEER_BODY = "All four Numeria regions explored — you're a Numeria explorer!";
 
 function focusFractionForestExplore() {
   Array.from(document.querySelectorAll<HTMLButtonElement>("button"))
@@ -30,10 +34,31 @@ export function MathPlanetCanvas({ quality, reducedMotion, childId, allowLocalFa
   const [destination, setDestination] = useState<Destination | null>(null);
   const [resetKey, setResetKey] = useState(0);
   const [completionMessage, setCompletionMessage] = useState("");
+  const [showCheer, setShowCheer] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
   const [sceneAvailable, setSceneAvailable] = useState(true);
   const input = useRef(createExplorerInput());
   const missionCompleted = useRef(false);
+  const cheerShown = useRef(false);
+  const pendingCheer = useRef(false);
+
+  function revealCheerIfPending() {
+    if (pendingCheer.current && !cheerShown.current) {
+      pendingCheer.current = false;
+      cheerShown.current = true;
+      setShowCheer(true);
+    }
+  }
+
+  function markRegionComplete(region: MathRegionId) {
+    setCompletedRegions((previous) => {
+      if (previous.has(region)) return previous;
+      const next = new Set(previous).add(region);
+      if (shouldQueueCheer(previous.size, next.size, cheerShown.current)) pendingCheer.current = true;
+      return next;
+    });
+  }
+
   // Fraction Forest runs the real, API-backed fractions mission in this same world, so the
   // Twin and parent insights see it. The other regions keep their local field activities.
   const mission = useFractionMission({
@@ -57,11 +82,12 @@ export function MathPlanetCanvas({ quality, reducedMotion, childId, allowLocalFa
           missionCompleted.current = false;
           setCompletionMessage(`Wonderful exploring! ${FRACTION_FOREST.name} complete.`);
         }
+        revealCheerIfPending();
         requestAnimationFrame(focusFractionForestExplore);
       },
       missionCompleted() {
         missionCompleted.current = true;
-        setCompletedRegions((previous) => new Set(previous).add("fraction-forest"));
+        markRegionComplete("fraction-forest");
       },
     },
   });
@@ -122,11 +148,12 @@ export function MathPlanetCanvas({ quality, reducedMotion, childId, allowLocalFa
     input.current.paused = false;
     setDestination(null);
     setSession(null);
+    revealCheerIfPending();
     onSessionOpenChange?.(false);
   }
 
   function completeRegion(region: MathRegionId) {
-    if (region === session) setCompletedRegions((previous) => new Set(previous).add(region));
+    if (region === session) markRegionComplete(region);
   }
 
   return <ActivitySessionFrame open={session !== null} name={regionName} onClose={closeSession}>
@@ -177,5 +204,6 @@ export function MathPlanetCanvas({ quality, reducedMotion, childId, allowLocalFa
       {/* Safe: openSession only sets `session` for a region confirmed by answerSetFor. */}
       <MathHandSession key={session} region={session as MathHandRegion} onComplete={completeRegion} onClose={closeSession} />
     </div> : null}
+    {showCheer ? <PlanetCompletionCheer title={CHEER_TITLE} body={CHEER_BODY} onDismiss={() => setShowCheer(false)} /> : null}
   </ActivitySessionFrame>;
 }
