@@ -2,7 +2,7 @@
 
 import { Component, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { CanvasTexture, Group, Line, LineBasicMaterial, MeshStandardMaterial, Vector3 } from "three";
+import { CanvasTexture, Group, Line, LineBasicMaterial, Mesh, MeshStandardMaterial, Vector3 } from "three";
 import type React from "react";
 import type { HandTrackingLatest } from "../../features/gestures/useHandTracking";
 import { GESTURE_CONFIG } from "../../features/gestures/config";
@@ -13,6 +13,14 @@ import {
   type MagnetPlayState,
   type TablePoint,
 } from "./magnetHandPlay";
+import {
+  FIELD_RING_ACTIVE_OPACITY,
+  FIELD_RING_IDLE_OPACITY,
+  HOME_LERP,
+  METAL_FOLLOW_LERP,
+  REJECT_PUSH_STRENGTH,
+  rejectPushOffset,
+} from "./magnetSceneFeel";
 import { MagnetHandGestureController, type MagnetGestureTarget } from "./magnetHandGesture";
 import { MAGNET_HOME, MAGNET_OBJECTS, type MagnetObject, type MagnetObjectId } from "./scienceWorld";
 
@@ -383,6 +391,7 @@ function MagnetHomePad() {
 
 function LabInteraction({ props }: { props: MagnetHandLabSceneProps }) {
   const magnet = useRef<Group>(null);
+  const fieldRing = useRef<Mesh>(null);
   const feedback = useRef<Group>(null);
   const objectGroups = useRef<ObjectGroupMap>({});
   const objectMaterials = useRef<ObjectMaterialMap>({});
@@ -469,26 +478,35 @@ function LabInteraction({ props }: { props: MagnetHandLabSceneProps }) {
       if (frameAction) action.current(frameAction);
     }
 
-    if (props.state.checkpoint === "hidden") return;
+    if (props.state.checkpoint === "hidden") {
+      if (fieldRing.current) fieldRing.current.visible = false;
+      return;
+    }
 
     let nextCue: "pull" | "stay" | null = null;
     let nextPull: MagnetObjectId | null = null;
     let nextBanner: { text: string; color: string } | null = null;
+    let anyInField = false;
 
     for (const object of MAGNET_OBJECTS) {
       const model = objectGroups.current[object.id];
       if (!model) continue;
       const withinField = point !== null && props.state.checkpoint === "explore" && isWithinMagnetField(target, toTablePoint(object));
+      if (withinField) anyInField = true;
       const shouldFollow = props.state.checkpoint === "explore" && object.result === "attracted" && withinField;
+      const nonMagneticFeedback = object.result === "not-attracted" && withinField;
       const sorted = props.state.sorted.includes(object.id);
       const held = props.state.held === object.id;
       if (shouldFollow || held) objectTarget.current.copy(magnetTarget.current).setZ(.29);
-      else if (sorted) objectTarget.current.fromArray(sortedPositions[object.id]);
+      else if (nonMagneticFeedback && !props.reducedMotion) {
+        const home = toTablePoint(object);
+        const pushed = rejectPushOffset(home, target, REJECT_PUSH_STRENGTH);
+        objectTarget.current.set(tableX(pushed.x), tableY(pushed.y), homePositions.get(object.id)![2]);
+      } else if (sorted) objectTarget.current.fromArray(sortedPositions[object.id]);
       else objectTarget.current.fromArray(homePositions.get(object.id)!);
       if (props.reducedMotion) model.position.copy(objectTarget.current);
-      else model.position.lerp(objectTarget.current, shouldFollow || held ? .28 : .12);
+      else model.position.lerp(objectTarget.current, shouldFollow || held ? METAL_FOLLOW_LERP : HOME_LERP);
 
-      const nonMagneticFeedback = object.result === "not-attracted" && withinField;
       if (shouldFollow) {
         nextCue = "pull";
         nextPull = object.id;
@@ -517,6 +535,19 @@ function LabInteraction({ props }: { props: MagnetHandLabSceneProps }) {
       }
     }
 
+    if (fieldRing.current) {
+      const showRing = props.state.checkpoint === "explore";
+      fieldRing.current.visible = showRing;
+      const ringMaterial = fieldRing.current.material as MeshStandardMaterial;
+      if (showRing) {
+        const opacity = anyInField ? FIELD_RING_ACTIVE_OPACITY : FIELD_RING_IDLE_OPACITY;
+        ringMaterial.opacity = props.reducedMotion && !anyInField ? FIELD_RING_IDLE_OPACITY : opacity;
+        if (anyInField && !props.reducedMotion) {
+          ringMaterial.opacity = FIELD_RING_ACTIVE_OPACITY * (0.85 + Math.sin(clock.elapsedTime * 6) * 0.15);
+        }
+      }
+    }
+
     if (nextCue && nextCue !== lastCue.current) attractionCue.current?.(nextCue);
     lastCue.current = nextCue;
     if (nextPull !== activePullId.current) {
@@ -537,7 +568,13 @@ function LabInteraction({ props }: { props: MagnetHandLabSceneProps }) {
     <Workbench />
     {props.state.checkpoint === "hidden" ? <Campsite found={props.state.foundHiddenMagnet} reducedMotion={props.reducedMotion} /> : <>
       <MagnetHomePad />
-      <group ref={magnet} position={[tableX(MAGNET_HOME.x), tableY(MAGNET_HOME.y), .35]}><HorseshoeMagnet /></group>
+      <group ref={magnet} position={[tableX(MAGNET_HOME.x), tableY(MAGNET_HOME.y), .35]}>
+        <HorseshoeMagnet />
+        <mesh ref={fieldRing} rotation={[Math.PI / 2, 0, 0]} position={[0, 0, -.08]} visible={false}>
+          <torusGeometry args={[.34, .025, 8, 28]} />
+          <meshStandardMaterial color="#ffe18a" transparent opacity={FIELD_RING_IDLE_OPACITY} depthWrite={false} emissive="#c57939" emissiveIntensity={.2} />
+        </mesh>
+      </group>
       {MAGNET_OBJECTS.map((object) => <MagnetObjectModel
         key={object.id}
         object={object}
