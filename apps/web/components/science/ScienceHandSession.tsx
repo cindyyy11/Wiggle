@@ -31,10 +31,11 @@ export type ScienceHandSessionProps = {
   progress: StarterProgress;
   onProgress(next: StarterProgress): void;
   onClose(): void;
+  onComplete?(land: StarterLand): void;
 };
 
 /** A camera-first hand session for one Science land. The caller only opens it for lands that have a bench set. */
-export function ScienceHandSession({ land, progress, onProgress, onClose }: ScienceHandSessionProps) {
+export function ScienceHandSession({ land, progress, onProgress, onClose, onComplete }: ScienceHandSessionProps) {
   const activity = SCIENCE_ACTIVITIES[land];
   const set = BENCH_SETS[land]!;
   const rules = useMemo(() => rulesFor(land), [land]);
@@ -57,6 +58,15 @@ export function ScienceHandSession({ land, progress, onProgress, onClose }: Scie
     () => ({ kind: "bench" as const, phase: state.phase, holding }),
     [state.phase, holding],
   );
+  const complete = useRef(onComplete);
+  complete.current = onComplete;
+  const notified = useRef(false);
+
+  useEffect(() => {
+    if (state.phase !== "done" || notified.current) return;
+    notified.current = true;
+    complete.current?.(land);
+  }, [state.phase, land]);
 
   const factFor = (id: string) => activity.items.find((item) => item.id === id)?.fact ?? "";
   const handleAction = (action: BenchAction) => {

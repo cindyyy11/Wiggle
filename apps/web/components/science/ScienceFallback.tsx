@@ -17,7 +17,7 @@ export type ScienceFallbackProps = {
 
 export function ScienceFallback(props: ScienceFallbackProps) {
   return <section className={styles.planet} aria-label="Science Planet">
-    <ScienceHud {...props} />
+    <ScienceHud {...props} completedZones={new Set()} />
     <section className={styles.map}>
       <div className={styles.mapVisual} role="img" aria-label="Science Planet map">
         <div className={styles.mapOrbit} />

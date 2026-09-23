@@ -260,6 +260,40 @@ it("marks Fraction Forest complete, announces it, and hands the world back after
   expect(document.getElementById(completed.getAttribute("aria-describedby") ?? "")?.textContent).toBe("Complete");
 });
 
+it("cheers once after all four Numeria regions are complete this visit", async () => {
+  vi.useFakeTimers({ shouldAdvanceTime: true });
+  try {
+    const { client } = missionClient();
+    render(<MathPlanetCanvas client={client} onBackToWorlds={vi.fn()} />);
+    for (const region of fieldRegions) {
+      visit(region.name);
+      fireEvent.click(screen.getByRole("button", { name: `Explore ${region.name}` }));
+      for (const challenge of MATH_ACTIVITIES[region.id as MathRegionId].challenges) {
+        act(() => answers.props!.onSelect(challenge.answer));
+        act(() => { vi.advanceTimersByTime(CELEBRATE_MS + 50); });
+      }
+      fireEvent.click(screen.getByRole("button", { name: "Back to Numeria" }));
+    }
+    expect(screen.getByText("3 of 4 regions complete")).toBeTruthy();
+    expect(screen.queryByRole("dialog", { name: "You did it!" })).toBeNull();
+
+    visit(forest.name);
+    fireEvent.click(screen.getByRole("button", { name: "Explore Fraction Forest" }));
+    await screen.findByRole("heading", { name: "Make three quarters" });
+    fireEvent.click(screen.getByRole("button", { name: "3 of 4" }));
+    fireEvent.click(screen.getByRole("button", { name: "Check my answer" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Back to my universe" }));
+
+    await waitFor(() => expect(screen.getByRole("dialog", { name: "You did it!" })).toBeTruthy());
+    expect(screen.getByText("All four Numeria regions explored — you're a Numeria explorer!")).toBeTruthy();
+    expect(screen.getByText("4 of 4 regions complete")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Keep exploring" }));
+    expect(screen.queryByRole("dialog", { name: "You did it!" })).toBeNull();
+  } finally {
+    vi.useRealTimers();
+  }
+});
+
 it("keeps the Numeria HUD and shows a retryable message when the mission cannot start", async () => {
   const client = new ApiClient();
   vi.spyOn(client, "start").mockRejectedValue(new Error("offline"));

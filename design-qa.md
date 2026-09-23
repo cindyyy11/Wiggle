@@ -20,6 +20,16 @@ Not verified, and not represented as passing:
 - Live Vercel, Render and Supabase deployment, and a real household Auth run. The 37-assertion pgTAP RLS suite was run and passes 37 of 37, but against a single container of Supabase's own Postgres 15.8 image (`supabase/postgres:15.8.1.135`, with its real `auth.users` and `auth.uid()`) after applying all three migrations, not a full local Supabase stack: GoTrue and PostgREST were not running, so the six live-Supabase repository cases (which need two signed-in parent tokens) were not run. No Supabase CLI is installed here.
 - The browser suite serves the existing `.next` build and does not rebuild it. A run before this session's rebuild exercised stale code; the README and runbook now say to run `npm run build` first.
 
+## Planet completion cheer — 23 September 2026
+
+result: automated checks pass; visual check is not yet checked.
+
+Science Planet now shows Numeria-style “N of 4 lands complete” and Complete badges. Finishing all four Science lands or all four Numeria regions in one visit opens a shared full-screen star cheer after the session closes (this visit only).
+
+Checked: 8 unit files / 47 tests covering `PlanetCompletionCheer`, `planetCheerGate`, `ScienceHud`, Science/Numeria canvas wiring, and `ScienceHandSession` onComplete. Visual: cheer overlay and Science badges at desktop / ~390 px pending.
+
+Not verifiable automatically: how motivating the cheer feels — judgment call. Persistence and constellation unlocks remain Phase 5.
+
 ## Hand shell gesture coaching and layout — 23 September 2026
 
 result: automated checks pass; visual check is not yet checked in a live camera session.

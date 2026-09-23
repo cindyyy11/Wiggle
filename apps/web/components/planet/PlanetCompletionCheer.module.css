@@ -1,0 +1,79 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  background: #100d20cc;
+}
+
+.card {
+  position: relative;
+  width: min(100%, 26rem);
+  padding: 1.75rem 1.5rem 1.35rem;
+  border-radius: 1.5rem;
+  background: #fff0d4;
+  color: #342c43;
+  text-align: center;
+  box-shadow: 0 1rem 2.5rem #100d2066;
+}
+
+.card h2 {
+  margin: 0 0 .65rem;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  line-height: 1.15;
+}
+
+.card p {
+  margin: 0 0 1.25rem;
+  line-height: 1.45;
+  font-size: 1.05rem;
+}
+
+.dismiss {
+  min-width: 44px;
+  min-height: 44px;
+  padding: .8rem 1.2rem;
+  border: 0;
+  border-radius: 1rem;
+  background: #ffd991;
+  color: #342c43;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.dismiss:focus-visible {
+  outline: 3px solid #342c43;
+  outline-offset: 3px;
+}
+
+.stars {
+  display: flex;
+  justify-content: center;
+  gap: .55rem;
+  margin-bottom: 1rem;
+}
+
+.stars span {
+  width: 1.1rem;
+  height: 1.1rem;
+  background: #ffd991;
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  animation: cheer-twinkle 1.2s ease-in-out infinite;
+}
+
+.stars span:nth-child(2) { animation-delay: .15s; }
+.stars span:nth-child(3) { animation-delay: .3s; width: 1.35rem; height: 1.35rem; }
+.stars span:nth-child(4) { animation-delay: .45s; }
+.stars span:nth-child(5) { animation-delay: .6s; }
+
+@keyframes cheer-twinkle {
+  0%, 100% { transform: scale(1); opacity: .85; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stars span { animation: none; }
+}

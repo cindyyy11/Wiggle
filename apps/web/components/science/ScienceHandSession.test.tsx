@@ -31,11 +31,11 @@ const lands = (Object.keys(BENCH_SETS) as StarterLand[]).filter((land) => BENCH_
 const send = (action: BenchAction) => act(() => mock.scene!.onAction(action));
 const status = () => screen.getByRole("status").textContent ?? "";
 
-function Harness({ land, initial, onClose = vi.fn() }: { land: StarterLand; initial?: StarterProgress; onClose?: () => void }) {
+function Harness({ land, initial, onClose = vi.fn(), onComplete }: { land: StarterLand; initial?: StarterProgress; onClose?: () => void; onComplete?: (land: StarterLand) => void }) {
   const [progress, setProgress] = useState<StarterProgress>(initial ?? { observed: [], matched: [] });
   return <>
     <span data-testid="progress">{progress.observed.length}/{progress.matched.length}</span>
-    <ScienceHandSession land={land} progress={progress} onProgress={setProgress} onClose={onClose} />
+    <ScienceHandSession land={land} progress={progress} onProgress={setProgress} onClose={onClose} onComplete={onComplete} />
   </>;
 }
 
@@ -96,6 +96,16 @@ it("resumes as finished when every match was already made", () => {
   const ids = SCIENCE_ACTIVITIES.animals.items.map((item) => item.id);
   render(<Harness land="animals" initial={{ observed: ids, matched: ids }} />);
   expect(screen.getByText("All done!", { selector: "p" })).toBeTruthy();
+});
+
+it("notifies onComplete once when the land is finished", () => {
+  const onComplete = vi.fn();
+  const ids = SCIENCE_ACTIVITIES.animals.items.map((item) => item.id);
+  const { rerender } = render(<Harness land="animals" initial={{ observed: ids, matched: ids }} onComplete={onComplete} />);
+  expect(onComplete).toHaveBeenCalledTimes(1);
+  expect(onComplete).toHaveBeenCalledWith("animals");
+  rerender(<Harness land="animals" initial={{ observed: ids, matched: ids }} onComplete={onComplete} />);
+  expect(onComplete).toHaveBeenCalledTimes(1);
 });
 
 it("leaves through the exit button", () => {
