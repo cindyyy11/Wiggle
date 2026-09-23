@@ -53,6 +53,9 @@
 .spaceHud .startButton { background: #ffe17d; border: 0; box-shadow: none; border-radius: 24px; padding: 10px 22px; }
 .spaceHud .comingSoon { border: 0; padding: 6px; background: none; color: #d9dbff; }
 .spaceHud .completionStatus { border: 0; padding: 6px; background: none; color: #c9daf7; font-size: 12px; }
+.spaceHud .completionStatus.quiet { position: absolute; width: 1px; height: 1px; margin: 0; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.spaceHud .returnMessage { margin: 4px 0 0; padding: 0; border: 0; background: none; color: #b9f6ff; font-size: 12px; font-weight: 700; }
+.spaceHud .completeBadge { background: #d9f0e1; color: #184b35; }
 .spaceHud .backButton { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px 0 12px; border: 1px solid #ffffff2e; border-radius: 999px; background: #1c2c52d9; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); color: #fffaf2; font: 700 14px "Trebuchet MS", sans-serif; box-shadow: 0 8px 24px #0b1a2a33; cursor: pointer; }
 .spaceHud .backButton::before { content: "‹" / ""; font-size: 22px; line-height: 1; margin-top: -2px; }
 .spaceHud .backButton:hover { background: #2a3f75; border-color: #ffffff59; color: #fffaf2; }
@@ -112,6 +115,25 @@
 .backButton { padding: .65rem 1rem; border-radius: 999px; background: #fff9ed; }
 .topicControls { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: 1.2rem; }
 .topicButton { display: inline-flex; align-items: center; gap: .45rem; padding: .55rem .75rem; border-radius: .75rem; background: #ffffffc7; text-align: left; }
+.topicName { min-width: 0; }
+.completeBadge {
+  padding: .16rem .4rem;
+  border-radius: 999px;
+  background: #d9f0e1;
+  color: #184b35;
+  font-size: .7rem;
+  font-weight: 800;
+}
+.screenReaderOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 .topicButton[aria-pressed="true"], .mapZone[aria-pressed="true"] { box-shadow: 0 0 0 3px #173e5e, 0 .4rem 0 #173e5e; transform: translateY(-.18rem); }
 .topicDot { width: .75rem; height: .75rem; border: 1px solid #173e5e; border-radius: 50%; flex: 0 0 auto; }
 .zoneCard { max-width: 34rem; margin-top: 1.25rem; padding: clamp(1rem, 3vw, 1.6rem); border: 3px solid #173e5e; border-radius: 1.25rem; background: #fffdf7e8; box-shadow: .7rem .7rem 0 #ef8b7899; }
@@ -121,6 +143,8 @@
 .startButton { padding: .75rem 1rem; border-radius: .8rem; background: #ef8b78; box-shadow: 0 .23rem 0 #a04a3e; }
 .comingSoon { margin-bottom: 0; padding: .65rem .8rem; border: 2px dashed #705c8c; border-radius: .7rem; background: #eee7f7; color: #3f3153; font-weight: 700; }
 .completionStatus { margin: .85rem 0 0; padding: .65rem .8rem; border: 2px solid #27644c; border-radius: .7rem; background: #d9f0e1; color: #184b35; font-weight: 800; }
+.completionStatus.quiet { position: absolute; width: 1px; height: 1px; margin: 0; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.returnMessage { margin: .55rem 0 0; font-size: .9rem; font-weight: 700; color: #184b35; }
 .map { position: relative; width: min(100%, 66rem); min-height: clamp(21rem, 48vw, 31rem); margin: clamp(1.75rem, 5vw, 4rem) auto 0; border: 3px solid #173e5e; border-radius: 2rem; background: linear-gradient(120deg, #73c6e8, #d2f4e8 52%, #f9d986); isolation: isolate; overflow: hidden; }
 .mapVisual { position: absolute; inset: 0; }
 .map::before, .map::after { position: absolute; z-index: -1; border-radius: 50%; background: #fff8e699; content: ""; }
