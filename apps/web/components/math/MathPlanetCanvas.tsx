@@ -1,9 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ActivitySessionFrame } from "../planet/ActivitySessionFrame";
 import { PlanetCompletionCheer } from "../planet/PlanetCompletionCheer";
-import { shouldQueueCheer } from "../planet/planetCheerGate";
+import { shouldQueueCheer, shouldQueueCheerOnHydrate } from "../planet/planetCheerGate";
+import { hasCheeredPlanet, markCheeredPlanet } from "../planet/planetCheerSession";
+import { loadCompletedNumeriaRegions, saveCompletedNumeriaRegions } from "../planet/planetCompletionMemory";
 import { FractionMission } from "../mission/FractionMission";
 import { useFractionMission } from "../mission/useFractionMission";
 import missionStyles from "../mission/mission.module.css";
@@ -11,6 +13,7 @@ import { UniverseCanvas } from "../universe/UniverseCanvas";
 import { ViewTools } from "../universe/ViewTools";
 import { createExplorerInput, LANDMARKS, MISSION_DESTINATION, type CameraMode, type Destination, type LandmarkId } from "../universe/world";
 import { answerSetFor, type MathHandRegion } from "../handActivity/answerSets";
+import { DEMO_CHILD_ID } from "../../lib/demo/seed";
 import { MathHandSession } from "./MathHandSession";
 import { MathHud } from "./MathHud";
 import type { MathPlanetProps } from "./MathPlanet";
@@ -27,9 +30,10 @@ function focusFractionForestExplore() {
 }
 
 export function MathPlanetCanvas({ quality, reducedMotion, childId, allowLocalFallback, client, onBackToWorlds, onSessionOpenChange }: MathPlanetProps) {
+  const child = childId ?? DEMO_CHILD_ID;
   const [selectedRegion, setSelectedRegion] = useState<MathRegionId>("fraction-forest");
   const [session, setSession] = useState<MathRegionId | null>(null);
-  const [completedRegions, setCompletedRegions] = useState<ReadonlySet<MathRegionId>>(() => new Set());
+  const [completedRegions, setCompletedRegions] = useState<ReadonlySet<MathRegionId>>(() => loadCompletedNumeriaRegions(child));
   const [mode, setMode] = useState<CameraMode>("globe");
   const [destination, setDestination] = useState<Destination | null>(null);
   const [resetKey, setResetKey] = useState(0);
@@ -39,13 +43,14 @@ export function MathPlanetCanvas({ quality, reducedMotion, childId, allowLocalFa
   const [sceneAvailable, setSceneAvailable] = useState(true);
   const input = useRef(createExplorerInput());
   const missionCompleted = useRef(false);
-  const cheerShown = useRef(false);
+  const cheerShown = useRef(hasCheeredPlanet("numeria"));
   const pendingCheer = useRef(false);
 
   function revealCheerIfPending() {
     if (pendingCheer.current && !cheerShown.current) {
       pendingCheer.current = false;
       cheerShown.current = true;
+      markCheeredPlanet("numeria");
       setShowCheer(true);
     }
   }
@@ -54,10 +59,20 @@ export function MathPlanetCanvas({ quality, reducedMotion, childId, allowLocalFa
     setCompletedRegions((previous) => {
       if (previous.has(region)) return previous;
       const next = new Set(previous).add(region);
+      saveCompletedNumeriaRegions(child, next);
       if (shouldQueueCheer(previous.size, next.size, cheerShown.current)) pendingCheer.current = true;
       return next;
     });
   }
+
+  useEffect(() => {
+    if (shouldQueueCheerOnHydrate(completedRegions.size, cheerShown.current)) {
+      pendingCheer.current = true;
+      revealCheerIfPending();
+    }
+    // Mount-only hydrate cheer for already-complete planets.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Fraction Forest runs the real, API-backed fractions mission in this same world, so the
   // Twin and parent insights see it. The other regions keep their local field activities.

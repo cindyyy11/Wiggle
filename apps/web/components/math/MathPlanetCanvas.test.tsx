@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { AnswerBenchSceneProps } from "../handActivity/AnswerBenchScene";
 import type { UniverseCanvasProps } from "../universe/UniverseCanvas";
 import { LANDMARKS } from "../universe/world";
@@ -10,7 +10,7 @@ import { MathPlanet } from "./MathPlanet";
 import { CELEBRATE_MS } from "./MathHandSession";
 import { MathPlanetCanvas } from "./MathPlanetCanvas";
 import { ApiClient } from "../../lib/api/client";
-import { demoSession } from "../../lib/demo/seed";
+import { demoSession, DEMO_CHILD_ID } from "../../lib/demo/seed";
 
 const state = vi.hoisted(() => ({ props: {} as UniverseCanvasProps }));
 const answers = vi.hoisted(() => ({ props: null as AnswerBenchSceneProps | null }));
@@ -28,6 +28,11 @@ vi.mock("../universe/UniverseCanvas", () => ({
     return <section aria-label="Mock Numeria scene">{props.hud}{props.children}</section>;
   },
 }));
+
+beforeEach(() => {
+  window.localStorage.clear();
+  window.sessionStorage.clear();
+});
 
 afterEach(cleanup);
 const regions = LANDMARKS.filter((landmark) => landmark.id !== "lexi");
@@ -292,6 +297,18 @@ it("cheers once after all four Numeria regions are complete this visit", async (
   } finally {
     vi.useRealTimers();
   }
+});
+
+it("hydrates numeria completions and cheers once per session", () => {
+  window.localStorage.clear();
+  window.sessionStorage.clear();
+  window.localStorage.setItem(
+    `wiggle:planet-complete:${DEMO_CHILD_ID}:numeria`,
+    JSON.stringify(["fraction-forest", "number-valley", "geometry-ridge", "crystal-crater"]),
+  );
+  render(<MathPlanetCanvas onBackToWorlds={vi.fn()} childId={DEMO_CHILD_ID} />);
+  expect(screen.getByText("4 of 4 regions complete")).toBeTruthy();
+  expect(screen.getByRole("dialog", { name: "You did it!" })).toBeTruthy();
 });
 
 it("keeps the Numeria HUD and shows a retryable message when the mission cannot start", async () => {
