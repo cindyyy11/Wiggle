@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import React from "react";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import type { StarterLand } from "./scienceActivities";
 
 const hand = vi.hoisted(() => ({
@@ -32,6 +32,12 @@ vi.mock("./ScienceHandSession", () => ({
 }));
 
 import { SciencePlanetCanvas } from "./SciencePlanetCanvas";
+import { DEMO_CHILD_ID } from "../../lib/demo/seed";
+
+beforeEach(() => {
+  window.localStorage.clear();
+  window.sessionStorage.clear();
+});
 
 afterEach(() => {
   cleanup();
@@ -99,5 +105,34 @@ it("cheers once after the fourth land finishes and the session closes", async ()
   fireEvent.click(screen.getByRole("button", { name: "Visit Magnet Lands" }));
   openMagnet();
   fireEvent.click(screen.getByRole("button", { name: "Back to Science Planet" }));
+  expect(screen.queryByRole("dialog", { name: "You did it!" })).toBeNull();
+});
+
+it("hydrates completed zones from localStorage", () => {
+  window.localStorage.setItem(
+    `wiggle:planet-complete:${DEMO_CHILD_ID}:science`,
+    JSON.stringify(["magnet-lab", "animals", "colors", "life-cycle"]),
+  );
+  render(<SciencePlanetCanvas {...defaults} quality="fallback" childId={DEMO_CHILD_ID} />);
+  expect(screen.getByText("4 of 4 lands complete")).toBeTruthy();
+});
+
+it("persists a newly completed zone", async () => {
+  render(<SciencePlanetCanvas {...defaults} quality="fallback" childId={DEMO_CHILD_ID} />);
+  await finishMagnet();
+  const raw = window.localStorage.getItem(`wiggle:planet-complete:${DEMO_CHILD_ID}:science`);
+  expect(JSON.parse(raw!)).toContain("magnet-lab");
+});
+
+it("cheers once per session when opening an already-complete planet", () => {
+  window.localStorage.setItem(
+    `wiggle:planet-complete:${DEMO_CHILD_ID}:science`,
+    JSON.stringify(["magnet-lab", "animals", "colors", "life-cycle"]),
+  );
+  render(<SciencePlanetCanvas {...defaults} quality="fallback" childId={DEMO_CHILD_ID} />);
+  expect(screen.getByRole("dialog", { name: "You did it!" })).toBeTruthy();
+  fireEvent.click(screen.getByRole("button", { name: "Keep exploring" }));
+  cleanup();
+  render(<SciencePlanetCanvas {...defaults} quality="fallback" childId={DEMO_CHILD_ID} />);
   expect(screen.queryByRole("dialog", { name: "You did it!" })).toBeNull();
 });

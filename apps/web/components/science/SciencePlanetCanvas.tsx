@@ -4,8 +4,11 @@ import { UniverseCanvas } from "../universe/UniverseCanvas";
 import { ViewTools } from "../universe/ViewTools";
 import { createExplorerInput, destinationFromPoint, type CameraMode, type CameraPose, type Destination, type QualityPreference } from "../universe/world";
 import type { ScienceZoneId } from "../worlds/subjectRoute";
+import { DEMO_CHILD_ID } from "../../lib/demo/seed";
 import { PlanetCompletionCheer } from "../planet/PlanetCompletionCheer";
-import { shouldQueueCheer } from "../planet/planetCheerGate";
+import { shouldQueueCheer, shouldQueueCheerOnHydrate } from "../planet/planetCheerGate";
+import { hasCheeredPlanet, markCheeredPlanet } from "../planet/planetCheerSession";
+import { loadCompletedScienceZones, saveCompletedScienceZones } from "../planet/planetCompletionMemory";
 import { ScienceHud } from "./ScienceHud";
 import { scienceLand } from "./scienceLands";
 import { MagnetLabMission } from "./MagnetLabMission";
@@ -22,12 +25,14 @@ const CHEER_BODY = "All four Science lands explored — you're a Science explore
 
 export type SciencePlanetCanvasProps = {
   quality?: QualityPreference; reducedMotion?: boolean; selectedZone: ScienceZoneId;
+  childId?: string;
   onZoneSelect: (zone: ScienceZoneId) => void; onBackToWorlds: () => void;
   onStartMagnetLab?: () => void; completionMessage?: string;
   onSessionOpenChange?: (open: boolean) => void;
 };
 
 export function SciencePlanetCanvas(props: SciencePlanetCanvasProps) {
+  const child = props.childId ?? DEMO_CHILD_ID;
   const [mode, setMode] = useState<CameraMode>("globe");
   const [destination, setDestination] = useState<Destination | null>(null);
   const [session, setSession] = useState<ScienceZoneId | null>(null);
@@ -35,7 +40,7 @@ export function SciencePlanetCanvas(props: SciencePlanetCanvasProps) {
   const [dismissed, setDismissed] = useState<ScienceZoneId | null>(null);
   const [invitation, setInvitation] = useState<ScienceZoneId | null>(null);
   const [selectedZone, setSelectedZone] = useState<ScienceZoneId>(scienceLand(props.selectedZone).id);
-  const [completedZones, setCompletedZones] = useState<ReadonlySet<ScienceZoneId>>(() => new Set());
+  const [completedZones, setCompletedZones] = useState<ReadonlySet<ScienceZoneId>>(() => loadCompletedScienceZones(child));
   const [returnMessage, setReturnMessage] = useState(props.completionMessage ?? "");
   const [showCheer, setShowCheer] = useState(false);
   const [available, setAvailable] = useState(false);
@@ -43,19 +48,38 @@ export function SciencePlanetCanvas(props: SciencePlanetCanvasProps) {
   const [progress, setProgress] = useState<Record<StarterLand, StarterProgress>>({ animals: { observed: [], matched: [] }, colors: { observed: [], matched: [] }, "life-cycle": { observed: [], matched: [] } });
   const input = useRef(createExplorerInput());
   const entry = useRef<{ position: Destination; mode: CameraMode; camera?: CameraPose } | null>(null);
-  const cheerShown = useRef(false);
+  const cheerShown = useRef(hasCheeredPlanet("science"));
   const pendingCheer = useRef(false);
   const active = session === "magnet-lab";
   const paused = !!session;
+
+  const revealCheerIfPending = useCallback(() => {
+    if (pendingCheer.current && !cheerShown.current) {
+      pendingCheer.current = false;
+      cheerShown.current = true;
+      markCheeredPlanet("science");
+      setShowCheer(true);
+    }
+  }, []);
 
   const completeZone = useCallback((id: ScienceZoneId) => {
     setCompletedZones((previous) => {
       if (previous.has(id)) return previous;
       const next = new Set(previous).add(id);
+      saveCompletedScienceZones(child, next);
       if (shouldQueueCheer(previous.size, next.size, cheerShown.current)) pendingCheer.current = true;
       return next;
     });
     setReturnMessage(`Wonderful exploring! ${scienceLand(id).name} complete.`);
+  }, [child]);
+
+  useEffect(() => {
+    if (shouldQueueCheerOnHydrate(completedZones.size, cheerShown.current)) {
+      pendingCheer.current = true;
+      revealCheerIfPending();
+    }
+    // Mount-only hydrate cheer for already-complete planets.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => { setSelectedZone(scienceLand(props.selectedZone).id); }, [props.selectedZone]);
@@ -76,13 +100,9 @@ export function SciencePlanetCanvas(props: SciencePlanetCanvasProps) {
     setDestination(null);
     if (entry.current) { input.current.teleport = entry.current.position; input.current.restoreCamera = entry.current.camera; setMode(entry.current.mode); }
     setDismissed(nearby); setInvitation(null); setResetKey((key) => key + 1);
-    if (pendingCheer.current && !cheerShown.current) {
-      pendingCheer.current = false;
-      cheerShown.current = true;
-      setShowCheer(true);
-    }
+    revealCheerIfPending();
     props.onSessionOpenChange?.(false);
-  }, [nearby, props]);
+  }, [nearby, props, revealCheerIfPending]);
   const shownInvitation = !session && invitation !== dismissed ? invitation : null;
   useEffect(() => {
     if (!shownInvitation) return;

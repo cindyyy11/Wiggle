@@ -116,7 +116,7 @@ export function SubjectWorlds({ childId, allowLocalFallback, client, quality, in
 
   const content = route.world === "math" ? <div className={styles.worldContent}>
     <MathPlanet
-      childId={childId}
+      childId={currentChild ?? DEMO_CHILD_ID}
       allowLocalFallback={allowLocalFallback}
       client={client}
       quality={quality}
@@ -127,6 +127,7 @@ export function SubjectWorlds({ childId, allowLocalFallback, client, quality, in
   </div> : route.world === "science" ? <SciencePlanet
     selectedZone={route.zone}
     quality={quality}
+    childId={currentChild ?? DEMO_CHILD_ID}
     onZoneSelect={(zone) => navigate({ world: "science", zone, child: currentChild })}
     onBackToWorlds={() => navigate({ world: null, child: currentChild })}
     onSessionOpenChange={setScienceOverlayOpen}
