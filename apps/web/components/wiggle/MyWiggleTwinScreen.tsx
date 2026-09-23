@@ -14,6 +14,7 @@ import { saveSeenConstellationStars, seenConstellationStars } from "./constellat
 import { recordTwinVisit } from "./twinStreak";
 import { getNextStep, type NextStep } from "./nextStep";
 import { getLastSuggestedMission, saveSuggestedMission } from "./nextStepMemory";
+import { planetStarProgressFor } from "../planet/planetCompletionMemory";
 import styles from "./myWiggleTwin.module.css";
 
 export interface MyWiggleTwinScreenProps {
@@ -42,9 +43,10 @@ export function MyWiggleTwinScreen({ childId, client: suppliedClient }: MyWiggle
     if (!data || remembered.current) return;
     remembered.current = true;
     const seenStars = seenConstellationStars(childId);
-    const fresh = newlyUnlockedStars(data.twin, seenStars);
+    const planetProgress = planetStarProgressFor(childId);
+    const fresh = newlyUnlockedStars(data.twin, seenStars, planetProgress);
     setFreshStars(fresh.map(star => star.id));
-    const allUnlocked = getConstellationStars(data.twin).filter(star => star.unlocked).map(star => star.id);
+    const allUnlocked = getConstellationStars(data.twin, planetProgress).filter(star => star.unlocked).map(star => star.id);
     saveSeenConstellationStars(childId, [...new Set([...seenStars, ...allUnlocked])]);
     saveSeenTwin(childId, data.twin);
     setStreak(recordTwinVisit(childId));
@@ -57,7 +59,8 @@ export function MyWiggleTwinScreen({ childId, client: suppliedClient }: MyWiggle
 
   const previous = getLastSeenTwin(childId);
   const state = getTwinVisualState(data.twin, previous);
-  const stars = getConstellationStars(data.twin);
+  const planetProgress = planetStarProgressFor(childId);
+  const stars = getConstellationStars(data.twin, planetProgress);
   const unlockedCount = stars.filter(star => star.unlocked).length;
   const subjectsProgressing = Object.keys(data.twin.mastery).length;
   const topStar = stars.find(star => freshStars.includes(star.id)) ?? stars.find(star => star.unlocked);
@@ -101,7 +104,7 @@ export function MyWiggleTwinScreen({ childId, client: suppliedClient }: MyWiggle
         <h2>Recent discoveries</h2>
         {unlockedCount > 0 ? <ul>{stars.filter(star => star.unlocked).map(star => <li key={star.id}><Star aria-hidden="true" size={13} />{star.title}</li>)}</ul> : <p className={styles.empty}>Keep exploring missions to discover your first star.</p>}
       </section>
-      <WiggleConstellation twin={data.twin} newlyUnlocked={new Set(freshStars)} />
+      <WiggleConstellation twin={data.twin} planetProgress={planetProgress} newlyUnlocked={new Set(freshStars)} />
       <a className={styles.primary} href="/">Continue exploring<ArrowUpRight aria-hidden="true" size={18} /></a>
       <p className={styles.footer}>This page shows how your missions are going. It isn’t a test or a grade.</p>
     </div>

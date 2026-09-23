@@ -20,7 +20,7 @@ const twin: LearnerTwin = {
 describe("WiggleConstellation", () => {
   it("renders every star and marks Visual Explorer as unlocked", () => {
     render(<WiggleConstellation twin={twin} />);
-    expect(screen.getAllByRole("button")).toHaveLength(6);
+    expect(screen.getAllByRole("button")).toHaveLength(8);
     expect(screen.getByRole("button", { name: /Visual Explorer: Pictures/ })).toBeTruthy();
     expect(screen.getByRole("button", { name: "Voice Navigator: not discovered yet" })).toBeTruthy();
   });
@@ -38,5 +38,10 @@ describe("WiggleConstellation", () => {
     render(<WiggleConstellation twin={twin} newlyUnlocked={new Set(["visual-explorer"])} />);
     expect(screen.getByText("Visual Explorer")).toBeTruthy();
     expect(screen.getByLabelText("Newly unlocked")).toBeTruthy();
+  });
+
+  it("unlocks Science Explorer from planet progress", () => {
+    render(<WiggleConstellation twin={twin} planetProgress={{ scienceCompleted: 4, numeriaCompleted: 0 }} />);
+    expect(screen.getByRole("button", { name: /Science Explorer: You explored all four Science lands/ })).toBeTruthy();
   });
 });

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Sparkles } from "lucide-react";
-import { getConstellationStars, type ConstellationStar, type ConstellationStarId, type LearnerTwin } from "@wiggle/contracts";
+import { getConstellationStars, type ConstellationStar, type ConstellationStarId, type LearnerTwin, type PlanetStarProgress } from "@wiggle/contracts";
 import styles from "./wiggleConstellation.module.css";
 
 function StarMark({ unlocked }: { unlocked: boolean }) {
@@ -20,13 +20,14 @@ function StarMark({ unlocked }: { unlocked: boolean }) {
 
 export interface WiggleConstellationProps {
   twin: LearnerTwin;
+  planetProgress?: PlanetStarProgress | null;
   /** Stars discovered in earlier visits, used only to render a "new!" cue — not to hide anything. */
   newlyUnlocked?: ReadonlySet<ConstellationStarId>;
 }
 
 /** "My Learning Constellation" — a glowing star map of strengths and strategies, no percentages. */
-export function WiggleConstellation({ twin, newlyUnlocked }: WiggleConstellationProps) {
-  const stars = getConstellationStars(twin);
+export function WiggleConstellation({ twin, planetProgress, newlyUnlocked }: WiggleConstellationProps) {
+  const stars = getConstellationStars(twin, planetProgress);
   const [selected, setSelected] = useState<ConstellationStar | null>(null);
   return (
     <section className={styles.sky} aria-label="My Learning Constellation">

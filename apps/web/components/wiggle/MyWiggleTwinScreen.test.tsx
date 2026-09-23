@@ -37,6 +37,16 @@ describe("MyWiggleTwinScreen", () => {
     expect(document.body.textContent).not.toMatch(/accuracy/i);
   });
 
+  it("lists Science Explorer when local science lands are complete", async () => {
+    window.localStorage.setItem(
+      "wiggle:planet-complete:child-1:science",
+      JSON.stringify(["magnet-lab", "animals", "colors", "life-cycle"]),
+    );
+    render(<MyWiggleTwinScreen childId="child-1" client={fakeClient(baseTwin)} />);
+    await screen.findByText("My Wiggle Twin");
+    expect(screen.getAllByText(/Science Explorer/).length).toBeGreaterThan(0);
+  });
+
   it("shows a clickable next step toward the nearest not-yet-unlocked star", async () => {
     render(<MyWiggleTwinScreen childId="child-1" client={fakeClient(baseTwin)} />);
     await screen.findByText("My Wiggle Twin");

@@ -3,9 +3,9 @@ import { constellationStarIds } from "@wiggle/contracts";
 
 /**
  * Which constellation stars this browser has already seen unlocked, purely so the
- * "New star!" celebration only shows once. This is presentational memory only — the
- * actual unlock state is always recomputed live from the Learner Twin, never stored
- * here as a source of truth.
+ * "New star!" celebration only shows once. This is presentational memory only — unlock
+ * state is recomputed from the Learner Twin and optional local planet progress, never
+ * stored here as a source of truth.
  */
 function storageKey(childId: string): string {
   return `wiggle:constellation-seen:${childId}`;
