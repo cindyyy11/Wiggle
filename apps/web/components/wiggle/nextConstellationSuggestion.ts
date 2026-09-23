@@ -1,4 +1,4 @@
-import type { ConstellationStar, LearnerTwin } from "@wiggle/contracts";
+import type { ConstellationStar, LearnerTwin, PlanetStarProgress } from "@wiggle/contracts";
 import { getConstellationStars } from "@wiggle/contracts";
 
 /**
@@ -7,8 +7,11 @@ import { getConstellationStars } from "@wiggle/contracts";
  * its own. The ranking exists so a caller can offer an alternative when the
  * closest star was already suggested last time (see nextStep.ts).
  */
-export function rankedLockedStars(twin: LearnerTwin): ConstellationStar[] {
-  return getConstellationStars(twin)
+export function rankedLockedStars(
+  twin: LearnerTwin,
+  planetProgress?: PlanetStarProgress | null,
+): ConstellationStar[] {
+  return getConstellationStars(twin, planetProgress)
     .filter(star => !star.unlocked)
     .sort((a, b) => b.progress - a.progress);
 }
@@ -19,6 +22,9 @@ export function rankedLockedStars(twin: LearnerTwin): ConstellationStar[] {
  * docs/superpowers/specs/2026-09-13-global-wiggle-twin-launcher-design.md).
  * Returns null once every star is unlocked.
  */
-export function nextConstellationSuggestion(twin: LearnerTwin): ConstellationStar | null {
-  return rankedLockedStars(twin)[0] ?? null;
+export function nextConstellationSuggestion(
+  twin: LearnerTwin,
+  planetProgress?: PlanetStarProgress | null,
+): ConstellationStar | null {
+  return rankedLockedStars(twin, planetProgress)[0] ?? null;
 }

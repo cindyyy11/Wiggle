@@ -31,6 +31,6 @@ describe("nextConstellationSuggestion", () => {
       modalityEffectiveness: { visual: 0.9, voice: 0.9, gesture: 0.9, movement: 0.9, story: 0.9, text: 0.9 },
       strategyEffectiveness: { chunking: 0.9, movementBreak: 0.9, visualHint: 0.9, voiceHint: 0.9, choice: 0.9 },
     };
-    expect(nextConstellationSuggestion(mastered)).toBeNull();
+    expect(nextConstellationSuggestion(mastered, { scienceCompleted: 4, numeriaCompleted: 4 })).toBeNull();
   });
 });

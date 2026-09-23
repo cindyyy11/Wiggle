@@ -1,3 +1,4 @@
+import type { PlanetStarProgress } from "@wiggle/contracts";
 import type { ScienceZoneId } from "../worlds/subjectRoute";
 import type { MathRegionId } from "../math/mathActivities";
 
@@ -42,7 +43,7 @@ export function saveCompletedNumeriaRegions(childId: string, regions: ReadonlySe
   saveSet(childId, "numeria", regions);
 }
 
-export function planetStarProgressFor(childId: string): { scienceCompleted: number; numeriaCompleted: number } {
+export function planetStarProgressFor(childId: string): PlanetStarProgress {
   return {
     scienceCompleted: loadCompletedScienceZones(childId).size,
     numeriaCompleted: loadCompletedNumeriaRegions(childId).size,

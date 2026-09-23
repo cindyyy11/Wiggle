@@ -34,6 +34,12 @@ const STAR_DESTINATIONS: Readonly<Record<ConstellationStarId, StarDestination>> 
   "voice-navigator": numeria,
   "puzzle-solver": science("animals", "Animal Types", "Pip the Bird"),
   "brave-beginner": science("life-cycle", "Life Cycle Garden", "Sprout"),
+  "science-explorer": science("animals", "Animal Types", "Pip the Bird"),
+  "numeria-explorer": {
+    missionName: "Number Valley",
+    guideName: "Lexi",
+    href: childId => buildWorldHref({ world: "math", child: childId }),
+  },
 };
 
 export function starDestination(id: ConstellationStarId): StarDestination {

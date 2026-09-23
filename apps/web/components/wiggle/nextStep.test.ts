@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+// @vitest-environment jsdom
+import { beforeEach, describe, expect, it } from "vitest";
 import type { LearnerTwin } from "@wiggle/contracts";
 import { getNextStep } from "./nextStep";
 
@@ -24,7 +25,22 @@ const mastered: LearnerTwin = {
   strategyEffectiveness: { chunking: 0.9, movementBreak: 0.9, visualHint: 0.9, voiceHint: 0.9, choice: 0.9 },
 };
 
+function seedPlanetsComplete(childId: string) {
+  window.localStorage.setItem(
+    `wiggle:planet-complete:${childId}:science`,
+    JSON.stringify(["magnet-lab", "animals", "colors", "life-cycle"]),
+  );
+  window.localStorage.setItem(
+    `wiggle:planet-complete:${childId}:numeria`,
+    JSON.stringify(["fraction-forest", "number-valley", "geometry-ridge", "crystal-crater"]),
+  );
+}
+
 describe("getNextStep", () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+  });
+
   it("points the nearest locked star at a real, clickable place", () => {
     const step = getNextStep(base, "child-1");
     expect(step?.title).toBe("Visual Explorer");
@@ -34,6 +50,7 @@ describe("getNextStep", () => {
   });
 
   it("returns null once every star is unlocked, instead of a stale suggestion", () => {
+    seedPlanetsComplete("child-1");
     expect(getNextStep(mastered, "child-1")).toBeNull();
   });
 
@@ -47,12 +64,14 @@ describe("getNextStep", () => {
   });
 
   it("repeats the suggestion rather than fabricating an alternative when there is only one", () => {
+    seedPlanetsComplete("child-1");
     const onlyBraveBeginnerLocked: LearnerTwin = { ...mastered, initiationFriction: 0.5 };
     const step = getNextStep(onlyBraveBeginnerLocked, "child-1", "Life Cycle Garden");
     expect(step?.missionName).toBe("Life Cycle Garden");
   });
 
   it("never suggests Magnet Lab, even when Movement Explorer is the nearest locked star", () => {
+    seedPlanetsComplete("child-1");
     const movementNearestButExcluded: LearnerTwin = {
       ...mastered,
       modalityEffectiveness: { ...mastered.modalityEffectiveness, movement: 0.65, visual: 0.1 },
@@ -64,6 +83,7 @@ describe("getNextStep", () => {
   });
 
   it("returns null when Movement Explorer is the only locked star, instead of suggesting Magnet Lab", () => {
+    seedPlanetsComplete("child-1");
     const onlyMovementLocked: LearnerTwin = {
       ...mastered,
       modalityEffectiveness: { ...mastered.modalityEffectiveness, movement: 0.65 },
@@ -73,11 +93,13 @@ describe("getNextStep", () => {
   });
 
   it("never suggests Fraction Forest, even when a Numeria star is the only locked one", () => {
+    seedPlanetsComplete("child-1");
     const onlyTinyStepLocked: LearnerTwin = {
       ...mastered,
       strategyEffectiveness: { ...mastered.strategyEffectiveness, chunking: 0.5 },
     };
     expect(getNextStep(onlyTinyStepLocked, "child-1")).toBeNull();
+    window.localStorage.clear();
     const tinyStepNearest: LearnerTwin = { ...base, strategyEffectiveness: { ...base.strategyEffectiveness, chunking: 0.65 }, modalityEffectiveness: { ...base.modalityEffectiveness, visual: 0.1 } };
     expect(getNextStep(tinyStepNearest, "child-1")?.missionName).not.toBe("Fraction Forest");
   });

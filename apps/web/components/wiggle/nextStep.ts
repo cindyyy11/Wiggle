@@ -1,4 +1,6 @@
 import type { LearnerTwin } from "@wiggle/contracts";
+import { DEMO_CHILD_ID } from "../../lib/demo/seed";
+import { planetStarProgressFor } from "../planet/planetCompletionMemory";
 import { rankedLockedStars } from "./nextConstellationSuggestion";
 import { starDestination } from "./starDestination";
 
@@ -28,7 +30,12 @@ const EXCLUDED_MISSION_NAMES = new Set(["Magnet Lab", "Fraction Forest"]);
  * the suggestion repeats rather than pretending there's a real alternative.
  */
 export function getNextStep(twin: LearnerTwin, childId?: string, avoidMissionName?: string | null): NextStep | null {
-  const candidates = rankedLockedStars(twin).filter(candidate => !EXCLUDED_MISSION_NAMES.has(starDestination(candidate.id).missionName));
+  const id = childId ?? DEMO_CHILD_ID;
+  const planetProgress =
+    typeof window !== "undefined" ? planetStarProgressFor(id) : { scienceCompleted: 0, numeriaCompleted: 0 };
+  const candidates = rankedLockedStars(twin, planetProgress).filter(
+    candidate => !EXCLUDED_MISSION_NAMES.has(starDestination(candidate.id).missionName),
+  );
   if (candidates.length === 0) return null;
   const star = (avoidMissionName
     ? candidates.find(candidate => starDestination(candidate.id).missionName !== avoidMissionName)
