@@ -20,6 +20,16 @@ Not verified, and not represented as passing:
 - Live Vercel, Render and Supabase deployment, and a real household Auth run. The 37-assertion pgTAP RLS suite was run and passes 37 of 37, but against a single container of Supabase's own Postgres 15.8 image (`supabase/postgres:15.8.1.135`, with its real `auth.users` and `auth.uid()`) after applying all three migrations, not a full local Supabase stack: GoTrue and PostgREST were not running, so the six live-Supabase repository cases (which need two signed-in parent tokens) were not run. No Supabase CLI is installed here.
 - The browser suite serves the existing `.next` build and does not rebuild it. A run before this session's rebuild exercised stale code; the README and runbook now say to run `npm run build` first.
 
+## Magnet Lab feel upgrade — 23 September 2026
+
+result: automated checks pass; visual check is not yet checked in a live camera session.
+
+Magnet explore now shows a field ring and clearer metal-stick vs non-metal reject motion. Sort pads hover while holding, pulse green on correct drops, and flash/wobble on wrong drops before the object returns home. Curriculum radii and grab/drop rules are unchanged.
+
+Checked: `magnetSceneFeel`, MagnetHandLabScene, magnetHandPlay, MagnetLabMission (+ camera) unit files. Visual: live desktop / ~390 px explore + wrong sort drop pending.
+
+Not verifiable automatically: whether the reject push reads as “no pull” for every kid — judgment call after a camera pass. Hidden checkpoint and constellation unlocks unchanged.
+
 ## Magnet Lands → HandActivityShell — 23 September 2026
 
 result: automated checks pass; visual check is not yet checked in a live camera session.
