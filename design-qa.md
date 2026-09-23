@@ -1,5 +1,15 @@
 # Wiggle final QA — 12 September 2026
 
+## Planet completion persistence + constellation stars — 23 September 2026
+
+result: automated checks pass; manual revisit of Science/Numeria with saved completions not yet camera-checked.
+
+Science and Numeria land completions now survive reload on this device. Finishing all four unlocks Science Explorer / Numeria Explorer in My Learning Constellation. The all-four cheer plays at most once per planet per browser tab session (including when opening an already-complete planet).
+
+Checked: planetCompletionMemory, planetCheerSession, planetCheerGate, constellation contracts, Science/Math canvas completion suites, constellation/Twin screen unit files. Twin API sync still out of scope.
+
+Not verifiable automatically: kid clarity of planet stars next to Twin-signal stars — judgment after a Twin screen glance.
+
 ## Local verification — 21 September 2026
 
 result: local checks pass; the production acceptance gate below is still blocked.
