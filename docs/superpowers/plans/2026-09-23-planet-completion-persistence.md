@@ -449,38 +449,39 @@ beforeEach(() => {
   window.sessionStorage.clear();
 });
 
+Import `DEMO_CHILD_ID` from `../../lib/demo/seed` (value is `10000000-0000-0000-0000-000000000011`). Use that string in storage keys and `childId` props — never invent `"demo"`.
+
+```tsx
 it("hydrates completed zones from localStorage", () => {
   window.localStorage.setItem(
-    "wiggle:planet-complete:demo:science",
+    `wiggle:planet-complete:${DEMO_CHILD_ID}:science`,
     JSON.stringify(["magnet-lab", "animals", "colors", "life-cycle"]),
   );
-  // Use the same DEMO_CHILD_ID the canvas falls back to — import and assert.
-  render(<SciencePlanetCanvas {...defaults} quality="fallback" childId="demo" />);
+  render(<SciencePlanetCanvas {...defaults} quality="fallback" childId={DEMO_CHILD_ID} />);
   expect(screen.getByText("4 of 4 lands complete")).toBeTruthy();
 });
 
 it("persists a newly completed zone", async () => {
-  render(<SciencePlanetCanvas {...defaults} quality="fallback" childId="demo" />);
+  render(<SciencePlanetCanvas {...defaults} quality="fallback" childId={DEMO_CHILD_ID} />);
   await finishMagnet();
-  const raw = window.localStorage.getItem("wiggle:planet-complete:demo:science");
+  const raw = window.localStorage.getItem(`wiggle:planet-complete:${DEMO_CHILD_ID}:science`);
   expect(JSON.parse(raw!)).toContain("magnet-lab");
 });
 
 it("cheers once per session when opening an already-complete planet", () => {
   window.localStorage.setItem(
-    "wiggle:planet-complete:demo:science",
+    `wiggle:planet-complete:${DEMO_CHILD_ID}:science`,
     JSON.stringify(["magnet-lab", "animals", "colors", "life-cycle"]),
   );
-  render(<SciencePlanetCanvas {...defaults} quality="fallback" childId="demo" />);
+  render(<SciencePlanetCanvas {...defaults} quality="fallback" childId={DEMO_CHILD_ID} />);
   expect(screen.getByRole("dialog", { name: "You did it!" })).toBeTruthy();
   fireEvent.click(screen.getByRole("button", { name: "Keep exploring" }));
   cleanup();
-  render(<SciencePlanetCanvas {...defaults} quality="fallback" childId="demo" />);
+  render(<SciencePlanetCanvas {...defaults} quality="fallback" childId={DEMO_CHILD_ID} />);
   expect(screen.queryByRole("dialog", { name: "You did it!" })).toBeNull();
 });
 ```
 
-Adjust `DEMO_CHILD_ID` / key strings to match `lib/demo/seed` exactly (read the constant; do not invent a different demo id).
 
 - [ ] **Step 2: Run — expect FAIL** (no hydrate/persist yet)
 
@@ -521,16 +522,15 @@ Minimal seed test:
 ```tsx
 it("hydrates numeria completions and cheers once per session", () => {
   window.localStorage.setItem(
-    "wiggle:planet-complete:demo:numeria",
+    `wiggle:planet-complete:${DEMO_CHILD_ID}:numeria`,
     JSON.stringify(["fraction-forest", "number-valley", "geometry-ridge", "crystal-crater"]),
   );
-  render(<MathPlanetCanvas onBackToWorlds={vi.fn()} childId="demo" />);
+  render(<MathPlanetCanvas onBackToWorlds={vi.fn()} childId={DEMO_CHILD_ID} />);
   expect(screen.getByText("4 of 4 regions complete")).toBeTruthy();
   expect(screen.getByRole("dialog", { name: "You did it!" })).toBeTruthy();
 });
 ```
 
-(Use real `DEMO_CHILD_ID` if tests pass `undefined` childId.)
 
 - [ ] **Step 2: Run — expect FAIL**
 
