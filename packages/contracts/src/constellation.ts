@@ -1,8 +1,8 @@
 /**
  * "My Learning Constellation" — a child-facing catalog of discovered strengths and
- * strategies, derived purely from the Learner Digital Twin's numeric state. No star
- * is ever unlocked by an LLM decision, and no percentage is ever attached to a star;
- * the child sees a name and a short sentence, never a score.
+ * strategies. Twin-signal stars derive from the Learner Digital Twin; planet explorer
+ * stars derive from optional local land-completion counts. No star is ever unlocked by
+ * an LLM decision, and no percentage is ever attached to a star.
  */
 import type { LearnerTwin } from "./twin.js";
 
@@ -13,9 +13,16 @@ export const constellationStarIds = [
   "voice-navigator",
   "puzzle-solver",
   "brave-beginner",
+  "science-explorer",
+  "numeria-explorer",
 ] as const;
 
 export type ConstellationStarId = (typeof constellationStarIds)[number];
+
+export type PlanetStarProgress = {
+  scienceCompleted: number;
+  numeriaCompleted: number;
+};
 
 const UNLOCK_THRESHOLD = 0.7;
 /** Brave Beginner rewards *low* initiation friction, so it uses an inverted threshold. */
@@ -99,9 +106,37 @@ function progressToward(definition: StarDefinition, value: number): number {
   return Math.max(0, Math.min(1, progress));
 }
 
-/** Derive every constellation star's unlock state from the current Twin. Pure and deterministic. */
-export function getConstellationStars(twin: LearnerTwin): ConstellationStar[] {
-  return STAR_DEFINITIONS.map(definition => {
+function planetProgressToward(count: number): number {
+  return Math.max(0, Math.min(1, count / 4));
+}
+
+function planetStars(planetProgress?: PlanetStarProgress | null): ConstellationStar[] {
+  const scienceCompleted = planetProgress?.scienceCompleted ?? 0;
+  const numeriaCompleted = planetProgress?.numeriaCompleted ?? 0;
+  return [
+    {
+      id: "science-explorer",
+      title: "Science Explorer",
+      description: "You explored all four Science lands.",
+      unlocked: scienceCompleted >= 4,
+      progress: planetProgressToward(scienceCompleted),
+    },
+    {
+      id: "numeria-explorer",
+      title: "Numeria Explorer",
+      description: "You explored all four Numeria regions.",
+      unlocked: numeriaCompleted >= 4,
+      progress: planetProgressToward(numeriaCompleted),
+    },
+  ];
+}
+
+/** Derive every constellation star's unlock state. Twin stars from Twin; planet stars from optional local counts. */
+export function getConstellationStars(
+  twin: LearnerTwin,
+  planetProgress?: PlanetStarProgress | null,
+): ConstellationStar[] {
+  const twinStars = STAR_DEFINITIONS.map(definition => {
     const value = definition.signal(twin);
     return {
       id: definition.id,
@@ -111,14 +146,16 @@ export function getConstellationStars(twin: LearnerTwin): ConstellationStar[] {
       progress: progressToward(definition, value),
     };
   });
+  return [...twinStars, ...planetStars(planetProgress)];
 }
 
 /** Convenience for "what's newly unlocked" banners: stars unlocked now but not in `previous`. */
 export function newlyUnlockedStars(
   twin: LearnerTwin,
   previouslyUnlocked: ReadonlySet<ConstellationStarId>,
+  planetProgress?: PlanetStarProgress | null,
 ): ConstellationStar[] {
-  return getConstellationStars(twin).filter(
+  return getConstellationStars(twin, planetProgress).filter(
     star => star.unlocked && !previouslyUnlocked.has(star.id),
   );
 }

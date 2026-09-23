@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { constellationStarIds, getConstellationStars, newlyUnlockedStars } from "./constellation.js";
+import {
+  constellationStarIds,
+  getConstellationStars,
+  newlyUnlockedStars,
+  type PlanetStarProgress,
+} from "./constellation.js";
 import type { LearnerTwin } from "./twin.js";
 
 const base: LearnerTwin = {
@@ -51,5 +56,28 @@ describe("getConstellationStars", () => {
     const alreadySeen = new Set(["voice-navigator"] as const);
     const fresh = newlyUnlockedStars(twin, alreadySeen);
     expect(fresh.map(star => star.id)).toEqual(["visual-explorer"]);
+  });
+
+  it("keeps planet stars locked without planet progress", () => {
+    const science = getConstellationStars(base).find(s => s.id === "science-explorer")!;
+    expect(science.unlocked).toBe(false);
+    expect(science.progress).toBe(0);
+  });
+
+  it("unlocks Science Explorer at four science lands and reports progress", () => {
+    const progress: PlanetStarProgress = { scienceCompleted: 2, numeriaCompleted: 0 };
+    const partial = getConstellationStars(base, progress).find(s => s.id === "science-explorer")!;
+    expect(partial.unlocked).toBe(false);
+    expect(partial.progress).toBeCloseTo(0.5);
+
+    const full = getConstellationStars(base, { scienceCompleted: 4, numeriaCompleted: 0 }).find(s => s.id === "science-explorer")!;
+    expect(full.unlocked).toBe(true);
+    expect(full.progress).toBe(1);
+  });
+
+  it("does not unlock Twin stars from planet progress alone", () => {
+    const stars = getConstellationStars(base, { scienceCompleted: 4, numeriaCompleted: 4 });
+    expect(stars.find(s => s.id === "visual-explorer")!.unlocked).toBe(false);
+    expect(stars.find(s => s.id === "numeria-explorer")!.unlocked).toBe(true);
   });
 });
