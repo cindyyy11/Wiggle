@@ -76,3 +76,31 @@ describe("nextNudge", () => {
     expect(nextNudge(state, discover, "pinch").nudge).toBe("Try pointing your finger to discover!");
   });
 });
+
+const explore: CoachMode = { kind: "magnet", checkpoint: "explore", holding: false };
+const sortIdle: CoachMode = { kind: "magnet", checkpoint: "sort", holding: false };
+const sortHold: CoachMode = { kind: "magnet", checkpoint: "sort", holding: true };
+const hidden: CoachMode = { kind: "magnet", checkpoint: "hidden", holding: false };
+
+describe("magnet coach", () => {
+  it("maps checkpoints to hints", () => {
+    expect(expectedHint(explore)).toBe("open_palm");
+    expect(expectedHint(sortIdle)).toBe("pinch");
+    expect(expectedHint(sortHold)).toBe("open_palm");
+    expect(expectedHint(hidden)).toBe("point");
+  });
+
+  it("nudges wrong gestures with Magnet copy", () => {
+    expect(wrongGestureLine(explore, "point")).toBe("Open your palm to move the magnet!");
+    expect(wrongGestureLine(explore, "open_palm")).toBeNull();
+    expect(wrongGestureLine(sortIdle, "point")).toBe("Pinch to pick up an object!");
+    expect(wrongGestureLine(sortHold, "pinch")).toBe("Open your palm over PULLS or NO PULL!");
+    expect(wrongGestureLine(hidden, "pinch")).toBe("Point to find the hidden magnet!");
+    expect(wrongGestureLine(hidden, "point")).toBeNull();
+  });
+
+  it("re-arms magnet nudges when checkpoint or holding changes", () => {
+    const state = nextNudge(initialNudgeState(explore), explore, "point").state;
+    expect(nextNudge(state, sortIdle, "point").nudge).toBe("Pinch to pick up an object!");
+  });
+});

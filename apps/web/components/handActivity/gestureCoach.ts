@@ -6,11 +6,13 @@ export type GestureHint = "point" | "pinch" | "open_palm" | "hold" | "none";
 
 export type CoachMode =
   | { kind: "bench"; phase: BenchPhase; holding: boolean }
-  | { kind: "answer"; phase: AnswerPhase };
+  | { kind: "answer"; phase: AnswerPhase }
+  | { kind: "magnet"; checkpoint: "explore" | "sort" | "hidden"; holding: boolean };
 
 export type NudgeState = { phaseKey: string; delivered: boolean };
 
 export function phaseKey(mode: CoachMode): string {
+  if (mode.kind === "magnet") return `magnet:${mode.checkpoint}:${mode.holding ? "hold" : "idle"}`;
   return mode.kind === "bench" ? `bench:${mode.phase}:${mode.holding ? "hold" : "idle"}` : `answer:${mode.phase}`;
 }
 
@@ -18,6 +20,11 @@ export function expectedHint(mode: CoachMode): GestureHint {
   if (mode.kind === "answer") {
     if (mode.phase === "asking") return "hold";
     return "none";
+  }
+  if (mode.kind === "magnet") {
+    if (mode.checkpoint === "explore") return "open_palm";
+    if (mode.checkpoint === "sort") return mode.holding ? "open_palm" : "pinch";
+    return "point";
   }
   if (mode.phase === "discover") return "point";
   if (mode.phase === "match") return mode.holding ? "open_palm" : "pinch";
@@ -27,6 +34,16 @@ export function expectedHint(mode: CoachMode): GestureHint {
 export function wrongGestureLine(mode: CoachMode, gesture: Gesture | null): string | null {
   if (!gesture) return null;
   if (mode.kind === "answer") return null;
+  if (mode.kind === "magnet") {
+    if (mode.checkpoint === "explore") {
+      return gesture === "open_palm" ? null : "Open your palm to move the magnet!";
+    }
+    if (mode.checkpoint === "sort") {
+      if (mode.holding) return gesture === "open_palm" ? null : "Open your palm over PULLS or NO PULL!";
+      return gesture === "pinch" ? null : "Pinch to pick up an object!";
+    }
+    return gesture === "point" ? null : "Point to find the hidden magnet!";
+  }
   if (mode.phase === "discover") {
     return gesture === "point" ? null : "Try pointing your finger to discover!";
   }
