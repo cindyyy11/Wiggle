@@ -14,15 +14,18 @@ import {
   type TablePoint,
 } from "./magnetHandPlay";
 import {
+  CORRECT_PAD_PULSE_MS,
   FIELD_RING_ACTIVE_OPACITY,
   FIELD_RING_IDLE_OPACITY,
   HOME_LERP,
   METAL_FOLLOW_LERP,
   REJECT_PUSH_STRENGTH,
+  WRONG_DROP_WOBBLE_MS,
+  feedbackActive,
   rejectPushOffset,
 } from "./magnetSceneFeel";
 import { MagnetHandGestureController, type MagnetGestureTarget } from "./magnetHandGesture";
-import { MAGNET_HOME, MAGNET_OBJECTS, type MagnetObject, type MagnetObjectId } from "./scienceWorld";
+import { MAGNET_HOME, MAGNET_OBJECTS, type MagnetObject, type MagnetObjectId, type MagnetResult } from "./scienceWorld";
 
 export type MagnetHandLabSceneProps = {
   latest: React.RefObject<HandTrackingLatest>;
@@ -275,13 +278,19 @@ function LabelTexture({
   </sprite>;
 }
 
-function SortTargets() {
+function SortTargets({
+  attractedMaterial,
+  notAttractedMaterial,
+}: {
+  attractedMaterial: React.RefObject<MeshStandardMaterial | null>;
+  notAttractedMaterial: React.RefObject<MeshStandardMaterial | null>;
+}) {
   return <group>
     <mesh position={[tableX(attractedTarget.x), tableY(attractedTarget.y) + .07, .12]} scale={[.72, .28, .08]}>
-      <boxGeometry args={[1, 1, 1]} /><meshStandardMaterial color="#e9bb70" roughness={1} flatShading />
+      <boxGeometry args={[1, 1, 1]} /><meshStandardMaterial ref={attractedMaterial} color="#e9bb70" roughness={1} flatShading />
     </mesh>
     <mesh position={[tableX(notAttractedTarget.x), tableY(notAttractedTarget.y) + .07, .12]} scale={[.72, .28, .08]}>
-      <boxGeometry args={[1, 1, 1]} /><meshStandardMaterial color="#8db2d1" roughness={1} flatShading />
+      <boxGeometry args={[1, 1, 1]} /><meshStandardMaterial ref={notAttractedMaterial} color="#8db2d1" roughness={1} flatShading />
     </mesh>
     <LabelTexture text="PULLS!" color="#f4c873" position={[tableX(attractedTarget.x), tableY(attractedTarget.y) - .2, .4]} width={.95} height={.3} fontSize={64} />
     <LabelTexture text="NO PULL" color="#a9cae4" position={[tableX(notAttractedTarget.x), tableY(notAttractedTarget.y) - .2, .4]} width={.95} height={.3} fontSize={58} />
@@ -409,10 +418,35 @@ function LabInteraction({ props }: { props: MagnetHandLabSceneProps }) {
   const bannerText = useRef("");
   const activePullId = useRef<MagnetObjectId | null>(null);
   const magnetReady = useRef(false);
+  const attractedPadMaterial = useRef<MeshStandardMaterial | null>(null);
+  const notAttractedPadMaterial = useRef<MeshStandardMaterial | null>(null);
+  const padPulse = useRef<{ pad: MagnetResult; kind: "correct" | "wrong"; atMs: number } | null>(null);
+  const wrongDrop = useRef<{ id: MagnetObjectId; atMs: number; x: number; y: number; z: number } | null>(null);
   const [pullId, setPullId] = useState<MagnetObjectId | null>(null);
   const [banner, setBanner] = useState<{ text: string; color: string } | null>(null);
   action.current = props.onAction;
   attractionCue.current = props.onAttractionCue;
+
+  const dispatchAction = (next: MagnetPlayAction) => {
+    if (next.type === "drop" && (next.target === "attracted" || next.target === "not-attracted")) {
+      const object = MAGNET_OBJECTS.find((entry) => entry.id === next.id);
+      const now = performance.now();
+      if (object && next.target === object.result) {
+        padPulse.current = { pad: next.target, kind: "correct", atMs: now };
+      } else if (object) {
+        padPulse.current = { pad: next.target, kind: "wrong", atMs: now };
+        const model = objectGroups.current[next.id];
+        wrongDrop.current = {
+          id: next.id,
+          atMs: now,
+          x: model?.position.x ?? tableX(toTablePoint(object).x),
+          y: model?.position.y ?? tableY(toTablePoint(object).y),
+          z: model?.position.z ?? .29,
+        };
+      }
+    }
+    action.current(next);
+  };
 
   useEffect(() => {
     if (priorCheckpoint.current === props.state.checkpoint) return;
@@ -425,6 +459,8 @@ function LabInteraction({ props }: { props: MagnetHandLabSceneProps }) {
     lostTrackingSince.current = null;
     setPullId(null);
     setBanner(null);
+    padPulse.current = null;
+    wrongDrop.current = null;
   }, [props.state.checkpoint]);
 
   useFrame(({ clock }) => {
@@ -475,7 +511,7 @@ function LabInteraction({ props }: { props: MagnetHandLabSceneProps }) {
     }
 
     if (props.state.checkpoint === "sort" || props.state.checkpoint === "hidden") {
-      if (frameAction) action.current(frameAction);
+      if (frameAction) dispatchAction(frameAction);
     }
 
     if (props.state.checkpoint === "hidden") {
@@ -487,10 +523,30 @@ function LabInteraction({ props }: { props: MagnetHandLabSceneProps }) {
     let nextPull: MagnetObjectId | null = null;
     let nextBanner: { text: string; color: string } | null = null;
     let anyInField = false;
+    const nowMs = performance.now();
+    if (wrongDrop.current && !feedbackActive(wrongDrop.current.atMs, nowMs, WRONG_DROP_WOBBLE_MS)) {
+      wrongDrop.current = null;
+    }
+    if (padPulse.current) {
+      const duration = padPulse.current.kind === "correct" ? CORRECT_PAD_PULSE_MS : WRONG_DROP_WOBBLE_MS;
+      if (!feedbackActive(padPulse.current.atMs, nowMs, duration)) padPulse.current = null;
+    }
+    let hoverPad: MagnetResult | null = null;
+    if (props.state.checkpoint === "sort" && props.state.held && point) {
+      const over = targetForSort(point, props.state);
+      if (over === "attracted" || over === "not-attracted") hoverPad = over;
+    }
 
     for (const object of MAGNET_OBJECTS) {
       const model = objectGroups.current[object.id];
       if (!model) continue;
+      const wobbling = wrongDrop.current?.id === object.id && feedbackActive(wrongDrop.current.atMs, nowMs, WRONG_DROP_WOBBLE_MS);
+      if (wobbling && wrongDrop.current) {
+        const shake = props.reducedMotion ? 0 : Math.sin(clock.elapsedTime * 40) * .045;
+        model.position.set(wrongDrop.current.x + shake, wrongDrop.current.y, wrongDrop.current.z);
+        model.rotation.z = props.reducedMotion ? 0 : shake * 4;
+        continue;
+      }
       const withinField = point !== null && props.state.checkpoint === "explore" && isWithinMagnetField(target, toTablePoint(object));
       if (withinField) anyInField = true;
       const shouldFollow = props.state.checkpoint === "explore" && object.result === "attracted" && withinField;
@@ -548,6 +604,32 @@ function LabInteraction({ props }: { props: MagnetHandLabSceneProps }) {
       }
     }
 
+    const tintPad = (material: MeshStandardMaterial | null, pad: MagnetResult) => {
+      if (!material) return;
+      const pulsing = padPulse.current?.pad === pad ? padPulse.current : null;
+      if (pulsing?.kind === "correct") {
+        material.color.set("#7dce8a");
+        material.emissive.set("#2f7a3d");
+        material.emissiveIntensity = props.reducedMotion ? .35 : .55;
+      } else if (pulsing?.kind === "wrong") {
+        material.color.set("#e88989");
+        material.emissive.set("#8a2f2f");
+        material.emissiveIntensity = props.reducedMotion ? .35 : .55;
+      } else if (hoverPad === pad) {
+        material.color.set(pad === "attracted" ? "#f4c873" : "#a9cae4");
+        material.emissive.set(pad === "attracted" ? "#c57939" : "#355978");
+        material.emissiveIntensity = .35;
+      } else {
+        material.color.set(pad === "attracted" ? "#e9bb70" : "#8db2d1");
+        material.emissive.set("#000000");
+        material.emissiveIntensity = 0;
+      }
+    };
+    if (props.state.checkpoint === "sort") {
+      tintPad(attractedPadMaterial.current, "attracted");
+      tintPad(notAttractedPadMaterial.current, "not-attracted");
+    }
+
     if (nextCue && nextCue !== lastCue.current) attractionCue.current?.(nextCue);
     lastCue.current = nextCue;
     if (nextPull !== activePullId.current) {
@@ -587,7 +669,7 @@ function LabInteraction({ props }: { props: MagnetHandLabSceneProps }) {
         }}
         materialRef={(value) => { if (value) objectMaterials.current[object.id] = value; else delete objectMaterials.current[object.id]; }}
       />)}
-      {props.state.checkpoint === "sort" ? <SortTargets /> : null}
+      {props.state.checkpoint === "sort" ? <SortTargets attractedMaterial={attractedPadMaterial} notAttractedMaterial={notAttractedPadMaterial} /> : null}
       {pullId ? <MagnetZzzSparks magnet={magnet} object={pullObjectRef} active reducedMotion={props.reducedMotion} /> : null}
       <group ref={feedback} visible={false}>
         {banner ? <LabelTexture text={banner.text} color={banner.color} position={[0, 0, 0]} width={.9} height={.3} fontSize={64} /> : null}
